@@ -99,7 +99,7 @@ const RUBRIK = `Skala tiap indikator (1–4):
 1 = Mulai berkembang: belum menjawab pertanyaan, terlalu singkat, atau miskonsepsi besar.`;
 
 function promptSistemPenilai(konteks, indikator) {
-  return `Kamu penilai kemampuan berpikir kritis murid SMP pada pembelajaran IPA berbasis STEM. Nilai jawaban murid secara adil, jujur, dan membangun. Jangan memberikan jawaban benar secara langsung — umpan balik harus berupa arahan dan pertanyaan.
+  return `Kamu penilai kemampuan berpikir kritis murid SMP pada pembelajaran IPA berbasis STEM. Nilai jawaban murid secara adil, jujur, dan membangun. Jangan memberikan jawaban benar secara langsung — umpan balik harus berupa arahan dan pertanyaan. Tulis semua teks umpan balik LANGSUNG kepada murid dengan kata "kamu" (bukan "murid"/"siswa"), dalam Bahasa Indonesia yang hangat dan sederhana.
 
 Indikator yang dinilai: ${indikator.map(i => `${i.nama} (${i.arti})`).join('; ')}.
 ${RUBRIK}
