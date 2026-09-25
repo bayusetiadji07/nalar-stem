@@ -4,7 +4,7 @@ Aplikasi pembelajaran IPA berbasis **STEM** (SMP, Fase D) untuk melatih **berpik
 dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pertanyaan, bukan memberi jawaban.
 
 ## Isi
-- **7 Misi STEM** (kontekstual pesisir Besuki), masing-masing 7 langkah (6 langkah Engineering Design Process + praktik nyata):
+- **8 Misi STEM** (kontekstual pesisir Besuki), masing-masing 7 langkah (6 langkah Engineering Design Process + praktik nyata):
   1. Perahu Penyelamat Hasil Panen — Hukum Archimedes (kelas 8)
   2. Penjernih Air Sederhana — pemisahan campuran/filtrasi (kelas 7)
   3. Kotak Pendingin Ikan Nelayan — kalor & perpindahan kalor (kelas 7)
@@ -12,12 +12,13 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
   5. Roket Cuka & Soda Kue — perubahan materi/perubahan kimia & pereaksi pembatas (kelas 7)
   6. Roket Air Bertekanan — tekanan gas, hukum Boyle & aksi–reaksi; simulasi numerik semburan air + hambatan udara (kelas 8)
   7. Jembatan Stik Es Krim — gaya tekan & tarik, rangka segitiga, tekuk Euler, efisiensi struktur (kelas 8)
+  8. Pembangkit Listrik Tenaga Angin — perubahan energi, daya angin ½ρAv³, batas Betz, generator & gir (kelas 7–9)
 - **Langkah 7 "Wujudkan di Dunia Nyata"** di setiap misi: alat & bahan, cek keselamatan wajib (langkah kerja terkunci sampai semua dicentang), langkah kerja, takaran praktis dihitung dari uji terbaik di simulasi, tabel data uji nyata + foto (dikompres, localStorage), selisih otomatis terhadap prediksi simulasi, tombol "Ada masalah?" ke Kak Nala (keselamatan didahulukan). Data di `NYATA` (js/data.js).
 - **Laboratorium maya** (Canvas 2D) + tabel data + grafik pilih-sumbu + **detektor uji adil**
   (menandai uji yang mengubah >1 variabel) + kolom **prediksi sebelum menguji**.
 - **Lembar kerja** tiap langkah, dinilai AI dengan rubrik 1–4 pada 6 indikator Facione
   (Interpretasi, Analisis, Inferensi, Evaluasi, Eksplanasi, Regulasi Diri).
-- **Uji Nalar** — 15 soal literasi sains/berpikir kritis + pembahasan + diskusi dengan Kak Nala.
+- **Uji Nalar** — 16 soal literasi sains/berpikir kritis + pembahasan + diskusi dengan Kak Nala.
 - **Portofolio** — grafik radar indikator, ringkasan, jawaban lengkap, cetak/PDF.
 - **Panduan Guru** — sintaks, rubrik, catatan model.
 

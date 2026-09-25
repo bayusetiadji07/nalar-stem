@@ -941,7 +941,135 @@ function gambarJembatan(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   8. PEMBANGKIT LISTRIK TENAGA ANGIN — energi angin → gerak → listrik
+   Daya angin ½ρAv³; koefisien daya Cp (≤ batas Betz 0,593) bergantung
+   bahan, jumlah & sudut bilah; torsi awal vs hambatan generator
+   menentukan kecepatan angin mulai berputar; putaran generator lewat gir.
+   --------------------------------------------------------- */
+const BAHAN_BILAH = {
+  pvc:     { nama: 'Pipa PVC dibelah', cp: 0.30, kuat: 2.5, harga: 2000 },
+  triplek: { nama: 'Triplek tipis', cp: 0.24, kuat: 4.0, harga: 2500 },
+  kardus:  { nama: 'Kardus', cp: 0.20, kuat: 0.25, harga: 400 },
+  botol:   { nama: 'Botol plastik', cp: 0.15, kuat: 0.6, harga: 300 }
+};
+const GENERATOR = {
+  dinamo: { nama: 'Dinamo sepeda', hambat: 0.015, eta: 0.5, rpmIdeal: 600, maks: 6, harga: 35000 },
+  motor:  { nama: 'Motor DC bekas mainan', hambat: 0.004, eta: 0.55, rpmIdeal: 3000, maks: 4, harga: 12000 }
+};
+
+function dayaTurbin(v, angin) {
+  const R = +v.jari / 100, N = +v.bilah, pitch = +v.sudutBilah, gir = +v.gir;
+  const b = BAHAN_BILAH[v.bahan], gen = GENERATOR[v.generator];
+  const A = Math.PI * R * R;
+  const pAngin = 0.5 * 1.2 * A * angin ** 3;
+  const fBilah = { 2: 0.9, 3: 1, 4: 0.97, 5: 0.93, 6: 0.88, 7: 0.84, 8: 0.8 }[N] || 0.8;
+  const fSudut = Math.exp(-(((pitch - 15) / 14) ** 2));
+  const cp = Math.min(0.593, b.cp * fBilah * fSudut);
+  const lambda = 4 * Math.PI / N * (0.6 + 0.4 * Math.cos((pitch - 15) * Math.PI / 180)); // perbandingan kecepatan ujung bilah
+  // torsi awal saat rotor diam melawan hambatan generator (dikali gir)
+  const cStart = 0.02 * N * Math.sin(2 * pitch * Math.PI / 180);
+  const mulai = Math.sqrt(gen.hambat * gir / (0.5 * 1.2 * Math.PI * R ** 3 * cStart));
+  const rpmRotor = angin >= mulai ? lambda * angin / R * 60 / (2 * Math.PI) : 0;
+  const rpmGen = rpmRotor * gir;
+  const etaGen = rpmGen ? gen.eta * Math.exp(-((Math.log(rpmGen / gen.rpmIdeal) / 1.1) ** 2)) : 0;
+  const pMekanik = angin >= mulai ? cp * pAngin : 0;
+  // generator kecil punya batas daya; kelebihannya terbuang sebagai panas
+  return { pAngin, cp, mulai, rpmRotor, rpmGen, etaGen, pMekanik, pListrik: Math.min(pMekanik * etaGen, gen.maks), jenuh: pMekanik * etaGen > gen.maks };
+}
+
+function kekuatanBilah(v, angin) {
+  const R = +v.jari / 100, N = +v.bilah;
+  const momen = 0.5 * 1.2 * angin * angin * (Math.PI * R * R / N) * R * 0.5; // momen lentur pangkal bilah (N·m)
+  return momen / BAHAN_BILAH[v.bahan].kuat; // > 1 berarti patah
+}
+
+function hitungAngin(v) {
+  const d = dayaTurbin(v, +v.angin);
+  const d4 = dayaTurbin(v, 4);
+  const beban = kekuatanBilah(v, +v.angin);
+  const patah = beban > 1;
+  const pListrik = patah ? 0 : d.pListrik;
+  const nLed = Math.floor(pListrik / 0.1 + 1e-9);
+  const biaya = BAHAN_BILAH[v.bahan].harga * +v.bilah * Math.ceil(+v.jari / 10) + GENERATOR[v.generator].harga + ({ 1: 0, 3: 8000, 5: 12000, 10: 18000 }[+v.gir] || 0) + 15000;
+  return {
+    dayaAngin: bulat(d.pAngin, 1), daya: bulat(pListrik, 2), daya4: bulat(d4.pListrik, 2),
+    cp: bulat(d.cp * 100, 0), rpm: Math.round(patah ? 0 : d.rpmRotor), rpmGen: Math.round(patah ? 0 : d.rpmGen),
+    mulai: bulat(d.mulai, 1), lampu: patah ? 'Padam (bilah patah)' : d.jenuh ? `${nLed} LED (generator di batas maksimum, mulai panas)` : nLed ? `${nLed} LED menyala` : d.rpmRotor ? 'Terlalu redup' : 'Padam (tidak berputar)',
+    kekuatan: kekuatanBilah(v, 10) > 1 ? 'Patah di angin 10 m/s' : 'Aman sampai 10 m/s', biaya,
+    _patah: patah, _beban: beban, _d: d
+  };
+}
+
+function kriteriaAngin(v, h) {
+  return [
+    { teks: 'Daya listrik ≥ 1 W pada angin 4 m/s', lulus: h.daya4 >= 1, nilai: `${h.daya4} W` },
+    { teks: 'Mulai berputar pada angin ≤ 3 m/s', lulus: h.mulai <= 3, nilai: `${h.mulai} m/s` },
+    { teks: 'Bilah tahan angin kencang 10 m/s', lulus: kekuatanBilah(v, 10) <= 1, nilai: h.kekuatan },
+    { teks: 'Biaya ≤ Rp 75.000', lulus: h.biaya <= 75000, nilai: rp(h.biaya) }
+  ];
+}
+
+function gambarAngin(ctx, W, H, v, h, p) {
+  ctx.fillStyle = '#ecfeff'; ctx.fillRect(0, 0, W, H);
+  const tanah = H - 30;
+  ctx.fillStyle = '#fde68a'; ctx.fillRect(0, tanah, W, H - tanah); // pasir pantai
+  ctx.fillStyle = '#38bdf8'; ctx.fillRect(0, tanah - 8, W * 0.22, 8);
+  const cx = W * 0.4, cy = H * 0.42;
+  const Rpx = Math.min(H * 0.34, W * 0.3) * (0.45 + 0.55 * (+v.jari / 40));
+  // angin
+  const angin = +v.angin, laju = mulus(jepit(p / 0.3, 0, 1));
+  ctx.strokeStyle = 'rgba(14,116,144,.45)'; ctx.lineWidth = 2;
+  for (let i = 0; i < 5; i++) {
+    const y = cy - Rpx + i * Rpx / 2, x = ((p * 900 * (0.3 + angin / 8)) + i * 53) % (cx - 20);
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.bezierCurveTo(x + 15, y - 6, x + 25, y + 6, x + 40, y); ctx.stroke();
+  }
+  label(ctx, `Angin ${fx(angin)} m/s`, 12, 18, { ukuran: 12, tebal: true, warna: '#0e7490' });
+  // tiang & generator
+  ctx.fillStyle = '#64748b'; ctx.fillRect(cx - 4, cy, 8, tanah - cy);
+  ctx.fillStyle = '#334155'; kotakBulat(ctx, cx - 16, cy - 12, 44, 24, 6); ctx.fill();
+  label(ctx, GENERATOR[v.generator].nama.split(' ')[0], cx + 6, cy + 24, { rata: 'center', ukuran: 10, warna: '#334155' });
+  // rotor
+  const d = h._d;
+  const putar = h._patah ? 0 : d.rpmRotor;
+  const sudut = p * laju * Math.min(putar, 900) / 60 * 2 * Math.PI * 1.2;
+  const warna = { pvc: '#e2e8f0', triplek: '#d6a86b', kardus: '#c8a26b', botol: '#bae6fd' }[v.bahan];
+  const N = +v.bilah, lebar = Rpx * (0.12 + 0.2 * (+v.sudutBilah / 45));
+  const patahIdx = h._patah && p > 0.55 ? 0 : -1;
+  for (let i = 0; i < N; i++) {
+    const a = sudut + i * 2 * Math.PI / N;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
+    if (i === patahIdx) { const q = (p - 0.55) / 0.45; ctx.translate(q * 90, q * q * 160); ctx.rotate(q * 6); }
+    ctx.fillStyle = warna; ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(Rpx, -lebar / 2); ctx.quadraticCurveTo(Rpx + 6, 0, Rpx, lebar / 2); ctx.lineTo(0, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore();
+  }
+  ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 7); ctx.fill();
+  // kabel & lampu
+  const lx = W * 0.8, ly = H * 0.36;
+  ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx + 28, cy); ctx.bezierCurveTo(cx + 80, cy - 8, lx - 70, ly + 18, lx - 7, ly + 26); ctx.stroke();
+  const terang = jepit(h.daya / 1.5, 0, 1) * laju;
+  if (terang > 0.02) {
+    const gr = ctx.createRadialGradient(lx, ly, 4, lx, ly, 60);
+    gr.addColorStop(0, `rgba(253,224,71,${0.85 * terang})`); gr.addColorStop(1, 'rgba(253,224,71,0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(lx, ly, 60, 0, 7); ctx.fill();
+  }
+  ctx.fillStyle = terang > 0.02 ? `rgb(${Math.round(lerp(226, 253, terang))},${Math.round(lerp(232, 224, terang))},${Math.round(lerp(240, 71, terang))})` : '#e2e8f0';
+  ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.arc(lx, ly, 16, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#64748b'; ctx.fillRect(lx - 7, ly + 16, 14, 16);
+  label(ctx, 'Lampu LED pos ronda', lx, ly + 46, { rata: 'center', ukuran: 11, warna: '#334155' });
+  // meteran
+  label(ctx, `${fx(h.daya * laju, 2)} W · ${Math.round(putar * laju)} rpm`, lx, ly - 34, { rata: 'center', ukuran: 12, tebal: true, warna: '#fff', latar: '#0f766e' });
+  if (p >= 1) {
+    const teks = h._patah ? 'BILAH PATAH — angin terlalu kencang untuk bahan ini' : !d.rpmRotor ? `Belum berputar (butuh angin ≥ ${fx(h.mulai)} m/s)` : h.lampu;
+    label(ctx, teks, W / 2, H - 12, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: h._patah || !d.rpmRotor ? '#b91c1c' : h.daya >= 1 ? '#15803d' : '#b45309' });
+  }
+}
+
 const SIM = {
+  angin: { hitung: hitungAngin, kriteria: kriteriaAngin, gambar: gambarAngin, sumbuX: ['angin', 'jari', 'bilah', 'sudutBilah'], sumbuY: ['daya', 'rpm', 'dayaAngin', 'mulai'] },
   jembatan: { hitung: hitungJembatan, kriteria: kriteriaJembatan, gambar: gambarJembatan, sumbuX: ['tinggi', 'lapis', 'beban'], sumbuY: ['bebanMaks', 'efisiensi', 'stik', 'gaya'] },
   roketair: { hitung: hitungRoketAir, kriteria: kriteriaRoketAir, gambar: gambarRoketAir, sumbuX: ['air', 'tekanan', 'sudut'], sumbuY: ['jarak', 'tinggi', 'kecepatan', 'dorong'] },
   roket: { hitung: hitungRoket, kriteria: kriteriaRoket, gambar: gambarRoket, sumbuX: ['cuka', 'soda', 'sudut'], sumbuY: ['jarak', 'tinggi', 'tekanan', 'gas'] },

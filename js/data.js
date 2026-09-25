@@ -472,6 +472,57 @@ const NYATA = {
       { gejala: 'Jembatan terpuntir atau miring', kunci: 'puntir|terpuntir|miring|goyang|guling', petunjuk: ['Apakah kedua rangka sisi sama persis dan dipasang tegak?', 'Seberapa tinggi rangkamu dibanding lebar jembatannya?'] },
       { gejala: 'Beban maksimum jauh berbeda dari simulasi', kunci: 'beda|berbeda|jauh|lebih kecil', petunjuk: ['Apakah beban benar-benar tepat di tengah dan ditambah pelan-pelan?', 'Faktor apa di jembatan nyata (stik bengkok, lem tidak rata, sambungan sejajar) yang tidak ada di simulasi?'] }
     ]
+  },
+  angin: {
+    waktu: '3 × 40 menit (membuat bilah, merakit, uji dengan kipas angin lalu di luar ruangan)',
+    alat: [
+      'Bahan bilah sesuai rancangan: pipa PVC 3–4 inci yang dibelah, triplek tipis, kardus, atau botol plastik',
+      'Generator: motor DC bekas mainan (± 3–6 V) atau dinamo lampu sepeda',
+      'Tutup botol/lingkaran triplek sebagai poros (hub), baut kecil, lem tembak',
+      'Gir/puli dari mainan bekas bila rancangan memakai gir',
+      'Tiang kayu/pipa ± 1–1,5 m dan dudukan yang kokoh',
+      'Lampu LED 3 V + kabel, multimeter (untuk tegangan & arus)',
+      'Kipas angin berdiri untuk uji di dalam ruangan; anemometer atau aplikasi pengukur angin di HP bila ada'
+    ],
+    keselamatan: [
+      'Bilah yang berputar bisa melukai: jangan menyentuh atau mendekatkan wajah ke kincir yang sedang berputar; hentikan dulu dengan menahan porosnya dari belakang.',
+      'Memotong pipa PVC/triplek dengan gergaji atau cutter harus didampingi guru; haluskan tepi bilah yang tajam.',
+      'Pasang kincir JAUH dari kabel listrik PLN dan jangan memanjat untuk memasangnya — tiang cukup ± 1,5 m, diikat kokoh.',
+      'Listrik dari kincir hanya untuk LED kecil. JANGAN pernah menghubungkannya ke stopkontak atau listrik rumah.',
+      'Saat uji dengan kipas angin, jangan memasukkan jari ke kipas; letakkan kipas di lantai yang stabil.',
+      'Hentikan uji di luar ruangan bila angin terlalu kencang atau cuaca buruk (petir).'
+    ],
+    langkah: [
+      'Buat bilah sesuai panjang, jumlah, dan bahan rancanganmu. Buat semua bilah sama persis (timbang agar massanya sama).',
+      'Pasang bilah pada hub dengan sudut bilah sesuai rancangan (ukur dengan busur terhadap bidang putar).',
+      'Pasang hub pada poros generator (langsung, atau lewat gir sesuai rancangan). Putar dengan tangan: harus seimbang dan tidak menggesek.',
+      'Pasang generator di ujung tiang; tambahkan ekor pengarah dari karton agar kincir menghadap angin.',
+      'Hubungkan generator ke LED dan multimeter. Ukur TEGANGAN (V) di kaki LED, lalu ARUS (A) yang lewat LED.',
+      'Uji di depan kipas angin: ukur kecepatan angin di posisi kincir (atau catat nomor kecepatan kipas dan jaraknya). Catat kecepatan angin terendah saat kincir mulai berputar.',
+      'Hitung daya listrik: P = V × I. Ulangi pada beberapa kecepatan angin.',
+      'Uji di luar ruangan (tepi pantai/lapangan terbuka) pada sore hari dan bandingkan hasilnya.'
+    ],
+    takaran: v => {
+      const bahan = { pvc: 'pipa PVC dibelah memanjang (bentuk lengkung seperti sayap)', triplek: 'triplek tipis', kardus: 'kardus', botol: 'botol plastik' }[v.bahan];
+      const h = hitungAngin({ ...v, angin: 4 });
+      return [
+        `${v.bilah} bilah dari ${bahan}, panjang ${v.jari} cm dari pusat poros (diameter kincir ${+v.jari * 2} cm), sudut bilah ${v.sudutBilah}°.`,
+        `Generator: ${GENERATOR[v.generator].nama[0].toLowerCase() + GENERATOR[v.generator].nama.slice(1)}${+v.gir > 1 ? `, gir 1 : ${v.gir} (roda gigi besar di poros kincir, kecil di generator)` : ', dipasang langsung tanpa gir'}.`,
+        `Prediksi simulasi: mulai berputar pada angin ± ${fxd(h.mulai)} m/s; pada angin 4 m/s daya ± ${fxd(h.daya4, 2)} W.`,
+        `Cara mengukur daya: P (watt) = V (volt) × I (ampere). Contoh: 3 V × 0,2 A = 0,6 W.`
+      ];
+    },
+    ukur: [
+      { id: 'mulai', label: 'Angin saat mulai berputar', satuan: 'm/s', sim: 'mulai' },
+      { id: 'daya', label: 'Daya listrik (V × I) pada angin uji', satuan: 'W', sim: 'daya' },
+      { id: 'angin', label: 'Kecepatan angin saat uji', satuan: 'm/s' }
+    ],
+    masalah: [
+      { gejala: 'Kincir tidak mau berputar', kunci: 'tidak berputar|tidak mau|diam|macet', petunjuk: ['Putar dengan tangan: apakah terasa berat karena generator atau karena gesekan?', 'Bagaimana pengaruh sudut bilah dan gir terhadap kemudahan mulai berputar menurut simulasi?'] },
+      { gejala: 'Kincir berputar tetapi LED tidak menyala', kunci: 'tidak menyala|led|lampu', petunjuk: ['LED hanya menyala bila kakinya terpasang di kutub yang benar — sudah dicoba dibalik?', 'Berapa tegangan yang terbaca multimeter? LED umumnya butuh sekitar 2–3 V.'] },
+      { gejala: 'Kincir bergetar keras', kunci: 'getar|goyang|oleng', petunjuk: ['Apakah semua bilah sama panjang dan sama massanya?', 'Apakah hub terpasang tepat di tengah poros?'] },
+      { gejala: 'Daya jauh lebih kecil dari simulasi', kunci: 'kecil|beda|berbeda|lemah', petunjuk: ['Seberapa tepat kamu mengukur kecepatan angin di posisi kincir? Ingat daya bergantung pada v³.', 'Energi apa yang hilang di dunia nyata (gesekan, panas di kabel) yang tidak dihitung simulasi?'] }
+    ]
   }
 };
 
@@ -747,6 +798,49 @@ const MISI = [
       { id: 'efisiensi', label: 'Efisiensi', satuan: '' },
       { id: 'status', label: 'Saat diuji', satuan: '' }
     ]
+  },
+  {
+    id: 'angin',
+    judul: 'Pembangkit Listrik Tenaga Angin',
+    ikon: '💨',
+    kelas: 'Kelas 7–9 · Energi & Perubahannya, Induksi Elektromagnetik',
+    warna: '#0891b2',
+    ringkas: 'Rancang kincir angin mini yang mengubah energi angin pantai menjadi listrik untuk menyalakan lampu pos ronda.',
+    kisah: 'Pos ronda di tepi pantai Besuki gelap di malam hari karena jauh dari jaringan listrik. Padahal, angin laut hampir selalu bertiup. Kelompokmu diminta merancang <b>pembangkit listrik tenaga angin mini</b> untuk menyalakan lampu LED. Pada angin sore yang umum (<b>4 m/s</b>) harus dihasilkan <b>minimal 1 W</b>; kincir harus <b>mulai berputar saat angin masih pelan (≤ 3 m/s)</b>; dan bilahnya <b>tidak boleh patah</b> saat angin kencang (10 m/s).',
+    kriteria: [
+      'Daya listrik minimal 1 W pada angin 4 m/s',
+      'Kincir mulai berputar pada angin ≤ 3 m/s',
+      'Bilah tahan angin kencang 10 m/s'
+    ],
+    kendala: ['Biaya paling banyak Rp 75.000', 'Generator dari barang bekas: dinamo sepeda atau motor DC mainan'],
+    konsep: `
+      <p><b>Energi tidak dapat diciptakan atau dimusnahkan, hanya berubah bentuk.</b> Pada kincir angin: energi kinetik angin → energi gerak (putaran) bilah → energi listrik di generator → energi cahaya di lampu.</p>
+      <p class="rumus">Daya angin: P = ½ × ρ × A × v³ &nbsp;·&nbsp; A = π × r²</p>
+      <p>Perhatikan pangkat tiga pada kecepatan angin! Angin dua kali lebih kencang membawa daya <b>delapan kali</b> lebih besar. Jari-jari bilah dua kali lebih panjang memberi luas sapuan empat kali.</p>
+      <p><b>Batas Betz:</b> kincir tidak mungkin menangkap semua energi angin — paling banyak 59%. Kincir sederhana biasanya hanya 15–30%. Bentuk, jumlah, dan sudut bilah menentukan seberapa besar bagian yang tertangkap.</p>
+      <p><b>Generator</b> bekerja berdasarkan <b>induksi elektromagnetik</b>: magnet yang berputar di dekat kumparan kawat menimbulkan arus listrik. Setiap generator punya hambatan awal yang harus dilawan dan putaran ideal; <b>gir</b> dapat mempercepat putaran generator, tetapi membuat kincir lebih berat untuk mulai berputar.</p>
+      <p>Sebagian energi selalu berubah menjadi <b>panas dan bunyi</b> (gesekan), sehingga energi listrik yang dihasilkan selalu lebih kecil daripada energi angin.</p>`,
+    kataKunci: ['energi', 'kinetik', 'listrik', 'generator', 'induksi', 'magnet', 'kumparan', 'daya', 'betz', 'bilah', 'putaran', 'gir', 'torsi', 'luas', 'kecepatan angin'],
+    variabel: [
+      { id: 'jari', label: 'Panjang bilah (jari-jari)', tipe: 'range', min: 10, max: 40, step: 5, satuan: 'cm', awal: 15 },
+      { id: 'bilah', label: 'Jumlah bilah', tipe: 'range', min: 2, max: 8, step: 1, satuan: 'bilah', awal: 8 },
+      { id: 'sudutBilah', label: 'Sudut bilah', tipe: 'range', min: 5, max: 45, step: 5, satuan: '°', awal: 30 },
+      { id: 'bahan', label: 'Bahan bilah', tipe: 'select', awal: 'kardus', opsi: [['kardus', 'Kardus'], ['botol', 'Botol plastik'], ['pvc', 'Pipa PVC dibelah'], ['triplek', 'Triplek tipis']] },
+      { id: 'generator', label: 'Generator', tipe: 'select', awal: 'dinamo', opsi: [['dinamo', 'Dinamo sepeda'], ['motor', 'Motor DC bekas mainan']] },
+      { id: 'gir', label: 'Perbandingan gir', tipe: 'select', awal: '1', opsi: [['1', '1 : 1 (tanpa gir)'], ['3', '1 : 3'], ['5', '1 : 5'], ['10', '1 : 10']] },
+      { id: 'angin', label: 'Kecepatan angin uji', tipe: 'range', min: 1, max: 12, step: 0.5, satuan: 'm/s', awal: 4 }
+    ],
+    keluaran: [
+      { id: 'dayaAngin', label: 'Daya angin tersapu', satuan: 'W' },
+      { id: 'daya', label: 'Daya listrik', satuan: 'W' },
+      { id: 'cp', label: 'Energi angin tertangkap', satuan: '%' },
+      { id: 'rpm', label: 'Putaran kincir', satuan: 'rpm' },
+      { id: 'rpmGen', label: 'Putaran generator', satuan: 'rpm' },
+      { id: 'mulai', label: 'Angin minimum untuk berputar', satuan: 'm/s' },
+      { id: 'lampu', label: 'Lampu', satuan: '' },
+      { id: 'kekuatan', label: 'Kekuatan bilah', satuan: '' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -919,5 +1013,16 @@ const UJI_NALAR = [
       'Jembatan A lebih baik karena lebih berat sehingga lebih kokoh.'
     ],
     bahas: 'Menilai dengan kritis berarti memakai kriteria yang disepakati. Bila kriterianya efisiensi, bandingkan beban per massa bahan, bukan beban mentah saja. Dengan kriteria lain (misalnya beban terbesar), jawabannya bisa berbeda.'
+  },
+  {
+    ind: 'interpretasi',
+    soal: 'Daya angin dirumuskan P = ½ × ρ × A × v³. Jika kecepatan angin naik dari 3 m/s menjadi 6 m/s (dua kali lipat), sedangkan kincirnya sama, daya angin yang melewati kincir menjadi …',
+    opsi: [
+      'Delapan kali lipat, karena kecepatan dipangkatkan tiga (2³ = 8).',
+      'Dua kali lipat, karena kecepatannya dua kali lipat.',
+      'Empat kali lipat, karena kecepatan dikuadratkan.',
+      'Tetap, karena ukuran kincirnya tidak berubah.'
+    ],
+    bahas: 'Membaca rumus dengan cermat adalah bagian dari interpretasi. Pangkat tiga pada v berarti perubahan kecil kecepatan angin berdampak besar pada daya — itulah sebabnya lokasi kincir (tempat berangin kencang) sangat penting.'
   }
 ];
