@@ -4,12 +4,13 @@ Aplikasi pembelajaran IPA berbasis **STEM** (SMP, Fase D) untuk melatih **berpik
 dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pertanyaan, bukan memberi jawaban.
 
 ## Isi
-- **5 Misi STEM** (kontekstual pesisir Besuki), masing-masing 6 langkah Engineering Design Process:
+- **5 Misi STEM** (kontekstual pesisir Besuki), masing-masing 7 langkah (6 langkah Engineering Design Process + praktik nyata):
   1. Perahu Penyelamat Hasil Panen — Hukum Archimedes (kelas 8)
   2. Penjernih Air Sederhana — pemisahan campuran/filtrasi (kelas 7)
   3. Kotak Pendingin Ikan Nelayan — kalor & perpindahan kalor (kelas 7)
   4. Kebun Sawi Hidroponik — fotosintesis & faktor pembatas (kelas 7–8)
   5. Roket Cuka & Soda Kue — perubahan materi/perubahan kimia & pereaksi pembatas (kelas 7)
+- **Langkah 7 "Wujudkan di Dunia Nyata"** di setiap misi: alat & bahan, cek keselamatan wajib (langkah kerja terkunci sampai semua dicentang), langkah kerja, takaran praktis dihitung dari uji terbaik di simulasi, tabel data uji nyata + foto (dikompres, localStorage), selisih otomatis terhadap prediksi simulasi, tombol "Ada masalah?" ke Kak Nala (keselamatan didahulukan). Data di `NYATA` (js/data.js).
 - **Laboratorium maya** (Canvas 2D) + tabel data + grafik pilih-sumbu + **detektor uji adil**
   (menandai uji yang mengubah >1 variabel) + kolom **prediksi sebelum menguji**.
 - **Lembar kerja** tiap langkah, dinilai AI dengan rubrik 1–4 pada 6 indikator Facione

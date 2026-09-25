@@ -86,7 +86,7 @@ input[type=radio] { width: auto; accent-color: var(--utama); }
 .kartu-ind { background: #fff; border: 1px solid var(--garis); border-top: 4px solid var(--c); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
 .kartu-ind b { color: var(--c); }
 .kartu-ind span { font-size: .88rem; color: var(--redup); }
-.alur { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; counter-reset: a; }
+.alur { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; counter-reset: a; }
 .alur li { background: #fff; border: 1px solid var(--garis); border-radius: var(--radius); padding: 14px; display: flex; flex-direction: column; gap: 2px; position: relative; }
 .alur .no { width: 28px; height: 28px; border-radius: 50%; background: var(--utama); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: .85rem; margin-bottom: 6px; }
 .alur small { color: var(--redup); }
@@ -121,7 +121,7 @@ input[type=radio] { width: auto; accent-color: var(--utama); }
 .kembali { text-decoration: none; font-weight: 600; font-size: .9rem; color: var(--redup); }
 .km-judul { display: flex; align-items: center; gap: 14px; margin-top: 10px; }
 .km-judul h1 { font-size: 1.6rem; font-weight: 800; margin: 0; }
-.stepper { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-bottom: 18px; }
+.stepper { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 18px; }
 .stepper a { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 12px; background: #fff; border: 1px solid var(--garis); text-decoration: none; color: var(--redup); font-weight: 600; font-size: .83rem; min-width: 0; }
 .stepper .no { flex: 0 0 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #eef2f6; font-weight: 800; font-size: .8rem; }
 .stepper .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -280,6 +280,25 @@ body.tutor-buka .fab-tutor { opacity: 0; pointer-events: none; }
 .chat-form textarea { min-height: 46px; resize: none; }
 .chat-form .tombol { padding: 0 16px; font-size: 1.1rem; }
 
+/* ---------- Langkah 7: dunia nyata ---------- */
+.daftar-alat { margin: 0; padding-left: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 22px; font-size: .9rem; }
+.kartu-aman { border: 1px solid #fecaca; background: #fff7f7; }
+.cek-aman { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border-radius: 10px; font-size: .92rem; cursor: pointer; }
+.cek-aman:hover { background: #fee2e2; }
+.cek-aman input { width: 18px; height: 18px; margin-top: 3px; flex: 0 0 18px; accent-color: var(--hijau); }
+.cek-aman:has(input:checked) span { color: #166534; }
+.terkunci { text-align: center; color: var(--redup); font-weight: 600; background: #f8fafc; border-style: dashed; }
+.langkah-kerja { margin: 0; padding-left: 22px; }
+.langkah-kerja li { margin-bottom: 6px; }
+.rencana-nyata ul { margin: 6px 0 10px; padding-left: 20px; }
+.form-nyata { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px 14px; margin-bottom: 14px; align-items: end; }
+.form-nyata .lebar-penuh { grid-column: 1 / -1; }
+.form-nyata input[type=file] { padding: 6px; font-size: .85rem; }
+.foto-uji { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--garis); display: block; }
+.lencana.kuning { background: #fef3c7; color: #92400e; }
+.daftar-masalah { display: flex; flex-wrap: wrap; gap: 8px; }
+.porto-nyata { background: #faf5ff; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+
 /* ---------- Responsif ---------- */
 @media (max-width: 980px) {
   .tata-misi { grid-template-columns: minmax(0, 1fr); }
@@ -295,7 +314,7 @@ body.tutor-buka .fab-tutor { opacity: 0; pointer-events: none; }
   .hero { grid-template-columns: 1fr; }
   .grid-misi, .grid-porto { grid-template-columns: 1fr; }
   .grid-ind { grid-template-columns: repeat(2, 1fr); }
-  .stepper { grid-template-columns: repeat(6, 1fr); }
+  .stepper { grid-template-columns: repeat(7, 1fr); }
   .stepper .nm { display: none; }
   .stepper a { justify-content: center; }
 }

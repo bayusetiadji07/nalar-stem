@@ -13,11 +13,12 @@ function muat() {
   try { const d = JSON.parse(localStorage.getItem(KUNCI)); if (d && d.misi) return d; } catch (e) { /* abaikan */ }
   return { profil: { nama: '', kelas: '' }, misi: {}, kuis: { jawab: {}, diperiksa: false, urutan: null }, chat: {} };
 }
-function simpan() { try { localStorage.setItem(KUNCI, JSON.stringify(S)); } catch (e) { /* abaikan */ } }
+function simpan() { try { localStorage.setItem(KUNCI, JSON.stringify(S)); return true; } catch (e) { return false; } }
 function ms(id) {
   if (!S.misi[id]) S.misi[id] = { isian: {}, uji: [], nilai: {}, v: null };
   const m = MISI.find(x => x.id === id);
   if (!S.misi[id].v) S.misi[id].v = Object.fromEntries(m.variabel.map(v => [v.id, v.awal]));
+  if (!S.misi[id].nyata) S.misi[id].nyata = { cek: {}, uji: [] };
   return S.misi[id];
 }
 
@@ -34,7 +35,9 @@ function tampilKeluaran(k, nilai) {
 }
 function langkahTerisi(m, st, L) {
   const ok = L.isian.every(f => (st.isian[f.id] || '').trim().length >= 3);
-  return L.id === 'uji' ? ok && st.uji.length >= 3 : ok;
+  if (L.id === 'uji') return ok && st.uji.length >= 3;
+  if (L.id === 'nyata') { const ny = st.nyata || { cek: {}, uji: [] }; return ok && ny.uji.length >= 1 && NYATA[m.id].keselamatan.every((_, i) => ny.cek[i]); }
+  return ok;
 }
 function kemajuan(m) {
   const st = S.misi[m.id];
@@ -85,8 +88,8 @@ function kartuMisi(m) {
       <span class="km-kelas">${esc(m.kelas)}</span>
       <h3>${esc(m.judul)}</h3>
       <p>${esc(m.ringkas)}</p>
-      <div class="bilah"><span style="width:${n / 6 * 100}%"></span></div>
-      <span class="km-status">${n === 6 ? '✅ Selesai' : n ? `Langkah ${n}/6 selesai` : 'Belum dimulai'}</span>
+      <div class="bilah"><span style="width:${n / LANGKAH.length * 100}%"></span></div>
+      <span class="km-status">${n === LANGKAH.length ? '✅ Selesai' : n ? `Langkah ${n}/${LANGKAH.length} selesai` : 'Belum dimulai'}</span>
     </div>
   </a>`;
 }
@@ -163,7 +166,7 @@ function halMisi(id, no) {
   const m = MISI.find(x => x.id === id);
   if (!m) { location.hash = '#/misi'; return; }
   const st = ms(id);
-  const L = LANGKAH[jepit(no, 1, 6) - 1];
+  const L = LANGKAH[jepit(no, 1, LANGKAH.length) - 1];
   setKonteksTutor({ jenis: 'misi', m, L });
 
   APP.innerHTML = `
@@ -198,7 +201,7 @@ function halMisi(id, no) {
       </form>
       <div class="navigasi-langkah">
         ${L.no > 1 ? `<a class="tombol" href="#/misi/${id}/${L.no - 1}">← ${LANGKAH[L.no - 2].judul}</a>` : '<span></span>'}
-        ${L.no < 6 ? `<a class="tombol utama" href="#/misi/${id}/${L.no + 1}">${LANGKAH[L.no].judul} →</a>` : `<a class="tombol utama" href="#/portofolio">Lihat portofolio →</a>`}
+        ${L.no < LANGKAH.length ? `<a class="tombol utama" href="#/misi/${id}/${L.no + 1}">${LANGKAH[L.no].judul} →</a>` : `<a class="tombol utama" href="#/portofolio">Lihat portofolio →</a>`}
       </div>
     </div>
     <aside class="kolom-samping">
@@ -236,6 +239,7 @@ function halMisi(id, no) {
   };
   if (L.id === 'uji') pasangLab(m, st);
   if (L.id === 'evaluasi') pasangGrafik(m, st);
+  if (L.id === 'nyata') pasangNyata(m, st);
 }
 
 function perbaruiStepper(m, st) {
@@ -270,6 +274,7 @@ function isiLangkah(m, st, L) {
     <div class="chip-var ukur">${m.keluaran.map(k => `<span>${esc(k.label)}</span>`).join('')}</div></div>`;
   if (L.id === 'uji') return htmlLab(m, st);
   if (L.id === 'evaluasi') return htmlTabelUji(m, st) + htmlGrafik(m);
+  if (L.id === 'nyata') return htmlNyata(m, st);
   if (L.id === 'simpulkan') {
     const terbaik = ujiTerbaik(st);
     return `<div class="kartu"><h3>🏆 Uji terbaikmu</h3>${terbaik
@@ -284,6 +289,161 @@ function ujiTerbaik(st) {
   return [...st.uji].sort((a, b) => (b.lulus - a.lulus) || (b.no - a.no))[0];
 }
 
+/* ---------------- Langkah 7: dunia nyata ---------------- */
+function selisihPersen(nyata, sim) {
+  if (!isFinite(nyata) || !isFinite(sim) || sim === 0) return null;
+  return (nyata - sim) / Math.abs(sim) * 100;
+}
+function lencanaSelisih(d) {
+  if (d === null) return '';
+  const kelas = Math.abs(d) <= 20 ? 'hijau' : Math.abs(d) <= 50 ? 'kuning' : 'merah';
+  return `<span class="lencana ${kelas}">${d > 0 ? '+' : ''}${Math.round(d)}%</span>`;
+}
+function tampilUkur(u, nilai) {
+  if (nilai === '' || nilai === undefined || nilai === null) return '—';
+  return u.satuan === 'Rp' ? rp(nilai) : `${String(nilai).replace('.', ',')} ${u.satuan}`.trim();
+}
+
+function htmlNyata(m, st) {
+  const N = NYATA[m.id], ny = st.nyata;
+  const aman = N.keselamatan.every((_, i) => ny.cek[i]);
+  return `
+  <div class="kartu"><div class="lab-kepala"><h3>🧰 Alat &amp; bahan</h3><span class="pil">⏱️ ${esc(N.waktu)}</span></div>
+    <ul class="daftar-alat">${N.alat.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>
+  <div class="kartu kartu-aman"><h3>🦺 Cek keselamatan</h3>
+    <p class="redup kecil">Baca bersama kelompok dan guru, lalu centang semuanya. Langkah kerja baru terbuka setelah semua poin dicentang.</p>
+    ${N.keselamatan.map((k, i) => `<label class="cek-aman"><input type="checkbox" data-aman="${i}" ${ny.cek[i] ? 'checked' : ''}><span>${esc(k)}</span></label>`).join('')}
+  </div>
+  <div id="isiNyata">${aman ? htmlIsiNyata(m, st) : '<div class="kartu terkunci">🔒 Centang semua poin keselamatan untuk membuka langkah kerja, rencana takaran, dan tabel uji nyata.</div>'}</div>`;
+}
+
+function htmlIsiNyata(m, st) {
+  const N = NYATA[m.id], ny = st.nyata;
+  const acuan = ujiTerbaik(st);
+  return `
+  <div class="kartu"><h3>🛠️ Langkah kerja</h3><ol class="langkah-kerja">${N.langkah.map(l => `<li>${esc(l)}</li>`).join('')}</ol></div>
+  <div class="kartu rencana-nyata"><h3>📐 Rencana takaran dari simulasi</h3>
+    ${acuan ? `<p class="redup kecil">Dihitung dari uji terbaikmu di laboratorium maya: <b>uji ke-${acuan.no}</b> (memenuhi ${acuan.lulus}/${acuan.total} kriteria). Sesuaikan dengan bahan yang benar-benar ada, lalu tulis penyesuaianmu di lembar kerja.</p>
+      <ul>${N.takaran(acuan.v).map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+      <p class="kecil"><b>Prediksi simulasi:</b> ${N.ukur.filter(u => u.sim).map(u => { const k = m.keluaran.find(x => x.id === u.sim); return `${esc(k.label)} ${esc(tampilKeluaran(k, acuan.h[u.sim]))}`; }).join(' · ')}</p>
+      ${acuan.lulus < acuan.total ? `<p class="peringatan kecil">Rancangan ini baru memenuhi ${acuan.lulus} dari ${acuan.total} kriteria. Sebaiknya perbaiki dulu di <a href="#/misi/${m.id}/4">laboratorium maya</a> sebelum membuat prototipe agar bahan tidak terbuang.</p>` : ''}`
+      : `<p class="redup">Belum ada uji di laboratorium maya. <a href="#/misi/${m.id}/4">Lakukan uji di Langkah 4</a> agar takarannya bisa dihitung.</p>`}
+  </div>
+  <div class="kartu"><div class="lab-kepala"><h3>📋 Data uji nyata</h3><span class="redup kecil">Ulangi uji minimal 2–3 kali agar datamu bisa dipercaya</span></div>
+    <form id="fNyata" class="form-nyata">
+      <label class="ctl"><span>Rancangan simulasi acuan</span><select id="nAcuan">
+        ${st.uji.length ? [...st.uji].reverse().map(u => `<option value="${u.no}" ${acuan && u.no === acuan.no ? 'selected' : ''}>Uji simulasi ke-${u.no} (${u.lulus}/${u.total} kriteria)</option>`).join('') : '<option value="">(belum ada uji simulasi)</option>'}
+      </select></label>
+      ${N.ukur.map(u => `<label class="ctl"><span>${esc(u.label)}${u.satuan ? ` (${esc(u.satuan)})` : ''}</span><input type="number" step="any" inputmode="decimal" data-ukur="${u.id}" placeholder="angka hasil ukur"></label>`).join('')}
+      <label class="ctl lebar-penuh"><span>Catatan pengamatan (kondisi, kejadian tak terduga)</span><input id="nCatatan" maxlength="300" placeholder="Contoh: ada angin dari kiri, sumbat agak longgar ..."></label>
+      <label class="ctl lebar-penuh"><span>Foto prototipe/hasil (opsional)</span><input type="file" id="nFoto" accept="image/*" capture="environment"></label>
+      <p class="galat lebar-penuh" id="galatNyata" hidden></p>
+      <button class="tombol utama lebar-penuh" id="bSimpanNyata">💾 Simpan hasil uji nyata</button>
+    </form>
+    <div id="tabelNyata">${htmlTabelNyata(m, st)}</div>
+  </div>
+  <div class="kartu"><h3>🆘 Ada masalah dengan prototipemu?</h3>
+    <p class="redup kecil">Pilih masalahnya — Kak Nala akan membantumu mencari penyebab lewat pertanyaan. Untuk urusan keselamatan, ikuti arahan guru.</p>
+    <div class="daftar-masalah">${N.masalah.map((q, i) => `<button type="button" class="tombol" data-masalah="${i}">${esc(q.gejala)}</button>`).join('')}</div>
+  </div>`;
+}
+
+function htmlTabelNyata(m, st) {
+  const N = NYATA[m.id], ny = st.nyata;
+  if (!ny.uji.length) return '<p class="redup">Belum ada hasil uji nyata.</p>';
+  return `<div class="tabel-gulir"><table class="tabel">
+    <thead><tr><th>Uji</th><th>Acuan</th>${N.ukur.map(u => `<th>${esc(u.label)}</th>`).join('')}<th>Catatan</th><th>Foto</th><th></th></tr></thead>
+    <tbody>${ny.uji.map((u, i) => {
+      const acuan = st.uji.find(x => x.no === u.acuan);
+      return `<tr><td><b>${u.no}</b></td><td>${acuan ? `sim ke-${acuan.no}` : '—'}</td>
+        ${N.ukur.map(k => {
+          const simNilai = k.sim && acuan ? +acuan.h[k.sim] : null;
+          const d = simNilai !== null && u.nilai[k.id] !== '' ? selisihPersen(+u.nilai[k.id], simNilai) : null;
+          return `<td>${esc(tampilUkur(k, u.nilai[k.id]))}${simNilai !== null ? `<br><small class="redup">sim: ${esc(tampilUkur(k, simNilai))}</small> ${lencanaSelisih(d)}` : ''}</td>`;
+        }).join('')}
+        <td class="kecil">${esc(u.catatan || '')}</td>
+        <td>${u.foto ? `<img class="foto-uji" src="${u.foto}" alt="Foto uji nyata ${u.no}">` : '—'}</td>
+        <td><button type="button" class="tombol kecil" data-hapus-nyata="${i}" aria-label="Hapus uji ${u.no}">✕</button></td></tr>`;
+    }).join('')}</tbody></table></div>
+    <p class="redup kecil">Lencana = selisih hasil nyata terhadap prediksi simulasi (hijau ≤ 20%, kuning ≤ 50%, merah &gt; 50%). Selisih besar adalah petunjuk: faktor apa yang tidak dihitung model?</p>`;
+}
+
+function kecilkanFoto(berkas) {
+  return new Promise((ok, gagal) => {
+    const r = new FileReader();
+    r.onerror = gagal;
+    r.onload = () => {
+      const img = new Image();
+      img.onerror = gagal;
+      img.onload = () => {
+        const k = Math.min(1, 480 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        ok(c.toDataURL('image/jpeg', 0.6));
+      };
+      img.src = r.result;
+    };
+    r.readAsDataURL(berkas);
+  });
+}
+
+function pasangNyata(m, st) {
+  const N = NYATA[m.id], ny = st.nyata;
+  $$('[data-aman]').forEach(c => c.onchange = () => {
+    ny.cek[c.dataset.aman] = c.checked; simpan();
+    const aman = N.keselamatan.every((_, i) => ny.cek[i]);
+    const wadah = $('#isiNyata');
+    const sudahTerbuka = !!$('#fNyata');
+    if (aman && !sudahTerbuka) { wadah.innerHTML = htmlIsiNyata(m, st); pasangIsiNyata(m, st); toast('Langkah kerja terbuka. Selamat berkarya dengan aman!'); }
+    if (!aman && sudahTerbuka) wadah.innerHTML = '<div class="kartu terkunci">🔒 Centang semua poin keselamatan untuk membuka langkah kerja, rencana takaran, dan tabel uji nyata.</div>';
+    perbaruiStepper(m, st);
+  });
+  if ($('#fNyata')) pasangIsiNyata(m, st);
+}
+
+function pasangIsiNyata(m, st) {
+  const N = NYATA[m.id], ny = st.nyata;
+  const pasangTabel = () => {
+    $$('[data-hapus-nyata]').forEach(b => b.onclick = () => {
+      if (!confirm('Hapus hasil uji nyata ini?')) return;
+      ny.uji.splice(+b.dataset.hapusNyata, 1);
+      ny.uji.forEach((u, i) => { u.no = i + 1; });
+      simpan(); $('#tabelNyata').innerHTML = htmlTabelNyata(m, st); pasangTabel(); perbaruiStepper(m, st);
+    });
+  };
+  pasangTabel();
+  $$('[data-ukur], #nCatatan').forEach(el => el.addEventListener('input', () => { $('#galatNyata').hidden = true; }));
+  $('#fNyata').onsubmit = async e => {
+    e.preventDefault();
+    const nilai = {};
+    $$('[data-ukur]').forEach(el => { nilai[el.dataset.ukur] = el.value.trim() === '' ? '' : +el.value; });
+    const g = $('#galatNyata');
+    if (Object.values(nilai).every(x => x === '')) { g.textContent = 'Isi minimal satu hasil pengukuran.'; g.hidden = false; return; }
+    if (Object.values(nilai).some(x => x !== '' && !isFinite(x))) { g.textContent = 'Hasil pengukuran harus berupa angka.'; g.hidden = false; return; }
+    const b = $('#bSimpanNyata'); b.disabled = true;
+    let foto = '';
+    const berkas = $('#nFoto').files[0];
+    if (berkas) { try { foto = await kecilkanFoto(berkas); } catch (err) { toast('Foto tidak bisa dibaca', 'peringatan'); } }
+    const baris = { no: ny.uji.length + 1, acuan: +$('#nAcuan').value || null, nilai, catatan: $('#nCatatan').value.trim(), foto, waktu: Date.now() };
+    ny.uji.push(baris);
+    if (!simpan()) {
+      baris.foto = '';
+      if (simpan()) toast('Penyimpanan penuh — hasil disimpan tanpa foto', 'peringatan');
+      else { ny.uji.pop(); g.textContent = 'Penyimpanan perangkat penuh. Hapus beberapa foto uji lama lalu coba lagi.'; g.hidden = false; b.disabled = false; return; }
+    } else toast('Hasil uji nyata tersimpan');
+    $('#fNyata').reset();
+    const pilih = $('#nAcuan'); if (pilih && baris.acuan) pilih.value = baris.acuan;
+    $('#tabelNyata').innerHTML = htmlTabelNyata(m, st); pasangTabel(); perbaruiStepper(m, st);
+    b.disabled = false;
+  };
+  $$('[data-masalah]').forEach(b => b.onclick = () => {
+    const q = N.masalah[+b.dataset.masalah];
+    bukaTutor(`Masalah pada prototipe nyataku: ${q.gejala}. Bantu aku mencari penyebabnya.`, 2);
+  });
+}
+
+/* ---------------- Laboratorium maya ---------------- */
 /* ---------------- Laboratorium maya ---------------- */
 function htmlLab(m, st) {
   return `<div class="kartu lab">
@@ -481,6 +641,23 @@ function konteksMisi(m, st, L) {
       baris.push(`Uji ${u.no}: ${m.variabel.map(v => `${v.label}=${tampilVar(v, u.v[v.id])}`).join(', ')} → ${m.keluaran.map(k => `${k.label}=${tampilKeluaran(k, u.h[k.id])}`).join(', ')}; kriteria terpenuhi ${u.lulus}/${u.total}; ${u.adil === null ? 'uji awal' : u.adil ? 'uji adil' : `TIDAK adil (mengubah ${u.ubah.join(', ')})`}${u.prediksi ? `; prediksi murid: "${u.prediksi}"` : ''}.`);
     });
   } else baris.push('Murid belum melakukan uji di laboratorium maya.');
+  if (L.id === 'nyata') {
+    const N = NYATA[m.id], ny = st.nyata || { cek: {}, uji: [] };
+    const acuan = ujiTerbaik(st);
+    baris.push('MURID SEDANG MEMBUAT & MENGUJI PROTOTIPE NYATA (bukan simulasi).');
+    baris.push(`Aturan keselamatan wajib misi ini: ${N.keselamatan.join(' | ')}`);
+    baris.push(`Alat & bahan yang disarankan: ${N.alat.join('; ')}`);
+    baris.push(`Langkah kerja: ${N.langkah.map((l, i) => `${i + 1}) ${l}`).join(' ')}`);
+    if (acuan) baris.push(`Takaran praktis dari uji simulasi terbaik (uji ${acuan.no}): ${N.takaran(acuan.v).join(' ')}`);
+    baris.push(`Masalah umum & arah petunjuk (untuk tutor): ${N.masalah.map(q => `${q.gejala}: ${q.petunjuk.join(' ')}`).join(' || ')}`);
+    if (ny.uji.length) {
+      baris.push('Data uji nyata murid:');
+      ny.uji.forEach(u => {
+        const a = st.uji.find(x => x.no === u.acuan);
+        baris.push(`Uji nyata ${u.no}: ${N.ukur.map(k => `${k.label}=${tampilUkur(k, u.nilai[k.id])}${k.sim && a ? ` (prediksi simulasi ${tampilUkur(k, a.h[k.sim])})` : ''}`).join(', ')}${u.catatan ? `; catatan: "${u.catatan}"` : ''}.`);
+      });
+    } else baris.push('Murid belum mencatat hasil uji nyata.');
+  }
   return baris.join('\n');
 }
 
@@ -621,7 +798,7 @@ function halPortofolio() {
     <div class="kartu">
       <h3>Ringkasan</h3>
       <div class="statistik">
-        <div><b>${MISI.filter(m => kemajuan(m) === 6).length}/${MISI.length}</b><small>Misi selesai</small></div>
+        <div><b>${MISI.filter(m => kemajuan(m) === LANGKAH.length).length}/${MISI.length}</b><small>Misi selesai</small></div>
         <div><b>${semuaUji.length}</b><small>Uji dilakukan</small></div>
         <div><b>${persenAdil === null ? '—' : persenAdil + '%'}</b><small>Uji adil</small></div>
         <div><b>${K.diperiksa ? `${benar}/${UJI_NALAR.length}` : '—'}</b><small>Uji Nalar</small></div>
@@ -634,8 +811,9 @@ function halPortofolio() {
     if (!st) return '';
     const t = ujiTerbaik(st);
     return `<div class="kartu porto-misi" style="--aksen:${m.warna}">
-      <h3>${m.ikon} ${esc(m.judul)} <span class="redup kecil">· ${kemajuan(m)}/6 langkah</span></h3>
+      <h3>${m.ikon} ${esc(m.judul)} <span class="redup kecil">· ${kemajuan(m)}/${LANGKAH.length} langkah</span></h3>
       ${t ? `<p><b>Rancangan terbaik:</b> uji ke-${t.no}, memenuhi ${t.lulus}/${t.total} kriteria (${m.variabel.map(v => `${v.label.toLowerCase()} ${tampilVar(v, t.v[v.id])}`).join(', ')}).</p>` : ''}
+      ${st.nyata && st.nyata.uji.length ? `<div class="porto-nyata"><p><b>🔧 Prototipe nyata:</b> ${st.nyata.uji.length} kali uji.</p>${htmlTabelNyata(m, st).replace(/<td><button[^>]*data-hapus-nyata[^>]*>.*?<\/button><\/td>/g, '<td></td>')}</div>` : ''}
       ${LANGKAH.map(L => {
         const ada = L.isian.some(f => st.isian[f.id]);
         if (!ada) return '';
@@ -650,7 +828,7 @@ function halPortofolio() {
   $('#bSalin').onclick = () => {
     const teks = [`Portofolio NalarSTEM — ${S.profil.nama || '(tanpa nama)'} ${S.profil.kelas || ''}`,
       ...INDIKATOR.map(i => `${i.nama}: ${rata[i.id] ? bulat(rata[i.id], 1) : '-'}`),
-      ...MISI.map(m => `${m.judul}: ${kemajuan(m)}/6 langkah, ${(S.misi[m.id]?.uji || []).length} uji`),
+      ...MISI.map(m => `${m.judul}: ${kemajuan(m)}/${LANGKAH.length} langkah, ${(S.misi[m.id]?.uji || []).length} uji`),
       `Uji adil: ${persenAdil ?? '-'}%`, `Uji Nalar: ${K.diperiksa ? benar + '/' + UJI_NALAR.length : '-'}`].join('\n');
     navigator.clipboard.writeText(teks).then(() => toast('Ringkasan disalin — tempel ke guru/grup kelas'), () => toast('Gagal menyalin', 'peringatan'));
   };
@@ -699,7 +877,7 @@ function halGuru() {
     <p>NalarSTEM melatih <b>kemampuan berpikir kritis</b> murid SMP (Fase D) melalui pembelajaran IPA berbasis <b>STEM</b> dengan model <b>PjBL-STEM / Engineering Design Process</b>. AI Tutor "Kak Nala" berperan sebagai <i>scaffolding</i> Sokratik: menuntun dengan pertanyaan, bukan memberi jawaban.</p>
     <h3>Sintaks pembelajaran (± 2–3 JP per misi)</h3>
     <table class="tabel"><thead><tr><th>Langkah</th><th>Kegiatan murid</th><th>Indikator berpikir kritis</th><th>Peran guru</th></tr></thead><tbody>
-      ${LANGKAH.map(L => `<tr><td><b>${L.no}. ${L.judul}</b><br><small>${L.edp}</small></td><td>${L.arahan}</td><td>${L.indikator.map(i => INDIKATOR.find(x => x.id === i).nama).join(', ')}</td><td>${['Memantik dengan kisah lokal; pastikan murid membedakan kriteria dan kendala.', 'Mengonfirmasi konsep; luruskan miskonsepsi yang muncul.', 'Memeriksa kelengkapan variabel & pola "Jika–maka–karena".', 'Berkeliling; tanyakan "variabel apa yang kamu ubah?"', 'Memfasilitasi diskusi kelompok membandingkan data.', 'Presentasi CER antarkelompok dan refleksi.'][L.no - 1]}</td></tr>`).join('')}
+      ${LANGKAH.map(L => `<tr><td><b>${L.no}. ${L.judul}</b><br><small>${L.edp}</small></td><td>${L.arahan}</td><td>${L.indikator.map(i => INDIKATOR.find(x => x.id === i).nama).join(', ')}</td><td>${['Memantik dengan kisah lokal; pastikan murid membedakan kriteria dan kendala.', 'Mengonfirmasi konsep; luruskan miskonsepsi yang muncul.', 'Memeriksa kelengkapan variabel & pola "Jika–maka–karena".', 'Berkeliling; tanyakan "variabel apa yang kamu ubah?"', 'Memfasilitasi diskusi kelompok membandingkan data.', 'Presentasi CER antarkelompok dan refleksi.', 'Memeriksa cek keselamatan & alat, mendampingi penggunaan alat tajam/uji di luar kelas, lalu memfasilitasi diskusi hasil nyata vs simulasi.'][L.no - 1]}</td></tr>`).join('')}
     </tbody></table>
     <h3>Rubrik penilaian (dipakai AI & tutor lokal)</h3>
     <table class="tabel"><thead><tr><th>Skor</th><th>Deskriptor</th></tr></thead><tbody>
@@ -719,6 +897,18 @@ function halGuru() {
     </ul>
     <h3>Catatan model simulasi</h3>
     <p>Simulasi memakai model fisika/biologi yang <b>disederhanakan</b> agar pola teramati jelas (mis. faktor pembatas Blackman, konduksi dinding datar, efisiensi penyaringan per lapisan, lintasan roket dengan faktor hambatan udara tetap). Diskusikan dengan murid bahwa model selalu punya keterbatasan — ini sendiri merupakan latihan berpikir kritis.</p>
+    <h3>Praktik dunia nyata (Langkah 7)</h3>
+    <p>Setiap misi dilengkapi daftar alat &amp; bahan murah, <b>cek keselamatan</b> yang wajib dicentang sebelum langkah kerja terbuka, <b>takaran praktis</b> yang dihitung dari uji terbaik murid di simulasi, tabel <b>data uji nyata</b> (bisa dengan foto), dan perbandingan otomatis dengan prediksi simulasi. Tombol <b>Ada masalah?</b> menghubungkan murid ke Kak Nala, yang diprogram mendahulukan keselamatan dan menolak modifikasi berbahaya.</p>
+    <table class="tabel"><thead><tr><th>Misi</th><th>Waktu</th><th>Poin keselamatan utama</th></tr></thead><tbody>
+      ${MISI.map(m => `<tr><td>${m.ikon} ${esc(m.judul)}</td><td>${esc(NYATA[m.id].waktu)}</td><td>${esc(NYATA[m.id].keselamatan[0])}</td></tr>`).join('')}
+    </tbody></table>
+    <h3>Rubrik produk nyata (penilaian guru)</h3>
+    <table class="tabel"><thead><tr><th>Aspek</th><th>4 · Mahir</th><th>2 · Berkembang</th></tr></thead><tbody>
+      <tr><td>Keselamatan</td><td>Semua prosedur keselamatan dipatuhi tanpa diingatkan; area kerja rapi.</td><td>Perlu diingatkan lebih dari sekali.</td></tr>
+      <tr><td>Fungsi prototipe</td><td>Memenuhi semua kriteria keberhasilan saat diuji nyata.</td><td>Memenuhi sebagian kriteria.</td></tr>
+      <tr><td>Data &amp; dokumentasi</td><td>Uji diulang ≥ 3 kali, data lengkap dengan satuan, ada foto.</td><td>Uji hanya sekali atau data tidak lengkap.</td></tr>
+      <tr><td>Refleksi model</td><td>Menjelaskan selisih nyata–simulasi dengan faktor spesifik dan mengusulkan perbaikan.</td><td>Hanya menyebut "hasilnya beda" tanpa alasan jelas.</td></tr>
+    </tbody></table>
     <h3>Pengumpulan hasil</h3>
     <p>Data tersimpan di perangkat masing-masing murid. Minta murid membuka <b>Portofolio</b> → <b>Cetak / simpan PDF</b>, atau <b>Salin ringkasan</b> lalu kirim ke guru.</p>
   </div>`;

@@ -87,6 +87,7 @@ ATURAN WAJIB:
 8. Tingkat petunjuk: [1] pertanyaan terbuka; [2] arahkan ke konsep/variabel yang relevan; [3] petunjuk konkret (misal "bandingkan uji 2 dan 3, apa yang berbeda?") tetapi tetap tanpa jawaban akhir.
 9. Jika pertanyaan di luar pembelajaran IPA/STEM, arahkan kembali dengan sopan. Tolak hal yang tidak pantas atau berbahaya. Untuk keselamatan (misal air minum), ingatkan dengan tegas.
 10. Boleh memakai **tebal** untuk kata kunci. Jangan memakai judul markdown.
+11. PRAKTIK NYATA: jika murid membuat/menguji prototipe sungguhan, KESELAMATAN SELALU DI ATAS metode Sokratik. Untuk hal yang menyangkut bahaya, beri arahan keselamatan secara LANGSUNG dan tegas (boleh tanpa pertanyaan), lalu sarankan melibatkan guru. Tolak dengan sopan modifikasi berbahaya (misal: cuka biang/asam kuat, botol kaca, api, listrik PLN dekat air, es kering, memperbesar tekanan secara berlebihan, meminum air hasil saringan) dan tawarkan alternatif aman. Jika arah petunjuk masalah di konteks memuat kata "KESELAMATAN", atau masalahnya menyangkut tekanan/benda yang bisa melesat, panas, listrik, atau bahan kimia, WAJIB awali balasan dengan instruksi keselamatan itu secara langsung (misal: "Jangan dekati botol, tunggu 2 menit, minta guru membuka sumbat dengan wajah menjauh"), baru kemudian pertanyaan pemantik. Untuk masalah teknis yang aman (bocor, lambat, meleset), tetap bantu murid menemukan penyebab lewat pertanyaan dan membandingkan hasil nyata dengan prediksi simulasi.
 
 KONTEKS BELAJAR MURID SAAT INI:
 ${konteks}`;
@@ -153,6 +154,11 @@ function tutorLokal(pesan) {
   const q = pemantik[giliranLokal++ % pemantik.length];
   if (/jawab|kunci|kasih tahu|beri tahu|langsung|contek/.test(p)) {
     return `Kak Nala tahu kamu ingin cepat selesai 😊. Tapi kemampuan berpikirmu akan tumbuh kalau kamu menemukannya sendiri — Kak Nala bantu lewat petunjuk ya.\n\n**Pertanyaan pemantik:** ${q}`;
+  }
+  const N = M && typeof NYATA !== 'undefined' ? NYATA[M.id] : null;
+  const masalah = N && N.masalah.find(q => p.includes(q.gejala.toLowerCase()) || new RegExp(q.kunci).test(p));
+  if (masalah && (/masalah|prototipe|nyata/.test(p) || (L && L.id === 'nyata'))) {
+    return `**${masalah.gejala}** — ayo selidiki penyebabnya seperti ilmuwan:\n- ${masalah.petunjuk.join('\n- ')}\n\nIngat: bila ada yang terasa berbahaya, hentikan dan panggil gurumu.\n\n**Pertanyaan pemantik:** apa satu hal yang akan kamu ubah pada uji berikutnya, dan bagaimana memastikan hanya itu yang berubah?`;
   }
   if (/data|pola|grafik|tabel|uji/.test(p) && U.length) {
     const a = U[U.length - 1];

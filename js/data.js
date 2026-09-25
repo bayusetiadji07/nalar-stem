@@ -107,8 +107,275 @@ const LANGKAH = [
       'Bagian mana dari pemikiran awalmu yang ternyata keliru? Apa yang membuatmu sadar?',
       'Kalau rancanganmu dipakai sungguhan di desa, apa risiko yang belum kamu uji?'
     ]
+  },
+  {
+    no: 7, id: 'nyata', judul: 'Wujudkan di Dunia Nyata', edp: 'Buat Nyata',
+    indikator: ['evaluasi', 'regulasi'],
+    arahan: 'Saatnya membuat prototipe sungguhan! Centang cek keselamatan, buat rancanganmu dari bahan nyata, uji, lalu bandingkan dengan prediksi simulasi. Hasil yang berbeda bukan kegagalan — justru bahan berpikir kritis: apa yang tidak diperhitungkan oleh model?',
+    isian: [
+      { id: 'rencanaNyata', label: 'RENCANA — Apa yang kamu sesuaikan dari rancangan simulasi karena bahan/alat nyata yang tersedia? Apa dugaanmu tentang pengaruhnya?', ph: 'Di simulasi aku memakai ..., tetapi yang tersedia ..., jadi aku menduga ...' },
+      { id: 'bandingNyata', label: 'BANDINGKAN — Seberapa dekat hasil nyata dengan prediksi simulasi? Sebutkan angkanya dan kemungkinan penyebab perbedaannya.', ph: 'Simulasi memprediksi ..., hasil nyata ..., berbeda karena ...' },
+      { id: 'perbaikanNyata', label: 'PERBAIKI — Apa yang akan kamu ubah pada prototipe berikutnya? Apa yang kamu pelajari tentang keterbatasan model simulasi?', ph: 'Berikutnya aku akan ... karena ... Ternyata simulasi tidak memperhitungkan ...' }
+    ],
+    pemantik: [
+      'Faktor apa di dunia nyata yang tidak ada di simulasi?',
+      'Jika kamu mengulang uji nyata dengan rancangan yang sama, apakah hasilnya akan persis sama? Mengapa?',
+      'Bagian mana dari prototipemu yang paling berisiko tidak aman, dan bagaimana mencegahnya?'
+    ]
   }
 ];
+
+/* ---------------- Panduan praktik dunia nyata (Langkah 7) ----------------
+   takaran(v) menerjemahkan variabel uji terbaik di simulasi menjadi takaran praktis.
+   ukur[].sim = id keluaran simulasi pembanding (bila ada). */
+const fxd = (n, d = 1) => String(Number((+n).toFixed(d))).replace('.', ',');
+
+const NYATA = {
+  perahu: {
+    waktu: '2 × 40 menit',
+    alat: [
+      'Bahan lambung sesuai rancanganmu: styrofoam bekas kemasan, lembar plastik/botol bekas, triplek tipis, atau seng bekas',
+      'Lem tembak atau lem kedap air + lakban bening',
+      'Cutter/gunting (dengan pendampingan guru), penggaris, spidol',
+      'Baskom besar, ember, atau bak air dangkal',
+      'Beban uji: botol air mineral 600 mL berisi air (± 0,6 kg) atau kantong pasir 0,5 kg',
+      'Timbangan dapur dan lap kain'
+    ],
+    keselamatan: [
+      'Cutter hanya dipakai dengan pendampingan guru; potong di atas alas dan arahkan mata pisau menjauhi tubuh.',
+      'Lem tembak panas — jangan sentuh ujung pistol lem dan lelehan lemnya.',
+      'Uji di baskom/ember/bak, BUKAN di sungai, laut, atau genangan banjir sungguhan.',
+      'Lantai basah licin — sediakan lap dan segera keringkan tumpahan air.',
+      'Kumpulkan sisa styrofoam untuk didaur ulang; jangan dibuang ke saluran air.'
+    ],
+    langkah: [
+      'Gambar pola: alas (panjang × lebar) dan empat dinding setinggi rancanganmu.',
+      'Potong bahan sesuai pola (minta guru mendampingi saat memakai cutter).',
+      'Rekatkan dinding ke alas. Lapisi semua sambungan dengan lakban agar kedap air.',
+      'Beri garis skala tiap 1 cm pada dinding luar — untuk membaca kedalaman celup.',
+      'Timbang perahu kosong, lalu apungkan dan catat kedalaman celupnya.',
+      'Tambahkan beban sedikit demi sedikit di TENGAH perahu. Catat kedalaman celup saat beban sama dengan muatan uji rancanganmu.',
+      'Terus tambah beban hingga sisa dinding di atas air tinggal ± 1 cm — itulah muatan maksimum nyata. Jangan sampai tenggelam agar beban tidak basah.',
+      'Uji stabilitas: goyang air pelan-pelan dengan tangan, amati apakah perahu mudah miring.'
+    ],
+    takaran: v => {
+      const p = +v.panjang, l = +v.lebar, t = +v.tinggi, luas = p * l + 2 * p * t + 2 * l * t;
+      const hasil = [
+        `Alas ${p} × ${l} cm; 2 dinding samping ${p} × ${t} cm; 2 dinding depan-belakang ${l} × ${t} cm.`,
+        `Bahan yang dibutuhkan ± ${Math.round(luas * 1.1).toLocaleString('id-ID')} cm² (sudah ditambah 10% untuk sisa potongan).`,
+        `Muatan uji ${fxd(v.muatan)} kg ≈ ${fxd(+v.muatan / 0.6)} botol air mineral 600 mL penuh (kriteria lomba: 3 kg ≈ 5 botol).`
+      ];
+      if (v.air === 'laut') hasil.push('Air laut tiruan: larutkan ± 35 g garam dapur (± 7 sendok teh) per 1 liter air.');
+      return hasil;
+    },
+    ukur: [
+      { id: 'celup', label: 'Kedalaman celup (muatan seperti simulasi)', satuan: 'cm', sim: 'celup' },
+      { id: 'kapasitas', label: 'Muatan maksimum nyata', satuan: 'kg', sim: 'kapasitas' },
+      { id: 'biaya', label: 'Biaya nyata', satuan: 'Rp', sim: 'biaya' }
+    ],
+    masalah: [
+      { gejala: 'Perahu bocor / air merembes di sambungan', kunci: 'bocor|rembes|masuk air', petunjuk: ['Sambungan mana yang paling dulu basah? Periksa sudut-sudut alas.', 'Apakah lakban menempel pada permukaan yang kering dan bersih?'] },
+      { gejala: 'Perahu miring atau terbalik saat diberi beban', kunci: 'miring|terbalik|oleng', petunjuk: ['Di mana letak beban? Bandingkan beban di tengah dengan beban di satu sisi.', 'Bagaimana rasio lebar : tinggi perahumu dibanding rancangan simulasi?'] },
+      { gejala: 'Kedalaman celup berbeda jauh dari simulasi', kunci: 'beda|berbeda|selisih|tidak sama', petunjuk: ['Apakah ukuran potongan nyata persis sama dengan rancangan?', 'Berapa massa perahu nyatamu termasuk lem dan lakban? Simulasi tidak menghitung lem.'] },
+      { gejala: 'Dasar perahu melengkung atau retak', kunci: 'lengkung|melengkung|retak|patah', petunjuk: ['Apakah beban bertumpu di satu titik? Coba sebar beban di atas papan tipis.', 'Bahan mana yang lebih kuat menahan tekanan beban menurut simulasi?'] }
+    ]
+  },
+  penjernih: {
+    waktu: '2 × 40 menit',
+    alat: [
+      'Botol plastik bekas 1,5 L (bagian dasarnya dipotong) dan gelas bening',
+      'Kerikil dan pasir halus yang sudah dicuci sampai air bilasannya bening',
+      'Ijuk atau sabut kelapa',
+      'Arang kayu yang ditumbuk kasar (atau arang aktif akuarium)',
+      'Kapas atau kain kasa untuk menyumbat leher botol',
+      'Air keruh: air sungai/selokan, atau buatan (1 L air + 2 sendok makan tanah)',
+      'Gelas takar/botol 1 L, stopwatch HP, penggaris, spidol, sarung tangan'
+    ],
+    keselamatan: [
+      'Air hasil saringan TIDAK BOLEH diminum — penyaringan tidak membunuh kuman.',
+      'Pengambilan air sungai dilakukan orang dewasa; murid tidak turun ke sungai.',
+      'Pakai sarung tangan saat memegang air kotor dan cuci tangan dengan sabun setelahnya.',
+      'Memotong botol dengan cutter/gunting didampingi guru.',
+      'Menumbuk arang menimbulkan debu — lakukan di luar ruangan, basahi sedikit, dan pakai masker.'
+    ],
+    langkah: [
+      'Potong dasar botol, lalu balik botol sehingga leher botol berada di bawah.',
+      'Sumbat leher botol dengan kapas/kain kasa.',
+      'Isi lapisan dari BAWAH ke atas sesuai urutan rancanganmu (lapisan 4 diisi pertama, lapisan 1 terakhir) dengan ketebalan seperti di bawah.',
+      'Bilas saringan dengan air bersih 2–3 kali sampai air yang keluar tidak hitam lagi.',
+      'Letakkan gelas di bawah botol. Tuangkan 1 liter air keruh pelan-pelan; nyalakan stopwatch sejak tuangan pertama.',
+      'Hentikan stopwatch saat tetesan berhenti. Catat waktunya.',
+      'Uji kejernihan: letakkan gelas air awal dan air hasil di depan kertas bertulisan; nilai 1 (keruh) sampai 5 (tulisan sangat jelas).',
+      'Cium bau air hasil (kibaskan tangan di atas gelas, jangan dihirup langsung); nilai 0–3.',
+      'Jika rancanganmu mengulang penyaringan, tuang lagi air hasil dan catat total waktunya.'
+    ],
+    takaran: v => {
+      const lapis = [v.lapis1, v.lapis2, v.lapis3, v.lapis4].filter(x => x && x !== 'kosong');
+      const tebal = m => m === 'pasir' ? +v.tebalPasir : m === 'arang' ? +v.tebalArang : m === 'kerikil' ? 4 : 3;
+      const nama = { kerikil: 'kerikil', ijuk: 'ijuk', pasir: 'pasir halus', arang: 'arang' };
+      const ml = cm => Math.round(cm * 64); // luas penampang botol 1,5 L ± 64 cm²
+      return [
+        `Urutan mengisi dari bawah: ${[...lapis].reverse().map(m => `${nama[m]} ${tebal(m)} cm`).join(' → ')}.`,
+        ...lapis.filter(m => m === 'pasir' || m === 'arang').map(m => `${nama[m][0].toUpperCase() + nama[m].slice(1)} ${tebal(m)} cm ≈ ${ml(tebal(m))} mL (± ${fxd(ml(tebal(m)) / 250)} gelas belimbing).`),
+        `Penyaringan diulang ${v.ulang} kali.`,
+        'Tinggi 1 cm lapisan dalam botol 1,5 L ≈ 64 mL bahan.'
+      ];
+    },
+    ukur: [
+      { id: 'waktu', label: 'Waktu menyaring 1 L', satuan: 'menit', sim: 'waktu' },
+      { id: 'bau', label: 'Skala bau (0–3)', satuan: '', sim: 'bau' },
+      { id: 'jernih', label: 'Kejernihan (1–5)', satuan: '' }
+    ],
+    masalah: [
+      { gejala: 'Air yang keluar berwarna hitam', kunci: 'hitam|arang', petunjuk: ['Lapisan apa yang berada paling bawah? Apa yang bisa ikut terbawa air?', 'Sudahkah saringan dibilas air bersih sebelum dipakai?'] },
+      { gejala: 'Air mengalir sangat lambat atau macet', kunci: 'lambat|macet|tidak keluar|lama', petunjuk: ['Lapisan halus berada di mana? Apa yang terjadi jika kotoran kasar langsung mengenai pasir?', 'Apakah sumbat kapas di leher botol terlalu padat?'] },
+      { gejala: 'Air hasil masih keruh', kunci: 'keruh|kotor', petunjuk: ['Lapisan mana yang bertugas menahan partikel halus? Seberapa tebal lapisan itu?', 'Apakah pasir sudah dicuci bersih sebelum dipakai?'] },
+      { gejala: 'Pasir ikut keluar bersama air', kunci: 'pasir keluar|pasir ikut|butir', petunjuk: ['Apa yang menahan pasir agar tidak jatuh ke leher botol?', 'Bagaimana jika lapisan paling bawah diganti bahan yang lebih kasar?'] }
+    ]
+  },
+  pendingin: {
+    waktu: '1 × 40 menit membuat + pengamatan beberapa jam',
+    alat: [
+      'Kotak sesuai rancanganmu: kotak styrofoam bekas, kardus berlapis, kardus ganda berisi sekam padi, atau kotak papan',
+      'Lakban, gunting/cutter (dengan pendampingan guru)',
+      'Cat atau kertas putih/hitam untuk warna luar (sesuai rancangan)',
+      'Karet/spons tipis atau kain untuk merapatkan tutup',
+      'Es batu dalam kantong plastik tertutup, timbangan dapur',
+      'Nampan atau baskom sebagai alas kotak',
+      'Termometer (bila ada) dan jam/HP untuk mencatat waktu'
+    ],
+    keselamatan: [
+      'JANGAN memakai es kering (dry ice) — bisa membakar kulit dan membuat sesak napas di ruang tertutup.',
+      'Cutter/gunting dipakai dengan pendampingan guru.',
+      'Letakkan kotak di atas nampan agar air lelehan tidak membuat lantai licin.',
+      'Jauhkan kotak dari kompor dan sumber api.',
+      'Sekam padi berdebu — pakai masker saat mengisi dinding.'
+    ],
+    langkah: [
+      'Siapkan kotak sesuai bahan dan tebal dinding rancanganmu. Ukur dan catat ukuran bagian dalamnya.',
+      'Beri warna luar sesuai rancangan (cat atau tempel kertas).',
+      'Jika memilih tutup rapat, tempelkan karet/spons tipis di pinggir tutup.',
+      'Timbang es (dalam kantong plastik tertutup) sesuai rancangan, lalu masukkan ke kotak dan tutup.',
+      'Letakkan kotak di tempat yang suhunya mirip rancanganmu (misalnya teras). Catat suhu udara dan jam mulai.',
+      'Setiap 1 jam: buka sebentar, buang air lelehan, timbang sisa es, tutup kembali secepatnya.',
+      'Catat jam saat es habis. Jika tidak bisa menunggu, gunakan massa es yang mencair selama 3 jam untuk memperkirakan lama es bertahan.',
+      'Timbang kotak kosong di akhir percobaan.'
+    ],
+    takaran: v => {
+      const hasil = [
+        `Bahan dinding: ${({ styrofoam: 'styrofoam', sekam: 'sekam padi di antara dua lapis kardus/papan tipis', kardus: 'kardus berlapis', kayu: 'papan kayu' })[v.bahan]}, tebal ${v.tebal} cm.`,
+        `Es ${fxd(v.es)} kg ≈ ${fxd(v.es)} kantong es 1 kg; warna luar ${v.warna}; tutup ${v.tutup === 'rapat' ? 'rapat (pakai karet)' : 'dibiarkan ada celah'}.`,
+        'Simulasi memakai ruang dalam 40 × 30 × 30 cm. Jika kotakmu lebih kecil, kurangi es sebanding dengan volume kotak agar hasilnya bisa dibandingkan.',
+        'Perkiraan lama es bertahan dari data 3 jam: (massa es awal ÷ massa es yang mencair dalam 3 jam) × 3 jam.'
+      ];
+      if (v.bahan === 'sekam') hasil.push(`Isi rongga dinding ${v.tebal} cm dengan sekam dan padatkan pelan-pelan.`);
+      return hasil;
+    },
+    ukur: [
+      { id: 'tahan', label: 'Lama es bertahan (atau perkiraan)', satuan: 'jam', sim: 'tahan' },
+      { id: 'leleh3', label: 'Es mencair dalam 3 jam', satuan: 'g' },
+      { id: 'massaKotak', label: 'Massa kotak kosong', satuan: 'kg', sim: 'massaKotak' }
+    ],
+    masalah: [
+      { gejala: 'Es habis jauh lebih cepat dari simulasi', kunci: 'cepat|habis|cair', petunjuk: ['Berapa kali dan berapa lama kotak dibuka? Apa yang terjadi pada udara dingin di dalamnya?', 'Apakah ada celah di sudut atau tutup yang tidak ada di rancangan?'] },
+      { gejala: 'Tutup tidak bisa rapat', kunci: 'tutup|celah|rapat', petunjuk: ['Bahan apa di sekitarmu yang lentur dan bisa mengisi celah?', 'Menurut kartu konsep, perpindahan kalor jenis apa yang terjadi lewat celah?'] },
+      { gejala: 'Kotak basah atau lembek', kunci: 'basah|lembek|lembap', petunjuk: ['Dari mana air itu berasal — lelehan es atau embun di luar kotak?', 'Bagaimana cara menjaga air lelehan tidak menyentuh dinding kardus?'] },
+      { gejala: 'Sulit menimbang sisa es', kunci: 'timbang|menimbang', petunjuk: ['Bisakah kamu menimbang air lelehan saja, lalu menghitung sisa es?', 'Apa yang harus dijaga tetap sama setiap kali menimbang agar datanya adil?'] }
+    ]
+  },
+  hidroponik: {
+    waktu: '± 4 minggu (semai 7 hari + tanam 21 hari), 10 menit pengamatan tiap 3 hari',
+    alat: [
+      'Benih sawi, rockwool atau spons, dan netpot (atau gelas plastik yang dilubangi)',
+      'Wadah gelap tertutup (bekas es krim/styrofoam) yang tutupnya dilubangi untuk netpot',
+      'Nutrisi AB mix (toko pertanian) dan TDS meter bila ada',
+      'Tempat terang dekat jendela, atau lampu LED tumbuh dengan timer (dipasang oleh orang dewasa)',
+      'Pompa aerator akuarium (opsional)',
+      'Penggaris, timbangan dapur, sarung tangan'
+    ],
+    keselamatan: [
+      'Nutrisi AB mix bukan makanan/minuman — pakai sarung tangan, simpan jauh dari anak kecil, cuci tangan setelahnya.',
+      'Listrik dan air tidak boleh bersentuhan: lampu dan stopkontak dipasang orang dewasa, jauh dari wadah air.',
+      'Jangan menyentuh lampu yang sedang panas.',
+      'Jangan membakar apa pun untuk menambah CO₂ — cukup jaga ventilasi ruangan.',
+      'Cuci bersih sawi hasil panen sebelum dimakan.'
+    ],
+    langkah: [
+      'Semai benih di rockwool/spons basah. Tempatkan di tempat teduh 2–3 hari, lalu di tempat terang.',
+      'Setelah 3–4 daun (± hari ke-7), pindahkan bibit ke netpot pada tutup wadah.',
+      'Buat larutan nutrisi: larutkan pekatan A dan B ke air SECARA TERPISAH (jangan campurkan pekatan A dan B langsung). Sesuaikan kepekatan dengan rancanganmu.',
+      'Pastikan ujung akar menyentuh larutan. Tutup wadah agar larutan tidak kena cahaya (mencegah lumut).',
+      'Atur cahaya: lama penyinaran sesuai rancangan (pakai timer) dan jarak lampu ≥ 20 cm dari daun.',
+      'Setiap 3 hari: ukur tinggi tanaman dan hitung daun, cek volume dan kepekatan larutan.',
+      'Hari ke-21: panen, bersihkan akar, lalu timbang.'
+    ],
+    takaran: v => [
+      `Kepekatan nutrisi ${v.nutrisi} ppm. Perkiraan umum: ± ${fxd(+v.nutrisi / 1000 * 5)} mL pekatan A + ${fxd(+v.nutrisi / 1000 * 5)} mL pekatan B per liter air — selalu cek petunjuk kemasan / TDS meter.`,
+      `Lampu menyala ${v.jam} jam/hari; warna ${({ merahbiru: 'merah + biru', putih: 'putih', hijau: 'hijau' })[v.warnaLed]}. Intensitas ${v.cahaya}%: atur dengan jarak lampu (makin dekat makin terang, tetap ≥ 20 cm).`,
+      `Suhu ruang ± ${v.suhu} °C. Jika pakai sinar matahari, catat berapa jam tempatmu terkena cahaya langsung.`,
+      `CO₂ ${({ rendah: 'rendah', normal: 'normal', tinggi: 'tinggi' })[v.co2]} di simulasi — di sekolah cukup jaga ventilasi (anggap normal).`
+    ],
+    ukur: [
+      { id: 'massa', label: 'Massa sawi hari ke-21', satuan: 'g', sim: 'massa' },
+      { id: 'tinggi', label: 'Tinggi tanaman', satuan: 'cm' },
+      { id: 'daun', label: 'Jumlah daun', satuan: 'helai' }
+    ],
+    masalah: [
+      { gejala: 'Daun menguning', kunci: 'kuning', petunjuk: ['Berapa kepekatan larutanmu sekarang? Apakah sudah diganti/ditambah?', 'Daun yang menguning daun tua atau muda? Apa yang bisa kamu simpulkan?'] },
+      { gejala: 'Batang panjang kurus dan pucat', kunci: 'kurus|pucat|panjang|tinggi', petunjuk: ['Berapa jam dan seberapa dekat tanaman mendapat cahaya?', 'Di simulasi, faktor apa yang menyebabkan tanaman "pucat memanjang"?'] },
+      { gejala: 'Daun layu', kunci: 'layu', petunjuk: ['Apakah ujung akar masih menyentuh larutan?', 'Bagaimana suhu ruangan dan kepekatan larutan? Ingat konsep osmosis di kartu konsep.'] },
+      { gejala: 'Akar cokelat, berbau, atau berlumut', kunci: 'akar|lumut|bau|busuk', petunjuk: ['Apakah larutan terkena cahaya langsung? Apa yang tumbuh di air yang terkena cahaya?', 'Kapan terakhir larutan diganti? Adakah udara (oksigen) untuk akar?'] }
+    ]
+  },
+  roket: {
+    waktu: '2 × 40 menit (membuat + peluncuran di lapangan)',
+    alat: [
+      'Botol plastik bekas minuman bersoda (lebih kuat) sesuai ukuran rancangan',
+      'Sumbat gabus/karet yang pas dengan mulut botol',
+      'Karton tebal untuk sirip dan kerucut, lakban',
+      'Cuka dapur 5% dan soda kue',
+      'Tisu, gelas takar, sendok teh, timbangan dapur',
+      'Peluncur: 3 tongkat/bata agar botol bisa berdiri miring, busur derajat',
+      'Meteran 30 m (atau tali yang ditandai tiap 1 m), patok/kapur',
+      'Kacamata pelindung untuk SEMUA orang di area peluncuran'
+    ],
+    keselamatan: [
+      'Semua orang di area peluncuran wajib memakai kacamata pelindung.',
+      'Peluncuran di lapangan terbuka dengan pendampingan guru; penonton di belakang garis aman 5 m dan tidak ada orang di arah luncur.',
+      'Hanya botol PLASTIK bekas minuman bersoda — jangan botol kaca, botol retak, atau penyok.',
+      'Hanya cuka dapur 5% — jangan cuka biang atau asam lain.',
+      'Jika roket tidak meluncur: JANGAN didekati/diintip. Tunggu minimal 2 menit, lalu guru membuka sumbat dengan wajah dan tubuh menjauh dari mulut botol.',
+      'Jangan mengarahkan roket ke orang, jendela, kendaraan, atau kabel listrik.'
+    ],
+    langkah: [
+      'Buat 3–4 sirip dan kerucut dari karton. Tempelkan pada botol — dasar botol menjadi ujung atas roket, mulut botol di bawah.',
+      'Siapkan peluncur di lapangan dengan sudut sesuai rancangan (periksa dengan busur). Tandai titik peluncuran dan zona target 15–25 m.',
+      'Takar cuka dengan gelas takar, masukkan ke botol.',
+      'Timbang soda kue. Jika rancanganmu memakai tisu, bungkus soda kue dengan tisu seperti permen.',
+      'Semua orang memakai kacamata. Masukkan soda kue ke botol, SEGERA sumbat rapat, kocok 2 kali.',
+      'Letakkan roket di peluncur (sumbat di bawah), lalu SEGERA mundur ke belakang garis aman 5 m.',
+      'Tunggu roket meluncur; catat waktu tunggunya. Ukur jarak dari peluncur ke titik jatuh PERTAMA.',
+      'Catat kondisi angin. Bilas botol dengan air sebelum uji berikutnya.'
+    ],
+    takaran: v => [
+      `Cuka ${v.cuka} mL ≈ ${fxd(+v.cuka / 250)} gelas belimbing (250 mL).`,
+      `Soda kue ${v.soda} g ≈ ${fxd(+v.soda / 5)} sendok teh peres (1 sdt ≈ 5 g) — lebih tepat bila ditimbang.`,
+      `Jenis cuka: ${v.kadar === 'encer' ? 'cuka dapur 5% dicampur air sama banyak (jadi 2,5%)' : 'cuka dapur 5% tanpa dicampur'}.`,
+      `Botol ${v.botol === '1500' ? '1,5 L' : '600 mL'}; soda kue ${v.bungkus === 'tisu' ? 'dibungkus tisu' : 'dituang langsung'}; sudut peluncur ${v.sudut}° dari tanah.`
+    ],
+    ukur: [
+      { id: 'jarak', label: 'Jarak mendarat', satuan: 'm', sim: 'jarak' },
+      { id: 'tunggu', label: 'Waktu tunggu meluncur', satuan: 'detik' },
+      { id: 'biaya', label: 'Biaya nyata', satuan: 'Rp', sim: 'biaya' }
+    ],
+    masalah: [
+      { gejala: 'Roket tidak meluncur / sumbat tidak lepas', kunci: 'tidak meluncur|tidak lepas|diam|macet', petunjuk: ['KESELAMATAN DULU: jangan dekati botol. Tunggu 2 menit, guru yang membuka sumbat dengan wajah menjauh.', 'Setelah aman: apakah sumbat terlalu rapat, atau gasnya terlalu sedikit karena pereaksi pembatas?'] },
+      { gejala: 'Sumbat lepas sebelum botol sempat diletakkan', kunci: 'terlalu cepat|lepas duluan|sebelum', petunjuk: ['Bagaimana cara menunda reaksi agar ada waktu menyumbat dan meletakkan botol?', 'Apakah sumbatnya terlalu longgar?'] },
+      { gejala: 'Roket berbelok atau berputar di udara', kunci: 'belok|berputar|oleng|melenceng', petunjuk: ['Apakah sirip terpasang lurus dan sama besar?', 'Di mana titik berat roketmu? Apa pengaruh kerucut di bagian atas?'] },
+      { gejala: 'Jarak jauh lebih pendek dari simulasi', kunci: 'pendek|dekat|kurang jauh|beda', petunjuk: ['Berapa lama jeda antara memasukkan soda dan menyumbat? Berapa banyak gas yang lolos?', 'Faktor apa di lapangan (angin, sumbat, berat sirip) yang tidak ada di simulasi?'] }
+    ]
+  }
+};
 
 /* ---------------- Misi STEM ---------------- */
 const MISI = [
