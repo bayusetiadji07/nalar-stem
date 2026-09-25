@@ -7,22 +7,31 @@
    ========================================================= */
 
 const AI_KUNCI_SIMPAN = 'nalarstem-ai';
-const MODEL_CADANGAN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+const MODEL_DAFTAR = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+const MODEL_PILIHAN = [
+  ['gemini-3.5-flash', 'Gemini 3.5 Flash (disarankan)'],
+  ['gemini-3.6-flash', 'Gemini 3.6 Flash'],
+  ['gemini-2.5-flash', 'Gemini 2.5 Flash'],
+  ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (hemat kuota)']
+];
+const COBA_LAGI = [404, 429, 500, 503];
 
 function bacaAI() {
   let c = {};
   try { c = JSON.parse(localStorage.getItem(AI_KUNCI_SIMPAN) || '{}'); } catch (e) { /* abaikan */ }
   const dariBerkas = location.protocol === 'file:';
-  return { sumber: c.sumber || (dariBerkas ? 'lokal' : 'bawaan'), kunci: c.kunci || '', model: c.model || 'gemini-2.5-flash' };
+  // model lama yang sudah ditutup Google (mis. gemini-2.5-flash-lite) otomatis diganti bawaan
+  const model = MODEL_DAFTAR.includes(c.model) ? c.model : MODEL_DAFTAR[0];
+  return { sumber: c.sumber || (dariBerkas ? 'lokal' : 'bawaan'), kunci: c.kunci || '', model };
 }
 function simpanAI(c) {
   try { localStorage.setItem(AI_KUNCI_SIMPAN, JSON.stringify(c)); } catch (e) { /* abaikan */ }
 }
 
-function badanGemini(model, { sistem, riwayat, json }) {
-  const gen = { temperature: json ? 0.3 : 0.7, maxOutputTokens: json ? 1400 : 700 };
+function badanGemini(model, { sistem, riwayat, json }, pakaiThinking = true) {
+  const gen = { temperature: json ? 0.3 : 0.7, maxOutputTokens: json ? 2000 : 1000 };
   if (json) gen.responseMimeType = 'application/json';
-  if (/2\.5/.test(model)) gen.thinkingConfig = { thinkingBudget: 0 };
+  if (pakaiThinking && !/lite/.test(model)) gen.thinkingConfig = { thinkingBudget: 0 };
   return {
     systemInstruction: { parts: [{ text: sistem }] },
     contents: riwayat.map(r => ({ role: r.peran === 'model' ? 'model' : 'user', parts: [{ text: r.teks }] })),
@@ -36,11 +45,19 @@ function badanGemini(model, { sistem, riwayat, json }) {
   };
 }
 
-function ambilTeksGemini(data) {
+function teksGemini(data) {
   const c = data && data.candidates && data.candidates[0];
   const t = c && c.content && c.content.parts ? c.content.parts.map(p => p.text || '').join('') : '';
-  if (!t) throw new Error(c && c.finishReason === 'SAFETY' ? 'Pesan diblokir filter keamanan.' : 'Balasan AI kosong.');
+  if (!t && c && c.finishReason === 'SAFETY') throw new Error('Pesan diblokir filter keamanan.');
   return t;
+}
+
+async function mintaLangsung(kunci, model, permintaan, pakaiThinking) {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': kunci },
+    body: JSON.stringify(badanGemini(model, permintaan, pakaiThinking))
+  });
+  return { status: r.status, ok: r.ok, d: await r.json().catch(() => ({})) };
 }
 
 async function panggilAI(permintaan) {
@@ -48,18 +65,16 @@ async function panggilAI(permintaan) {
   if (c.sumber === 'lokal') throw new Error('LOKAL');
   if (c.sumber === 'pribadi') {
     if (!c.kunci) throw new Error('Kunci API Gemini pribadi belum diisi di Pengaturan AI.');
-    const daftar = [c.model, ...MODEL_CADANGAN].filter((m, i, a) => m && a.indexOf(m) === i);
-    let galat;
+    const daftar = [c.model, ...MODEL_DAFTAR.filter(m => m !== c.model)];
+    const catatan = [];
     for (const model of daftar) {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(c.kunci)}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(badanGemini(model, permintaan))
-      });
-      if (r.ok) return ambilTeksGemini(await r.json());
-      const d = await r.json().catch(() => ({}));
-      galat = new Error((d.error && d.error.message) || `Gemini membalas ${r.status}`);
-      if (![404, 429, 500, 503].includes(r.status)) throw galat;
+      let h = await mintaLangsung(c.kunci, model, permintaan, true);
+      if (h.status === 400 && !/API key/i.test((h.d.error && h.d.error.message) || '')) h = await mintaLangsung(c.kunci, model, permintaan, false);
+      if (h.ok) { const t = teksGemini(h.d); if (t) return t; catatan.push(`${model}: kosong`); continue; }
+      catatan.push(`${model}: ${h.status}`);
+      if (!COBA_LAGI.includes(h.status)) throw new Error((h.d.error && h.d.error.message) || `Gemini membalas ${h.status}`);
     }
-    throw galat;
+    throw new Error(`Semua model AI sedang sibuk atau kuota habis. Coba lagi sebentar. (${catatan.join('; ')})`);
   }
   // bawaan: lewat server
   if (location.protocol === 'file:') throw new Error('LOKAL');

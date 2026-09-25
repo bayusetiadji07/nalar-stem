@@ -928,7 +928,7 @@ function halPengaturan() {
       </fieldset>
       <label class="isian" id="baris-kunci" ${c.sumber === 'pribadi' ? '' : 'hidden'}><span>Kunci API Gemini</span><input id="aiKunci" type="password" value="${esc(c.kunci)}" placeholder="AIza..." autocomplete="off"></label>
       <label class="isian"><span>Model</span><select id="aiModel">
-        ${['gemini-2.5-flash', 'gemini-2.5-flash-lite'].map(x => `<option ${x === c.model ? 'selected' : ''}>${x}</option>`).join('')}
+        ${MODEL_PILIHAN.map(([x, n]) => `<option value="${x}" ${x === c.model ? 'selected' : ''}>${n}</option>`).join('')}
       </select></label>
       <div class="aksi-lembar"><button class="tombol utama">Simpan</button><button type="button" class="tombol" id="bTesAI">Uji koneksi</button><span id="hasilTes" class="redup"></span></div>
     </form>

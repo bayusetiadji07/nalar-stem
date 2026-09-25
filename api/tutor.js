@@ -1,10 +1,14 @@
 // Proxy AI Tutor → Google Gemini. Kunci disimpan di env GEMINI_API_KEY (Vercel / .env lokal).
-const MODEL_IZIN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+// Rantai cadangan: bila satu model sibuk (503), kuota habis (429), atau sudah ditutup (404),
+// otomatis mencoba model berikutnya.
+const MODEL_DAFTAR = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+const COBA_LAGI = [404, 429, 500, 503];
 
-function badanGemini(model, { sistem, riwayat, json }) {
-  const gen = { temperature: json ? 0.3 : 0.7, maxOutputTokens: json ? 1400 : 700 };
+function badanGemini(model, { sistem, riwayat, json }, pakaiThinking) {
+  const gen = { temperature: json ? 0.3 : 0.7, maxOutputTokens: json ? 2000 : 1000 };
   if (json) gen.responseMimeType = 'application/json';
-  if (/2\.5/.test(model)) gen.thinkingConfig = { thinkingBudget: 0 };
+  // Model "lite" menolak thinkingBudget 0; model lain dimatikan "berpikir"-nya agar cepat & tidak memakan token.
+  if (pakaiThinking && !/lite/.test(model)) gen.thinkingConfig = { thinkingBudget: 0 };
   return {
     systemInstruction: { parts: [{ text: sistem }] },
     contents: riwayat.map(r => ({ role: r.peran === 'model' ? 'model' : 'user', parts: [{ text: r.teks }] })),
@@ -18,6 +22,16 @@ function badanGemini(model, { sistem, riwayat, json }) {
   };
 }
 
+async function mintaGemini(kunci, model, permintaan, pakaiThinking) {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': kunci },
+    body: JSON.stringify(badanGemini(model, permintaan, pakaiThinking))
+  });
+  const d = await r.json().catch(() => ({}));
+  return { status: r.status, ok: r.ok, d };
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Gunakan POST' });
   const kunci = (process.env.GEMINI_API_KEY || '').replace(/^﻿/, '').trim();
@@ -29,33 +43,33 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Permintaan tidak valid.' });
   }
   const permintaan = {
-    sistem: b.sistem.slice(0, 12000),
+    sistem: b.sistem.slice(0, 16000),
     riwayat: b.riwayat.slice(-16).map(r => ({ peran: r.peran === 'model' ? 'model' : 'user', teks: String(r.teks || '').slice(0, 4000) })),
     json: !!b.json
   };
-  const pilihan = MODEL_IZIN.includes(b.model) ? b.model : MODEL_IZIN[0];
-  const daftar = [pilihan, ...MODEL_IZIN.filter(m => m !== pilihan)];
+  const pilihan = MODEL_DAFTAR.includes(b.model) ? b.model : MODEL_DAFTAR[0];
+  const daftar = [pilihan, ...MODEL_DAFTAR.filter(m => m !== pilihan)];
 
-  let pesanGalat = 'Gagal menghubungi Gemini.';
+  const galat = [];
   for (const model of daftar) {
     try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': kunci },
-        body: JSON.stringify(badanGemini(model, permintaan))
-      });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok) {
-        const c = d.candidates && d.candidates[0];
+      let h = await mintaGemini(kunci, model, permintaan, true);
+      // Pengaturan "thinking" ditolak model tertentu → ulangi sekali tanpa pengaturan itu.
+      if (h.status === 400 && !/API key/i.test((h.d.error && h.d.error.message) || '')) h = await mintaGemini(kunci, model, permintaan, false);
+      if (h.ok) {
+        const c = h.d.candidates && h.d.candidates[0];
         const teks = c && c.content && c.content.parts ? c.content.parts.map(p => p.text || '').join('') : '';
-        if (!teks) return res.status(502).json({ error: c && c.finishReason === 'SAFETY' ? 'Pesan diblokir filter keamanan.' : 'Balasan AI kosong.' });
-        return res.status(200).json({ teks, model });
+        if (teks) return res.status(200).json({ teks, model });
+        if (c && c.finishReason === 'SAFETY') return res.status(502).json({ error: 'Pesan diblokir filter keamanan.' });
+        galat.push(`${model}: balasan kosong`);
+        continue;
       }
-      pesanGalat = (d.error && d.error.message) || `Gemini membalas ${r.status}`;
-      if (![404, 429, 500, 503].includes(r.status)) break;
+      const pesan = (h.d.error && h.d.error.message) || `status ${h.status}`;
+      galat.push(`${model}: ${h.status}`);
+      if (!COBA_LAGI.includes(h.status)) return res.status(502).json({ error: pesan });
     } catch (e) {
-      pesanGalat = e.message;
+      galat.push(`${model}: ${e.message}`);
     }
   }
-  return res.status(502).json({ error: pesanGalat });
+  return res.status(503).json({ error: `Semua model AI sedang sibuk atau kuota habis. Coba lagi sebentar. (${galat.join('; ')})` });
 };
