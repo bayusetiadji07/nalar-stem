@@ -24,7 +24,7 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
 | Kunci pribadi | Browser memanggil Gemini langsung dengan kunci milik pengguna (disimpan di localStorage). |
 | Tutor lokal | Tanpa internet: petunjuk & penilaian berbasis aturan. Juga jadi cadangan otomatis bila AI gagal. |
 
-Model: `gemini-2.5-flash` (cadangan otomatis ke `2.5-flash-lite` / `2.0-flash` saat 429/503).
+Model: `gemini-2.5-flash` (cadangan otomatis ke `2.5-flash-lite` saat 429/503).
 
 ## Menjalankan
 ```bash

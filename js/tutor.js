@@ -7,7 +7,7 @@
    ========================================================= */
 
 const AI_KUNCI_SIMPAN = 'nalarstem-ai';
-const MODEL_CADANGAN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+const MODEL_CADANGAN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 function bacaAI() {
   let c = {};

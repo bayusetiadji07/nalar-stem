@@ -1,5 +1,5 @@
 // Proxy AI Tutor → Google Gemini. Kunci disimpan di env GEMINI_API_KEY (Vercel / .env lokal).
-const MODEL_IZIN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite', 'gemini-2.0-flash'];
+const MODEL_IZIN = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
 
 function badanGemini(model, { sistem, riwayat, json }) {
   const gen = { temperature: json ? 0.3 : 0.7, maxOutputTokens: json ? 1400 : 700 };
