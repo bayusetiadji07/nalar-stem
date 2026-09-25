@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NalarSTEM — Lab IPA STEM dengan AI Tutor</title>
+  <meta name="description" content="Aplikasi pembelajaran IPA berbasis STEM untuk melatih berpikir kritis murid SMP, dilengkapi AI Tutor Sokratik Kak Nala.">
+  <meta name="theme-color" content="#0d9488">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="atas">
+    <a href="#/" class="merek"><span class="logo">🧪</span><span>Nalar<b>STEM</b></span></a>
+    <button id="tombolMenu" class="tombol-menu" aria-label="Buka menu">☰</button>
+    <nav class="nav">
+      <a href="#/">Beranda</a>
+      <a href="#/misi">Misi STEM</a>
+      <a href="#/uji-nalar">Uji Nalar</a>
+      <a href="#/portofolio">Portofolio</a>
+      <a href="#/guru">Panduan Guru</a>
+      <a href="#/pengaturan">Pengaturan AI</a>
+    </nav>
+  </header>
+
+  <main id="app" class="wadah"></main>
+
+  <footer class="kaki">NalarSTEM · Media pembelajaran IPA berbasis STEM untuk melatih berpikir kritis · Simulasi memakai model yang disederhanakan</footer>
+
+  <!-- AI Tutor -->
+  <button id="fabTutor" class="fab-tutor" aria-label="Buka AI Tutor Kak Nala"><span class="avatar">🧑‍🔬</span><span class="fab-teks">Tanya Kak Nala</span></button>
+  <div id="latarTutor" class="latar-tutor"></div>
+  <aside class="laci-tutor" aria-label="AI Tutor Kak Nala">
+    <div class="laci-kepala">
+      <span class="avatar besar">🧑‍🔬</span>
+      <div><b>Kak Nala</b> <span id="tutorStatus" class="status-ai">AI Gemini</span><small id="tutorSub">Tanya apa saja tentang IPA</small></div>
+      <button id="bBersihChat" class="ikon-tombol" title="Hapus percakapan">🗑️</button>
+      <button id="tutupTutor" class="ikon-tombol" aria-label="Tutup">✕</button>
+    </div>
+    <div id="chatIsi" class="chat-isi"></div>
+    <div class="chip-cepat">
+      <button data-tingkat="1" data-pesan="Beri aku petunjuk kecil.">💡 Petunjuk kecil</button>
+      <button data-tingkat="3" data-pesan="Aku masih bingung. Beri petunjuk yang lebih jelas.">🔦 Petunjuk lebih jelas</button>
+      <button data-tingkat="2" data-pesan="Bantu aku membaca pola dari data ujiku.">📊 Baca dataku</button>
+      <button data-tingkat="1" data-pesan="Uji pemahamanku dengan satu pertanyaan.">🎯 Uji pemahamanku</button>
+    </div>
+    <form id="fChat" class="chat-form">
+      <textarea id="chatMasuk" rows="2" placeholder="Tulis pertanyaan atau pendapatmu…" maxlength="800"></textarea>
+      <button class="tombol utama" aria-label="Kirim">➤</button>
+    </form>
+  </aside>
+
+  <script src="js/data.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/tutor.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

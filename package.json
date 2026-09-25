@@ -1,0 +1,12 @@
+{
+  "name": "nalar-stem",
+  "version": "1.0.0",
+  "private": true,
+  "description": "NalarSTEM — pembelajaran IPA berbasis STEM untuk melatih berpikir kritis, dengan AI Tutor Kak Nala",
+  "scripts": {
+    "dev": "node server-lokal.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
