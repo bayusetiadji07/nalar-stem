@@ -262,6 +262,48 @@ const MISI = [
       { id: 'kondisi', label: 'Kondisi daun', satuan: '' },
       { id: 'biaya', label: 'Biaya listrik', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'roket',
+    judul: 'Roket Cuka & Soda Kue',
+    ikon: '🚀',
+    kelas: 'Kelas 7 · Perubahan Materi (Fisika & Kimia)',
+    warna: '#7c3aed',
+    ringkas: 'Manfaatkan gas hasil reaksi kimia cuka dan soda kue untuk meluncurkan roket botol tepat ke zona target.',
+    kisah: 'Pekan Sains sekolah mengadakan <b>lomba roket botol ramah lingkungan</b>. Bahan bakarnya hanya boleh <b>cuka dapur dan soda kue</b>. Roket harus mendarat di <b>zona target 15–25 m</b> — lebih jauh dari itu akan melewati pagar lapangan. Juri juga menilai <b>hemat bahan</b>: jangan sampai banyak cuka atau soda kue yang terbuang tanpa bereaksi.',
+    kriteria: [
+      'Roket mendarat di zona target 15–25 m',
+      'Pereaksi yang terbuang (tidak ikut bereaksi) paling banyak 20%',
+      'Busa tidak meluap sebelum botol tertutup'
+    ],
+    kendala: ['Biaya bahan paling banyak Rp 10.000 (cuka Rp 20/mL, soda kue Rp 100/g)', 'Hanya cuka dapur (5%) atau cuka yang diencerkan — cuka biang (25%) DILARANG karena korosif'],
+    konsep: `
+      <p><b>Perubahan fisika</b> tidak menghasilkan zat baru (misalnya es mencair, gula larut). <b>Perubahan kimia</b> menghasilkan zat baru yang sifatnya berbeda dari zat asal.</p>
+      <p>Saat cuka (mengandung asam asetat) bertemu soda kue (natrium bikarbonat), terjadi <b>reaksi kimia</b>:</p>
+      <p class="rumus">CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑</p>
+      <p><b>Ciri perubahan kimia</b> yang teramati: muncul gelembung gas, campuran terasa lebih dingin (reaksi menyerap kalor), dan terbentuk zat baru (natrium asetat, air, gas karbon dioksida).</p>
+      <p><b>Perbandingan massa:</b> 60 g asam asetat tepat bereaksi dengan 84 g soda kue. Cuka dapur 5% berarti 100 mL cuka mengandung ± 5 g asam asetat. Pereaksi yang habis lebih dulu disebut <b>pereaksi pembatas</b> — ia menentukan banyaknya gas yang terbentuk; kelebihan pereaksi lain terbuang percuma.</p>
+      <p><b>Gas CO₂</b> terkumpul di ruang kosong botol sehingga <b>tekanan</b> naik. Saat sumbat lepas, gas mendorong cairan keluar ke bawah dan roket terdorong ke atas (<b>Hukum III Newton: aksi–reaksi</b>). Terlalu sedikit cairan → sedikit "massa dorong"; terlalu banyak → ruang gas sempit.</p>
+      <p class="peringatan">⚠️ Keselamatan: pakai kacamata pelindung, luncurkan di lapangan terbuka, jangan mengarahkan roket ke orang, pakai botol plastik (bukan kaca), dan jangan memakai cuka biang.</p>`,
+    kataKunci: ['reaksi', 'kimia', 'perubahan kimia', 'zat baru', 'gas', 'karbon dioksida', 'co2', 'asam', 'pereaksi', 'pembatas', 'tekanan', 'gelembung', 'aksi', 'newton', 'bikarbonat'],
+    variabel: [
+      { id: 'cuka', label: 'Volume cuka', tipe: 'range', min: 50, max: 700, step: 25, satuan: 'mL', awal: 100 },
+      { id: 'soda', label: 'Massa soda kue', tipe: 'range', min: 5, max: 50, step: 1, satuan: 'g', awal: 10 },
+      { id: 'kadar', label: 'Jenis cuka', tipe: 'select', awal: 'dapur', opsi: [['dapur', 'Cuka dapur 5%'], ['encer', 'Cuka diencerkan 2,5%']] },
+      { id: 'bungkus', label: 'Cara memasukkan soda kue', tipe: 'select', awal: 'langsung', opsi: [['langsung', 'Dituang langsung'], ['tisu', 'Dibungkus tisu (reaksi tertunda)']] },
+      { id: 'botol', label: 'Ukuran botol', tipe: 'select', awal: '600', opsi: [['600', 'Botol 600 mL'], ['1500', 'Botol 1,5 L']] },
+      { id: 'sudut', label: 'Sudut peluncuran', tipe: 'range', min: 30, max: 90, step: 5, satuan: '°', awal: 90 }
+    ],
+    keluaran: [
+      { id: 'gas', label: 'Gas CO₂ terbentuk', satuan: 'L' },
+      { id: 'pembatas', label: 'Pereaksi pembatas', satuan: '' },
+      { id: 'sisa', label: 'Pereaksi terbuang', satuan: '' },
+      { id: 'tekanan', label: 'Tekanan saat lepas', satuan: 'bar' },
+      { id: 'kecepatan', label: 'Kecepatan awal', satuan: 'm/s' },
+      { id: 'tinggi', label: 'Tinggi maksimum', satuan: 'm' },
+      { id: 'jarak', label: 'Jarak mendarat', satuan: 'm' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -401,5 +443,16 @@ const UJI_NALAR = [
       'Benda pertama terapung karena volumenya paling kecil.'
     ],
     bahas: 'Massa jenis = massa/volume: 2,5 g/cm³ (tenggelam), 1 g/cm³ (melayang), 0,625 g/cm³ (terapung). Massa saja tidak menentukan.'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Saat cuka dicampur soda kue, muncul banyak gelembung dan gelas terasa dingin. Budi berpendapat: "Ini perubahan fisika, karena gelembungnya sama seperti air mendidih." Penilaian paling tepat terhadap pendapat Budi adalah …',
+    opsi: [
+      'Kurang tepat: gelembung pada air mendidih adalah uap air (zat yang sama), sedangkan gelembung di sini adalah gas CO₂ — zat baru hasil reaksi, jadi ini perubahan kimia.',
+      'Tepat, karena setiap gelembung pasti menandakan perubahan fisika.',
+      'Tepat, karena suhunya turun, bukan naik seperti air mendidih.',
+      'Kurang tepat, karena perubahan kimia selalu menghasilkan api.'
+    ],
+    bahas: 'Kemiripan tampilan (sama-sama bergelembung) belum tentu berarti proses yang sama. Kuncinya: apakah terbentuk zat baru? Gas CO₂ dan natrium asetat adalah zat baru. Perubahan kimia juga tidak harus disertai api atau kenaikan suhu.'
   }
 ];

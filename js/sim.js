@@ -525,7 +525,132 @@ function gambarHidroponik(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   5. ROKET CUKA & SODA KUE — perubahan kimia, pereaksi pembatas
+   --------------------------------------------------------- */
+const RT_28C = 24.7; // L·atm/mol pada ± 28 °C
+
+function hitungRoket(v) {
+  const cuka = +v.cuka, soda = +v.soda, botol = +v.botol;
+  const kadar = v.kadar === 'encer' ? 0.025 : 0.05;
+  const nAsam = cuka * kadar / 60;   // massa jenis cuka ≈ 1 g/mL, Mr asam asetat 60
+  const nSoda = soda / 84;           // Mr NaHCO3 84
+  const n = Math.min(nAsam, nSoda);
+  let pembatas, sisa, terbuang;
+  if (Math.abs(nAsam - nSoda) / Math.max(nAsam, nSoda) < 0.02) { pembatas = 'Pas (seimbang)'; sisa = 'Hampir tidak ada'; terbuang = 0; }
+  else if (nSoda > nAsam) {
+    const g = (nSoda - n) * 84; terbuang = g / soda * 100;
+    pembatas = 'Cuka'; sisa = `Soda kue ${fx(g)} g (${Math.round(terbuang)}%)`;
+  } else {
+    const ml = (nAsam - n) * 60 / kadar; terbuang = ml / cuka * 100;
+    pembatas = 'Soda kue'; sisa = `Cuka ${Math.round(ml)} mL (${Math.round(terbuang)}%)`;
+  }
+  const isi = cuka / botol;
+  const meluap = isi > 0.45;
+  const nEfektif = n * (v.bungkus === 'tisu' ? 0.9 : 0.6) * (meluap ? 0.5 : 1);
+  const ruangGas = Math.max(0.02, (botol - cuka) / 1000); // L
+  const pTolok = Math.max(0, nEfektif * RT_28C / ruangGas - 1) * 1.013; // bar
+  const pLepas = Math.min(pTolok, 3.5); // sumbat terlepas sendiri ± 3,5 bar
+  const faktorIsi = Math.min(1, isi / 0.25) * (isi > 0.5 ? 0.6 : 1);
+  const energi = 0.05 * pLepas * 1e5 * (ruangGas / 1000) * faktorIsi; // J (efisiensi ± 5%)
+  const massa = (botol === 1500 ? 0.045 : 0.025) + 0.05;
+  const v0 = Math.sqrt(2 * energi / massa);
+  const th = +v.sudut * Math.PI / 180;
+  const tinggi = v0 * v0 * Math.sin(th) ** 2 / (2 * 9.8) * 0.6;   // 0,6 = hambatan udara
+  const jarak = Math.max(0, v0 * v0 * Math.sin(2 * th) / 9.8 * 0.6);
+  return {
+    gas: bulat(n * RT_28C, 2), pembatas, sisa, tekanan: bulat(pLepas, 2), kecepatan: bulat(v0, 1),
+    tinggi: bulat(tinggi, 1), jarak: bulat(jarak, 1), biaya: Math.round((cuka * 20 + soda * 100) / 100) * 100,
+    _terbuang: terbuang, _meluap: meluap, _isi: isi
+  };
+}
+
+function kriteriaRoket(v, h) {
+  return [
+    { teks: 'Mendarat di zona 15–25 m', lulus: h.jarak >= 15 && h.jarak <= 25, nilai: `${h.jarak} m` },
+    { teks: 'Pereaksi terbuang ≤ 20%', lulus: h._terbuang <= 20, nilai: h.sisa },
+    { teks: 'Busa tidak meluap', lulus: !h._meluap, nilai: `botol terisi ${Math.round(h._isi * 100)}%` },
+    { teks: 'Biaya ≤ Rp 10.000', lulus: h.biaya <= 10000, nilai: rp(h.biaya) }
+  ];
+}
+
+function gambarBentukRoket(ctx, x, y, rot, skala = 1) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(skala, skala);
+  ctx.fillStyle = '#7c3aed';
+  ctx.beginPath(); ctx.moveTo(-7, 10); ctx.lineTo(-13, 18); ctx.lineTo(-7, 16); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(7, 10); ctx.lineTo(13, 18); ctx.lineTo(7, 16); ctx.fill();
+  ctx.fillStyle = 'rgba(219,234,254,.95)'; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.2;
+  kotakBulat(ctx, -7, -14, 14, 32, 4); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#dc2626'; ctx.beginPath(); ctx.moveTo(-7, -14); ctx.lineTo(0, -26); ctx.lineTo(7, -14); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function gambarRoket(ctx, W, H, v, h, p) {
+  ctx.fillStyle = '#eef2ff'; ctx.fillRect(0, 0, W, H);
+  const tanah = H - 34, x0 = 34;
+  const s = Math.min((W - x0 - 16) / 32, (tanah - 40) / Math.max(10, h.tinggi * 1.15));
+  const X = m => x0 + m * s, Y = m => tanah - m * s;
+  ctx.fillStyle = '#86efac'; ctx.fillRect(0, tanah, W, H - tanah);
+  // zona target & pagar
+  ctx.fillStyle = 'rgba(22,163,74,.22)'; ctx.fillRect(X(15), tanah - 6, X(25) - X(15), 10);
+  label(ctx, 'Zona target', (X(15) + X(25)) / 2, tanah - 16, { rata: 'center', ukuran: 11, warna: '#15803d' });
+  ctx.strokeStyle = '#78716c'; ctx.lineWidth = 2;
+  for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(X(27) + k * 5, tanah); ctx.lineTo(X(27) + k * 5, tanah - 22); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(X(27) - 2, tanah - 16); ctx.lineTo(X(27) + 17, tanah - 16); ctx.stroke();
+  ctx.fillStyle = '#166534';
+  for (let m = 0; m <= 30; m += 5) {
+    ctx.fillRect(X(m) - 0.5, tanah, 1, 6);
+    label(ctx, `${m} m`, X(m), tanah + 16, { rata: 'center', ukuran: 10, warna: '#14532d' });
+  }
+  const th = +v.sudut * Math.PI / 180;
+  // peluncur
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x0 - 12, tanah); ctx.lineTo(x0, tanah - 12); ctx.lineTo(x0 + 12, tanah); ctx.stroke();
+  const fase = 0.3;
+  if (p < fase) {
+    const q = p / fase;
+    const rot = Math.PI / 2 - th;
+    gambarBentukRoket(ctx, x0, tanah - 26, rot);
+    // cuka di dalam botol & gelembung reaksi
+    ctx.save(); ctx.translate(x0, tanah - 26); ctx.rotate(rot);
+    ctx.fillStyle = 'rgba(250,204,21,.55)';
+    const tinggiCair = Math.min(30, 32 * h._isi);
+    ctx.fillRect(-6, 17 - tinggiCair, 12, tinggiCair);
+    ctx.fillStyle = 'rgba(255,255,255,.95)';
+    for (let i = 0; i < 6; i++) { const bx = -4 + ((i * 37) % 9), by = 16 - ((q * 60 + i * 9) % Math.max(4, tinggiCair)); ctx.beginPath(); ctx.arc(bx, by, 1.4, 0, 7); ctx.fill(); }
+    ctx.restore();
+    if (h._meluap && q > 0.3) {
+      ctx.fillStyle = 'rgba(255,255,255,.9)';
+      for (let i = 0; i < 8; i++) { ctx.beginPath(); ctx.arc(x0 - 10 + i * 3, tanah - 50 - Math.sin(i) * 4 - q * 6, 4, 0, 7); ctx.fill(); }
+      label(ctx, 'Busa meluap! Gas banyak terbuang', x0 + 20, tanah - 64, { ukuran: 11, latar: '#fef3c7', warna: '#92400e' });
+    }
+    label(ctx, `Tekanan ${fx(h.tekanan * q)} bar`, x0 + 22, tanah - 36, { ukuran: 12, latar: 'rgba(255,255,255,.95)', warna: '#6d28d9', tebal: true });
+    return;
+  }
+  const u = Math.min(1, (p - fase) / (1 - fase));
+  const pos = t => ({ x: h.jarak * t, y: 4 * h.tinggi * t * (1 - t) });
+  // jejak lintasan
+  ctx.strokeStyle = 'rgba(124,58,237,.45)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2;
+  ctx.beginPath();
+  for (let t = 0; t <= u; t += 0.01) { const q = pos(t); ctx.lineTo(X(q.x), Y(q.y)); }
+  ctx.stroke(); ctx.setLineDash([]);
+  const q = pos(u);
+  const vx = h.jarak * s, vy = -4 * h.tinggi * (1 - 2 * u) * s;
+  const rot = u >= 1 ? Math.PI / 2 + (h.jarak > 0.5 ? 0.9 : Math.PI / 2) : Math.atan2(vy, vx || 0.0001) + Math.PI / 2;
+  gambarBentukRoket(ctx, X(q.x), Math.min(Y(q.y) - 12, tanah - 12), rot);
+  if (u < 0.15 && h.tinggi > 0.3) { // semburan cairan
+    ctx.fillStyle = 'rgba(250,204,21,.7)';
+    for (let i = 0; i < 6; i++) { ctx.beginPath(); ctx.arc(x0 - Math.cos(th) * (6 + i * 5), tanah - 14 + Math.sin(th) * (6 + i * 5), 2.5, 0, 7); ctx.fill(); }
+  }
+  if (p >= 1) {
+    const kena = h.jarak >= 15 && h.jarak <= 25;
+    const teks = h.jarak > 25 ? `Melewati pagar! (${fx(h.jarak)} m)` : `Mendarat di ${fx(h.jarak)} m · tinggi maks ${fx(h.tinggi)} m`;
+    label(ctx, teks, W / 2, 22, { rata: 'center', tebal: true, ukuran: 13, warna: '#fff', latar: kena ? '#15803d' : '#b45309' });
+  }
+}
+
 const SIM = {
+  roket: { hitung: hitungRoket, kriteria: kriteriaRoket, gambar: gambarRoket, sumbuX: ['cuka', 'soda', 'sudut'], sumbuY: ['jarak', 'tinggi', 'tekanan', 'gas'] },
   perahu: { hitung: v => hitungPerahu(v), kriteria: kriteriaPerahu, gambar: gambarPerahu, sumbuX: ['panjang', 'lebar', 'tinggi', 'muatan'], sumbuY: ['celup', 'bebas', 'kapasitas', 'biaya'] },
   penjernih: { hitung: hitungPenjernih, kriteria: kriteriaPenjernih, gambar: gambarPenjernih, sumbuX: ['tebalPasir', 'tebalArang', 'ulang'], sumbuY: ['keruh', 'bau', 'debit', 'biaya'] },
   pendingin: { hitung: hitungPendingin, kriteria: kriteriaPendingin, gambar: gambarPendingin, sumbuX: ['tebal', 'es', 'suhu'], sumbuY: ['tahan', 'laju', 'massaKotak', 'biaya'] },

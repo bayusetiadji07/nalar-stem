@@ -98,7 +98,7 @@ function halBeranda() {
     <div class="hero-teks">
       <span class="pil">Pembelajaran IPA berbasis STEM · Fase D</span>
       <h1>Berpikir kritis seperti <em>ilmuwan</em> dan <em>insinyur</em>.</h1>
-      <p>Selesaikan masalah nyata di sekitarmu — banjir rob, air keruh, ikan cepat busuk, kebun sekolah — dengan merancang, menguji di laboratorium maya, dan menalar dari data. <b>Kak Nala</b>, AI Tutor-mu, tidak memberi jawaban: ia menuntunmu lewat pertanyaan.</p>
+      <p>Selesaikan masalah nyata di sekitarmu — banjir rob, air keruh, ikan cepat busuk, kebun sekolah, lomba roket — dengan merancang, menguji di laboratorium maya, dan menalar dari data. <b>Kak Nala</b>, AI Tutor-mu, tidak memberi jawaban: ia menuntunmu lewat pertanyaan.</p>
       <div class="hero-aksi">
         <a class="tombol utama" href="#/misi">Mulai Misi STEM →</a>
         <a class="tombol" href="#/uji-nalar">Coba Uji Nalar</a>
@@ -715,10 +715,10 @@ function halGuru() {
       <li><b>Prediksi sebelum menguji</b> — murid membandingkan dugaan dengan hasil (konflik kognitif).</li>
       <li><b>Kriteria vs kendala yang saling tarik-menarik</b> — tidak ada satu jawaban tunggal; murid harus menimbang (<i>trade-off</i>).</li>
       <li><b>Grafik data</b> — murid memilih sumbu sendiri untuk menemukan pola.</li>
-      <li><b>Uji Nalar</b> — 12 soal literasi sains: hoaks, korelasi vs kausalitas, variabel, CER.</li>
+      <li><b>Uji Nalar</b> — ${UJI_NALAR.length} soal literasi sains: hoaks, korelasi vs kausalitas, variabel, CER.</li>
     </ul>
     <h3>Catatan model simulasi</h3>
-    <p>Simulasi memakai model fisika/biologi yang <b>disederhanakan</b> agar pola teramati jelas (mis. faktor pembatas Blackman, konduksi dinding datar, efisiensi penyaringan per lapisan). Diskusikan dengan murid bahwa model selalu punya keterbatasan — ini sendiri merupakan latihan berpikir kritis.</p>
+    <p>Simulasi memakai model fisika/biologi yang <b>disederhanakan</b> agar pola teramati jelas (mis. faktor pembatas Blackman, konduksi dinding datar, efisiensi penyaringan per lapisan, lintasan roket dengan faktor hambatan udara tetap). Diskusikan dengan murid bahwa model selalu punya keterbatasan — ini sendiri merupakan latihan berpikir kritis.</p>
     <h3>Pengumpulan hasil</h3>
     <p>Data tersimpan di perangkat masing-masing murid. Minta murid membuka <b>Portofolio</b> → <b>Cetak / simpan PDF</b>, atau <b>Salin ringkasan</b> lalu kirim ke guru.</p>
   </div>`;
