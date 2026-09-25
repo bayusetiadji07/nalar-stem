@@ -42,6 +42,48 @@ function label(ctx, teks, x, y, opsi = {}) {
   ctx.fillText(teks, x, y);
 }
 
+/* ---------- Aset gambar ilustrasi (assets/img/sim) ----------
+   Dimuat saat pertama diminta. Selama belum siap / gagal dimuat, fungsi
+   mengembalikan null dan simulasi memakai gambar kode seperti biasa. */
+const ASET_SIM = {};
+const BERKAS_ASET = {
+  'bg-perahu': 'jpg', 'bg-penjernih': 'jpg', 'bg-pendingin': 'jpg', 'bg-hidroponik': 'jpg', 'bg-lapangan': 'jpg', 'bg-jembatan': 'jpg', 'bg-angin': 'jpg'
+};
+function aset(nama) {
+  let a = ASET_SIM[nama];
+  if (!a) {
+    if (typeof Image === 'undefined') return null;
+    const img = new Image();
+    a = ASET_SIM[nama] = { img, siap: false };
+    img.onload = () => { a.siap = true; if (typeof window !== 'undefined') window.dispatchEvent(new Event('aset-sim')); };
+    img.src = `assets/img/sim/${nama}.${BERKAS_ASET[nama] || 'png'}`;
+  }
+  return a.siap ? a.img : null;
+}
+// Latar menutupi kanvas; titik gambar pada ketinggian fy (0..1) diletakkan di y kanvas = ty.
+function latar(ctx, W, H, nama, fy = 0.5, ty = H / 2) {
+  const img = aset(nama);
+  if (!img) return false;
+  const iw = img.naturalWidth, ih = img.naturalHeight;
+  let s = Math.max(W / iw, H / ih);
+  if (fy > 0) s = Math.max(s, ty / (fy * ih));
+  if (fy < 1) s = Math.max(s, (H - ty) / ((1 - fy) * ih));
+  ctx.drawImage(img, (W - iw * s) / 2, ty - fy * ih * s, iw * s, ih * s);
+  return true;
+}
+// Gambar benda dengan titik jangkar (ax, ay) pada posisi (x, y); lebar w (tinggi mengikuti rasio).
+function benda(ctx, nama, x, y, w, opsi = {}) {
+  const img = aset(nama);
+  if (!img) return false;
+  const h = w * img.naturalHeight / img.naturalWidth;
+  ctx.save(); ctx.translate(x, y);
+  if (opsi.rot) ctx.rotate(opsi.rot);
+  if (opsi.alpha !== undefined) ctx.globalAlpha = opsi.alpha;
+  ctx.drawImage(img, -w * (opsi.ax ?? 0.5), -h * (opsi.ay ?? 0.5), w, h);
+  ctx.restore();
+  return true;
+}
+
 /* ---------------------------------------------------------
    1. PERAHU — Hukum Archimedes
    --------------------------------------------------------- */
@@ -96,10 +138,15 @@ function gambarPerahu(ctx, W, H, v, h, p) {
   const b = BAHAN_PERAHU[v.bahan];
   const airY = H * 0.5;
   // langit & air
-  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, W, airY);
   const laut = v.air === 'laut';
-  ctx.fillStyle = laut ? '#0e7490' : '#60a5fa'; ctx.globalAlpha = 0.85;
-  ctx.fillRect(0, airY, W, H - airY); ctx.globalAlpha = 1;
+  const adaLatar = latar(ctx, W, H, 'bg-perahu', 0.5, airY);
+  if (adaLatar) {
+    if (laut) { ctx.fillStyle = 'rgba(14,116,144,.28)'; ctx.fillRect(0, airY, W, H - airY); } // air laut lebih pekat
+  } else {
+    ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, W, airY);
+    ctx.fillStyle = laut ? '#0e7490' : '#60a5fa'; ctx.globalAlpha = 0.85;
+    ctx.fillRect(0, airY, W, H - airY); ctx.globalAlpha = 1;
+  }
   // ombak
   ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 2;
   for (let r = 0; r < 3; r++) {
@@ -138,14 +185,16 @@ function gambarPerahu(ctx, W, H, v, h, p) {
   }
   // muatan: karung
   const n = Math.ceil(+v.muatan);
-  const kw = Math.min(26, (bw - 10) / Math.max(1, Math.min(n, 5)));
+  const kw = Math.min(aset('karung') ? 34 : 26, (bw - 10) / Math.max(1, Math.min(n, 5)));
   for (let i = 0; i < n; i++) {
     const baris = Math.floor(i / 5), kol = i % 5;
     const perBaris = Math.min(5, n - baris * 5);
     const x0 = -perBaris * kw / 2 + kol * kw;
     const y0 = -bh - (baris + 1) * kw * 0.8 + 2;
-    ctx.fillStyle = '#d6b27c'; kotakBulat(ctx, x0 + 1, y0, kw - 2, kw * 0.8, 5); ctx.fill();
-    ctx.strokeStyle = '#8b6b3d'; ctx.lineWidth = 1.2; ctx.stroke();
+    if (!benda(ctx, 'karung', x0 + kw / 2, y0 + kw * 0.8 + 1, kw * 1.08, { ay: 1 })) {
+      ctx.fillStyle = '#d6b27c'; kotakBulat(ctx, x0 + 1, y0, kw - 2, kw * 0.8, 5); ctx.fill();
+      ctx.strokeStyle = '#8b6b3d'; ctx.lineWidth = 1.2; ctx.stroke();
+    }
   }
   if (patah && p > 0.5) {
     ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 3;
@@ -153,7 +202,7 @@ function gambarPerahu(ctx, W, H, v, h, p) {
   }
   ctx.restore();
   // air depan (menutupi bagian tercelup)
-  ctx.fillStyle = laut ? 'rgba(14,116,144,.35)' : 'rgba(96,165,250,.35)';
+  ctx.fillStyle = adaLatar ? 'rgba(13,148,136,.22)' : laut ? 'rgba(14,116,144,.35)' : 'rgba(96,165,250,.35)';
   ctx.fillRect(0, airY, W, H - airY);
   ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(0, airY); ctx.lineTo(W, airY); ctx.stroke();
@@ -241,10 +290,12 @@ function warnaKeruh(T) {
 }
 
 function gambarPenjernih(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
+  const adaLatar = latar(ctx, W, H, 'bg-penjernih', 0.85, H - 8); // permukaan meja = dasar gelas
+  if (!adaLatar) { ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H); }
   const lapis = h._lapis;
   const bx = W / 2 - 55, bw = 110, atas = 58, tinggiBotol = H - 150;
   const skala = tinggiBotol / 34;
+  if (adaLatar) { ctx.fillStyle = 'rgba(255,255,255,.55)'; kotakBulat(ctx, bx, atas - 8, bw, tinggiBotol + 10, 10); ctx.fill(); }
   // air kotor di atas
   ctx.fillStyle = warnaKeruh(150);
   const turun = p < 1 ? 1 - p * 0.7 : 0.3;
@@ -265,7 +316,7 @@ function gambarPenjernih(ctx, W, H, v, h, p) {
       if (m === 'ijuk') { ctx.fillRect(rx - 5, ry, 10, 1); }
       else { ctx.beginPath(); ctx.arc(rx, ry, r, 0, 7); ctx.fill(); }
     }
-    label(ctx, `${M.nama} (${tebalLapis(m, v)} cm)`, bx + bw + 14, y + t / 2, { ukuran: 12, warna: '#334155' });
+    label(ctx, `${M.nama} (${tebalLapis(m, v)} cm)`, bx + bw + 14, y + t / 2, { ukuran: 12, warna: '#334155', latar: adaLatar ? 'rgba(255,255,255,.88)' : undefined });
     ctx.strokeStyle = '#cbd5e1'; ctx.beginPath(); ctx.moveTo(bx + bw, y + t / 2); ctx.lineTo(bx + bw + 10, y + t / 2); ctx.stroke();
     y += t;
   });
@@ -286,6 +337,7 @@ function gambarPenjernih(ctx, W, H, v, h, p) {
   }
   // gelas hasil
   const isi = mulus(jepit((p - 0.15) / 0.85, 0, 1));
+  if (adaLatar) { ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.fillRect(W / 2 - 34, gy, 68, 62); }
   ctx.fillStyle = warnaKeruh(h.keruh);
   ctx.fillRect(W / 2 - 34, gy + 60 - 56 * isi, 68, 56 * isi);
   ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2.5;
@@ -299,7 +351,7 @@ function gambarPenjernih(ctx, W, H, v, h, p) {
       ctx.stroke();
     }
   }
-  label(ctx, 'Air sungai 150 NTU', bx - 12, atas + 12, { rata: 'right', ukuran: 12, warna: '#78350f' });
+  label(ctx, 'Air sungai 150 NTU', bx - 12, atas + 12, { rata: 'right', ukuran: 12, warna: '#78350f', latar: adaLatar ? 'rgba(255,255,255,.88)' : undefined });
   if (p >= 1) {
     label(ctx, `${String(h.keruh).replace('.', ',')} NTU · ${h.debit} mL/menit`, W / 2 - 50, gy + 30, { rata: 'right', ukuran: 12, latar: '#fff', warna: '#0f172a' });
     if (h._bocor) label(ctx, h._bocor === 20 ? 'Butir pasir ikut keluar!' : 'Serbuk arang ikut keluar!', W / 2 + 50, gy + 30, { ukuran: 12, latar: '#fee2e2', warna: '#b91c1c' });
@@ -346,15 +398,18 @@ function kriteriaPendingin(v, h) {
 }
 
 function gambarPendingin(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#fff7ed'; ctx.fillRect(0, 0, W, H);
+  const adaLatar = latar(ctx, W, H, 'bg-pendingin', 0.8, H - 57); // lantai dek = dasar kotak
+  if (!adaLatar) { ctx.fillStyle = '#fff7ed'; ctx.fillRect(0, 0, W, H); }
   const b = BAHAN_DINGIN[v.bahan];
   const jamSim = Math.min(24, h.tahan * 1.15) * p;
   const sisa = Math.max(0, 1 - jamSim / h.tahan);
-  // matahari
+  // matahari (sudah ada di gambar latar)
+  if (!adaLatar) {
   ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(W - 48, 42, 20, 0, 7); ctx.fill();
   ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
   for (let i = 0; i < 8; i++) { const a = i * Math.PI / 4; ctx.beginPath(); ctx.moveTo(W - 48 + Math.cos(a) * 26, 42 + Math.sin(a) * 26); ctx.lineTo(W - 48 + Math.cos(a) * 34, 42 + Math.sin(a) * 34); ctx.stroke(); }
-  label(ctx, `Udara ${v.suhu} °C`, W - 48, 86, { rata: 'center', ukuran: 12, warna: '#9a3412' });
+  }
+  label(ctx, `Udara ${v.suhu} °C`, W - 48, 86, { rata: 'center', ukuran: 12, warna: '#9a3412', latar: adaLatar ? 'rgba(255,255,255,.9)' : undefined });
   // kotak
   const lebar = Math.min(W * 0.44, 260), tinggi = 150;
   const x = W * 0.3 - lebar / 2 + 30, y = H - tinggi - 60;
@@ -376,16 +431,20 @@ function gambarPendingin(ctx, W, H, v, h, p) {
   }
   // es & ikan
   const dalamX = x + tb + 8, dalamW = lebar - 2 * tb - 16, dasar = y + tinggi - tb - 6;
-  ctx.fillStyle = '#94a3b8';
-  ctx.beginPath(); ctx.ellipse(dalamX + dalamW * 0.5, dasar - 12, dalamW * 0.28, 9, 0, 0, 7); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(dalamX + dalamW * 0.78, dasar - 12); ctx.lineTo(dalamX + dalamW * 0.9, dasar - 20); ctx.lineTo(dalamX + dalamW * 0.9, dasar - 4); ctx.fill();
+  if (!benda(ctx, 'ikan', dalamX + dalamW * 0.5, dasar - 2, dalamW * 0.7, { ay: 1 })) {
+    ctx.fillStyle = '#94a3b8';
+    ctx.beginPath(); ctx.ellipse(dalamX + dalamW * 0.5, dasar - 12, dalamW * 0.28, 9, 0, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(dalamX + dalamW * 0.78, dasar - 12); ctx.lineTo(dalamX + dalamW * 0.9, dasar - 20); ctx.lineTo(dalamX + dalamW * 0.9, dasar - 4); ctx.fill();
+  }
   const nEs = Math.ceil(+v.es * 2);
   for (let i = 0; i < nEs; i++) {
     const s = 16 * Math.sqrt(sisa);
     if (s < 1) break;
     const ex = dalamX + (i % 6) * (dalamW / 6) + 4, ey = dasar - 30 - Math.floor(i / 6) * 18 - s;
-    ctx.fillStyle = 'rgba(186,230,253,.95)'; kotakBulat(ctx, ex, ey + (16 - s), s, s, 3); ctx.fill();
-    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1; ctx.stroke();
+    if (!benda(ctx, 'es-batu', ex + s / 2, ey + 16, s * 1.2, { ay: 1 })) {
+      ctx.fillStyle = 'rgba(186,230,253,.95)'; kotakBulat(ctx, ex, ey + (16 - s), s, s, 3); ctx.fill();
+      ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 1; ctx.stroke();
+    }
   }
   // genangan air lelehan
   ctx.fillStyle = 'rgba(56,189,248,.35)';
@@ -397,6 +456,7 @@ function gambarPendingin(ctx, W, H, v, h, p) {
   if (p > 0) label(ctx, `Kalor masuk ${fx(h.laju)} W`, x + lebar / 2, y - 34 - celah, { rata: 'center', ukuran: 12, latar: '#fee2e2', warna: '#b91c1c' });
   // grafik massa es vs waktu
   const gx = W * 0.62, gy = 120, gw = W * 0.34, gh = H - 200;
+  if (adaLatar) { ctx.fillStyle = 'rgba(255,255,255,.88)'; kotakBulat(ctx, gx - 12, gy - 26, gw + 24, gh + 70, 12); ctx.fill(); }
   ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1;
   ctx.strokeRect(gx, gy, gw, gh);
   const x12 = gx + gw * 12 / 24;
@@ -461,7 +521,8 @@ function kriteriaHidroponik(v, h) {
 }
 
 function gambarHidroponik(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#f0fdf4'; ctx.fillRect(0, 0, W, H);
+  const adaLatar = latar(ctx, W, H, 'bg-hidroponik', 0.8, H - 30); // permukaan meja = dasar tangki
+  if (!adaLatar) { ctx.fillStyle = '#f0fdf4'; ctx.fillRect(0, 0, W, H); }
   const warnaCahaya = { merahbiru: 'rgba(217,70,239,', putih: 'rgba(253,224,71,', hijau: 'rgba(74,222,128,' }[v.warnaLed];
   const I = +v.cahaya / 100;
   const cx = W * 0.36;
@@ -480,8 +541,19 @@ function gambarHidroponik(ctx, W, H, v, h, p) {
   const skala = jepit(Math.cbrt(Math.min(m, 350)) / Math.cbrt(350), 0.12, 1);
   const layu = h.kondisi.startsWith('Layu') || h.kondisi.startsWith('Kuning');
   const warnaDaun = layu ? '#a3a33a' : h.kondisi.startsWith('Pucat') ? '#86efac' : '#16a34a';
+  const tahap = Math.min(5, Math.max(1, Math.ceil(skala * 5)));
+  const namaSawi = layu ? 'sawi-layu' : `sawi-${tahap}`;
+  const pucat = h.kondisi.startsWith('Pucat') || h.kondisi.startsWith('Kuning');
   [-sp * 0.55, 0, sp * 0.55].forEach((dx, i) => {
     const px = cx + dx, py = tY;
+    if (aset(namaSawi)) {
+      ctx.save();
+      if (pucat) ctx.filter = 'saturate(0.45) brightness(1.12)';
+      if (layu) benda(ctx, 'sawi-layu', px, py + 6, sp * (0.35 + 0.45 * skala), { ay: 0.95 });
+      else benda(ctx, namaSawi, px, py - 4, sp * 0.95, { ay: 0.62 }); // bibir pot di tutup tangki
+      ctx.restore();
+      return;
+    }
     ctx.fillStyle = '#e2e8f0'; ctx.fillRect(px - 14, py - 8, 28, 12);
     ctx.strokeStyle = '#e7e5e4'; ctx.lineWidth = 1.5;
     for (let a = 0; a < 5; a++) { ctx.beginPath(); ctx.moveTo(px - 6 + a * 3, py + 4); ctx.quadraticCurveTo(px - 10 + a * 5, py + 30, px - 4 + a * 2, py + 48 * skala + 8); ctx.stroke(); }
@@ -509,6 +581,7 @@ function gambarHidroponik(ctx, W, H, v, h, p) {
   }
   // panel faktor
   const gx = W * 0.68, gw = W * 0.28;
+  if (adaLatar) { ctx.fillStyle = 'rgba(255,255,255,.88)'; kotakBulat(ctx, gx - 10, 8, gw + 20, 5 * 34 + 70, 12); ctx.fill(); }
   label(ctx, 'Faktor (1 = optimal)', gx, 22, { ukuran: 12, tebal: true, warna: '#14532d' });
   Object.entries(h._f).forEach(([nama, nilai], i) => {
     const y = 48 + i * 34;
@@ -518,7 +591,7 @@ function gambarHidroponik(ctx, W, H, v, h, p) {
     kotakBulat(ctx, gx, y + 9, gw * jepit(nilai, 0.02, 1.1) / 1.1, 10, 5); ctx.fill();
   });
   label(ctx, `Pembatas: ${h.pembatas}`, gx, 48 + 5 * 34 + 6, { ukuran: 12, latar: '#fee2e2', warna: '#b91c1c' });
-  label(ctx, `Hari ke-${hari} · ${Math.round(Math.min(m, 350))} g`, cx, H - 14, { rata: 'center', ukuran: 13, tebal: true, warna: '#14532d' });
+  label(ctx, `Hari ke-${hari} · ${Math.round(Math.min(m, 350))} g`, cx, H - 14, { rata: 'center', ukuran: 13, tebal: true, warna: '#14532d', latar: adaLatar ? 'rgba(255,255,255,.9)' : undefined });
   if (p >= 1) {
     const ok = h.massa >= 100 && h.kondisi === 'Sehat';
     label(ctx, ok ? 'SIAP PANEN!' : 'Belum memenuhi target', cx, 50, { rata: 'center', ukuran: 13, tebal: true, warna: '#fff', latar: ok ? '#15803d' : '#b45309' });
@@ -574,7 +647,9 @@ function kriteriaRoket(v, h) {
   ];
 }
 
-function gambarBentukRoket(ctx, x, y, rot, skala = 1) {
+function gambarBentukRoket(ctx, x, y, rot, skala = 1, nama = 'roket-cuka') {
+  // gambar AI bila tersedia (ujung atas di y-26, sirip di y+18, sama dengan bentuk kode)
+  if (benda(ctx, nama, x, y, 28 * skala, { rot, ay: 0.58 })) return;
   ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(skala, skala);
   ctx.fillStyle = '#7c3aed';
   ctx.beginPath(); ctx.moveTo(-7, 10); ctx.lineTo(-13, 18); ctx.lineTo(-7, 16); ctx.fill();
@@ -586,11 +661,12 @@ function gambarBentukRoket(ctx, x, y, rot, skala = 1) {
 }
 
 function gambarRoket(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#eef2ff'; ctx.fillRect(0, 0, W, H);
   const tanah = H - 34, x0 = 34;
+  const adaLatar = latar(ctx, W, H, 'bg-lapangan', 0.9, tanah);
+  if (!adaLatar) { ctx.fillStyle = '#eef2ff'; ctx.fillRect(0, 0, W, H); }
   const s = Math.min((W - x0 - 16) / 32, (tanah - 40) / Math.max(10, h.tinggi * 1.15));
   const X = m => x0 + m * s, Y = m => tanah - m * s;
-  ctx.fillStyle = '#86efac'; ctx.fillRect(0, tanah, W, H - tanah);
+  ctx.fillStyle = adaLatar ? 'rgba(134,239,172,.55)' : '#86efac'; ctx.fillRect(0, tanah, W, H - tanah);
   // zona target & pagar
   ctx.fillStyle = 'rgba(22,163,74,.22)'; ctx.fillRect(X(15), tanah - 6, X(25) - X(15), 10);
   label(ctx, 'Zona target', (X(15) + X(25)) / 2, tanah - 16, { rata: 'center', ukuran: 11, warna: '#15803d' });
@@ -713,11 +789,12 @@ function kriteriaRoketAir(v, h) {
 }
 
 function gambarRoketAir(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, W, H);
   const tanah = H - 34, x0 = 30, jMaks = 70;
+  const adaLatar = latar(ctx, W, H, 'bg-lapangan', 0.9, tanah);
+  if (!adaLatar) { ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, W, H); }
   const s = Math.min((W - x0 - 14) / jMaks, (tanah - 40) / Math.max(12, h.tinggi * 1.15));
   const X = m => x0 + m * s, Y = m => tanah - m * s;
-  ctx.fillStyle = '#86efac'; ctx.fillRect(0, tanah, W, H - tanah);
+  ctx.fillStyle = adaLatar ? 'rgba(134,239,172,.55)' : '#86efac'; ctx.fillRect(0, tanah, W, H - tanah);
   ctx.fillStyle = 'rgba(22,163,74,.22)'; ctx.fillRect(X(40), tanah - 6, X(60) - X(40), 10);
   label(ctx, 'Zona target', (X(40) + X(60)) / 2, tanah - 16, { rata: 'center', ukuran: 11, warna: '#15803d' });
   ctx.strokeStyle = '#78716c'; ctx.lineWidth = 2;
@@ -733,7 +810,7 @@ function gambarRoketAir(ctx, W, H, v, h, p) {
   const fase = 0.28;
   if (p < fase) {
     const q = p / fase, rot = Math.PI / 2 - th;
-    gambarBentukRoket(ctx, x0, tanah - 26, rot);
+    gambarBentukRoket(ctx, x0, tanah - 26, rot, 1, 'roket-air');
     ctx.save(); ctx.translate(x0, tanah - 26); ctx.rotate(rot);
     ctx.fillStyle = 'rgba(56,189,248,.75)';
     const tc = Math.min(30, 32 * h._isi); ctx.fillRect(-6, 17 - tc, 12, tc);
@@ -741,7 +818,7 @@ function gambarRoketAir(ctx, W, H, v, h, p) {
     // pompa & pengukur tekanan
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x0, tanah - 4); ctx.quadraticCurveTo(x0 + 30, tanah + 6, x0 + 58, tanah - 8); ctx.stroke();
-    ctx.fillStyle = '#334155'; ctx.fillRect(x0 + 54, tanah - 40 + Math.sin(q * 30) * 6, 8, 32);
+    if (!benda(ctx, 'pompa', x0 + 60, tanah + 2, 26, { ay: 1 })) { ctx.fillStyle = '#334155'; ctx.fillRect(x0 + 54, tanah - 40 + Math.sin(q * 30) * 6, 8, 32); }
     const tek = +v.tekanan * mulus(q);
     label(ctx, `Tekanan ${fx(tek)} bar${tek > 4 ? ' ⚠' : ''}`, x0 + 70, tanah - 44, { ukuran: 12, tebal: true, warna: tek > 4 ? '#fff' : '#0369a1', latar: tek > 4 ? '#dc2626' : 'rgba(255,255,255,.95)' });
     return;
@@ -756,7 +833,7 @@ function gambarRoketAir(ctx, W, H, v, h, p) {
   if (i === 0) rot = Math.PI / 2 - th;
   if (!h._stabil && u < 1) rot += tNow * 14;           // berputar-putar bila tanpa sirip
   if (u >= 1) rot = Math.PI / 2 + (h.jarak > 1 ? 0.9 : Math.PI / 2);
-  gambarBentukRoket(ctx, X(b[0]), Math.min(Y(b[1]) - 12, tanah - 12), rot);
+  gambarBentukRoket(ctx, X(b[0]), Math.min(Y(b[1]) - 12, tanah - 12), rot, 1, 'roket-air');
   if (tNow < h.dorong + 0.05 && i > 0) { // semburan air
     ctx.fillStyle = 'rgba(56,189,248,.8)';
     for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.arc(X(b[0]) - Math.sin(rot) * 0 - Math.cos(rot - Math.PI / 2) * (14 + k * 5), Y(b[1]) - 12 - Math.sin(rot - Math.PI / 2) * (14 + k * 5), 2.5, 0, 7); ctx.fill(); }
@@ -862,13 +939,14 @@ function kriteriaJembatan(v, h) {
 }
 
 function gambarJembatan(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#f0f9ff'; ctx.fillRect(0, 0, W, H);
   const lantaiY = H * 0.52, kiri = W * 0.14, kanan = W * 0.86, bentang = kanan - kiri;
-  // tebing & air saluran
-  ctx.fillStyle = '#a16207';
+  const adaLatar = latar(ctx, W, H, 'bg-jembatan', 0.88, H - 38); // permukaan air saluran
+  if (!adaLatar) { ctx.fillStyle = '#f0f9ff'; ctx.fillRect(0, 0, W, H); }
+  // tebing (tumpuan) & air saluran
+  ctx.fillStyle = adaLatar ? '#8a5a2b' : '#a16207';
   ctx.beginPath(); ctx.moveTo(0, lantaiY); ctx.lineTo(kiri + 6, lantaiY); ctx.lineTo(kiri - 20, H); ctx.lineTo(0, H); ctx.fill();
   ctx.beginPath(); ctx.moveTo(W, lantaiY); ctx.lineTo(kanan - 6, lantaiY); ctx.lineTo(kanan + 20, H); ctx.lineTo(W, H); ctx.fill();
-  ctx.fillStyle = '#7dd3fc'; ctx.fillRect(kiri - 12, H - 38, bentang + 24, 38);
+  if (!adaLatar) { ctx.fillStyle = '#7dd3fc'; ctx.fillRect(kiri - 12, H - 38, bentang + 24, 38); }
   const beban = +v.beban, rasio = h._rasio;
   const turun = mulus(jepit(p / 0.5, 0, 1));
   const patah = h._runtuh && p > 0.55;
@@ -928,8 +1006,12 @@ function gambarJembatan(ctx, W, H, v, h, p) {
     const ukuran = 16 + Math.min(26, beban * 1.6);
     const yBeban = lerp(by - 140, by, turun) + (patah ? 60 * mulus(jepit((p - 0.55) / 0.3, 0, 1)) : 0);
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, yBeban - 4); ctx.lineTo(bx, yBeban + 10); ctx.stroke();
-    ctx.fillStyle = '#475569'; kotakBulat(ctx, bx - ukuran / 2, yBeban + 10, ukuran, ukuran, 4); ctx.fill();
-    label(ctx, `${fx(beban)} kg`, bx, yBeban + 10 + ukuran / 2, { rata: 'center', ukuran: 11, warna: '#fff', tebal: true });
+    if (benda(ctx, 'ember', bx, yBeban + 8, ukuran * 1.35, { ay: 0.02 })) {
+      label(ctx, `${fx(beban)} kg`, bx, yBeban + 10 + ukuran * 0.8, { rata: 'center', ukuran: 11, warna: '#fff', tebal: true, latar: 'rgba(51,65,85,.85)' });
+    } else {
+      ctx.fillStyle = '#475569'; kotakBulat(ctx, bx - ukuran / 2, yBeban + 10, ukuran, ukuran, 4); ctx.fill();
+      label(ctx, `${fx(beban)} kg`, bx, yBeban + 10 + ukuran / 2, { rata: 'center', ukuran: 11, warna: '#fff', tebal: true });
+    }
   }
   // legenda
   label(ctx, '■ tarik', W - 12, H - 12, { rata: 'right', ukuran: 11, warna: '#2563eb', latar: 'rgba(255,255,255,.85)' });
@@ -1010,11 +1092,27 @@ function kriteriaAngin(v, h) {
   ];
 }
 
+// Bilah hasil AI diwarnai ulang sesuai bahan (disimpan di kanvas bantu agar tidak diwarnai tiap bingkai)
+const WARNA_BILAH = { pvc: 'rgba(241,245,249,.78)', botol: 'rgba(186,230,253,.6)', triplek: 'rgba(214,168,107,.3)', kardus: '' };
+const bilahBerwarna = {};
+function gambarBilah(bahan) {
+  if (bilahBerwarna[bahan]) return bilahBerwarna[bahan];
+  const img = aset('bilah');
+  if (!img || typeof document === 'undefined') return null;
+  const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext('2d'); g.drawImage(img, 0, 0);
+  if (WARNA_BILAH[bahan]) { g.globalCompositeOperation = 'source-atop'; g.fillStyle = WARNA_BILAH[bahan]; g.fillRect(0, 0, c.width, c.height); }
+  return (bilahBerwarna[bahan] = c);
+}
+
 function gambarAngin(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#ecfeff'; ctx.fillRect(0, 0, W, H);
   const tanah = H - 30;
-  ctx.fillStyle = '#fde68a'; ctx.fillRect(0, tanah, W, H - tanah); // pasir pantai
-  ctx.fillStyle = '#38bdf8'; ctx.fillRect(0, tanah - 8, W * 0.22, 8);
+  const adaLatar = latar(ctx, W, H, 'bg-angin', 0.9, tanah); // pasir pantai
+  if (!adaLatar) {
+    ctx.fillStyle = '#ecfeff'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fde68a'; ctx.fillRect(0, tanah, W, H - tanah);
+    ctx.fillStyle = '#38bdf8'; ctx.fillRect(0, tanah - 8, W * 0.22, 8);
+  }
   const cx = W * 0.4, cy = H * 0.42;
   const Rpx = Math.min(H * 0.34, W * 0.3) * (0.45 + 0.55 * (+v.jari / 40));
   // angin
@@ -1024,11 +1122,13 @@ function gambarAngin(ctx, W, H, v, h, p) {
     const y = cy - Rpx + i * Rpx / 2, x = ((p * 900 * (0.3 + angin / 8)) + i * 53) % (cx - 20);
     ctx.beginPath(); ctx.moveTo(x, y); ctx.bezierCurveTo(x + 15, y - 6, x + 25, y + 6, x + 40, y); ctx.stroke();
   }
-  label(ctx, `Angin ${fx(angin)} m/s`, 12, 18, { ukuran: 12, tebal: true, warna: '#0e7490' });
+  label(ctx, `Angin ${fx(angin)} m/s`, 12, 18, { ukuran: 12, tebal: true, warna: '#0e7490', latar: adaLatar ? 'rgba(255,255,255,.88)' : undefined });
   // tiang & generator
-  ctx.fillStyle = '#64748b'; ctx.fillRect(cx - 4, cy, 8, tanah - cy);
-  ctx.fillStyle = '#334155'; kotakBulat(ctx, cx - 16, cy - 12, 44, 24, 6); ctx.fill();
-  label(ctx, GENERATOR[v.generator].nama.split(' ')[0], cx + 6, cy + 24, { rata: 'center', ukuran: 10, warna: '#334155' });
+  ctx.fillStyle = adaLatar ? '#7c5a3a' : '#64748b'; ctx.fillRect(cx - 4, cy, 8, tanah - cy);
+  if (!benda(ctx, 'generator', cx + 14, cy + 6, 62, { ax: 0.35 })) {
+    ctx.fillStyle = '#334155'; kotakBulat(ctx, cx - 16, cy - 12, 44, 24, 6); ctx.fill();
+  }
+  label(ctx, GENERATOR[v.generator].nama.split(' ')[0], cx + 14, cy + 34, { rata: 'center', ukuran: 10, warna: '#334155', latar: adaLatar ? 'rgba(255,255,255,.85)' : undefined });
   // rotor
   const d = h._d;
   const putar = h._patah ? 0 : d.rpmRotor;
@@ -1040,16 +1140,43 @@ function gambarAngin(ctx, W, H, v, h, p) {
     const a = sudut + i * 2 * Math.PI / N;
     ctx.save(); ctx.translate(cx, cy); ctx.rotate(a);
     if (i === patahIdx) { const q = (p - 0.55) / 0.45; ctx.translate(q * 90, q * q * 160); ctx.rotate(q * 6); }
-    ctx.fillStyle = warna; ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.2;
-    ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(Rpx, -lebar / 2); ctx.quadraticCurveTo(Rpx + 6, 0, Rpx, lebar / 2); ctx.lineTo(0, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    const gb = gambarBilah(v.bahan);
+    if (gb) {
+      // lebar bilah mengikuti sudut bilah (bilah bersudut besar tampak lebih lebar dari depan)
+      const tinggiGb = Rpx * gb.height / gb.width;
+      ctx.scale(1, lebar / tinggiGb);
+      ctx.drawImage(gb, -Rpx * 0.04, -tinggiGb / 2, Rpx * 1.04, tinggiGb);
+    } else {
+      ctx.fillStyle = warna; ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(0, -3); ctx.lineTo(Rpx, -lebar / 2); ctx.quadraticCurveTo(Rpx + 6, 0, Rpx, lebar / 2); ctx.lineTo(0, 3); ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
     ctx.restore();
   }
   ctx.fillStyle = '#0f172a'; ctx.beginPath(); ctx.arc(cx, cy, 6, 0, 7); ctx.fill();
   // kabel & lampu
+  const terang = jepit(h.daya / 1.5, 0, 1) * laju;
+  const namaLampu = terang > 0.05 ? 'lampu-menyala' : 'lampu-padam';
+  const imgLampu = aset(namaLampu);
+  if (imgLampu) {
+    // tiang lampu bambu hasil AI: letak lentera relatif terhadap gambar
+    const tl = Math.min(H * 0.62, 190), wl = tl * imgLampu.naturalWidth / imgLampu.naturalHeight;
+    const lx = W * 0.82, kiriL = lx - wl / 2, atasL = tanah - tl;
+    const posLentera = namaLampu === 'lampu-menyala' ? { x: 0.26, y: 0.52 } : { x: 0.82, y: 0.36 };
+    const px = kiriL + wl * posLentera.x, py = atasL + tl * posLentera.y;
+    const tiangX = kiriL + wl * (namaLampu === 'lampu-menyala' ? 0.8 : 0.25);
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx + 36, cy + 6); ctx.bezierCurveTo(cx + 90, tanah - 20, tiangX - 60, tanah - 6, tiangX, tanah - 10); ctx.stroke();
+    if (terang > 0.02) {
+      const gr = ctx.createRadialGradient(px, py, 4, px, py, 70);
+      gr.addColorStop(0, `rgba(253,224,71,${0.9 * terang})`); gr.addColorStop(1, 'rgba(253,224,71,0)');
+      ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(px, py, 70, 0, 7); ctx.fill();
+    }
+    benda(ctx, namaLampu, lx, tanah + 2, wl, { ay: 1 });
+    label(ctx, `💡 ${fx(h.daya * laju, 2)} W · ${Math.round(putar * laju)} rpm`, lx, atasL - 14, { rata: 'center', ukuran: 12, tebal: true, warna: '#fff', latar: '#0f766e' });
+  } else {
   const lx = W * 0.8, ly = H * 0.36;
   ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(cx + 28, cy); ctx.bezierCurveTo(cx + 80, cy - 8, lx - 70, ly + 18, lx - 7, ly + 26); ctx.stroke();
-  const terang = jepit(h.daya / 1.5, 0, 1) * laju;
   if (terang > 0.02) {
     const gr = ctx.createRadialGradient(lx, ly, 4, lx, ly, 60);
     gr.addColorStop(0, `rgba(253,224,71,${0.85 * terang})`); gr.addColorStop(1, 'rgba(253,224,71,0)');
@@ -1062,6 +1189,7 @@ function gambarAngin(ctx, W, H, v, h, p) {
   label(ctx, 'Lampu LED pos ronda', lx, ly + 46, { rata: 'center', ukuran: 11, warna: '#334155' });
   // meteran
   label(ctx, `${fx(h.daya * laju, 2)} W · ${Math.round(putar * laju)} rpm`, lx, ly - 34, { rata: 'center', ukuran: 12, tebal: true, warna: '#fff', latar: '#0f766e' });
+  }
   if (p >= 1) {
     const teks = h._patah ? 'BILAH PATAH — angin terlalu kencang untuk bahan ini' : !d.rpmRotor ? `Belum berputar (butuh angin ≥ ${fx(h.mulai)} m/s)` : h.lampu;
     label(ctx, teks, W / 2, H - 12, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: h._patah || !d.rpmRotor ? '#b91c1c' : h.daya >= 1 ? '#15803d' : '#b45309' });

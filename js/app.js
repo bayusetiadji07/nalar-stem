@@ -594,8 +594,11 @@ function pasangLab(m, st) {
   pasangHapusUji(m, st);
   pasangGrafik(m, st);
   const ukur = () => { cancelAnimationFrame(anim); gambar(samaDenganTerakhir() ? 1 : 0); gambarGrafik(m, st); };
+  // gambar ilustrasi dimuat bertahap: gambar ulang kanvas saat tiba (kecuali sedang animasi)
+  const asetTiba = () => { const b = $('#bUji'); if (b && !b.disabled) gambar(samaDenganTerakhir() ? 1 : 0); };
   window.addEventListener('resize', ukur);
-  bersihkan.push(() => { window.removeEventListener('resize', ukur); cancelAnimationFrame(anim); });
+  window.addEventListener('aset-sim', asetTiba);
+  bersihkan.push(() => { window.removeEventListener('resize', ukur); window.removeEventListener('aset-sim', asetTiba); cancelAnimationFrame(anim); });
 }
 
 function pasangHapusUji(m, st) {
