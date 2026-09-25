@@ -90,10 +90,19 @@ function rute() {
 window.addEventListener('hashchange', rute);
 
 /* ---------------- Beranda ---------------- */
+// Gambar ilustrasi; bila berkasnya tidak ada, elemen penggantinya (emoji) yang tampil.
+const GAMBAR = 'assets/img/';
+function gambar(berkas, alt = '', kelas = '', malas = true) {
+  return `<img class="${kelas}" src="${GAMBAR}${berkas}" alt="${esc(alt)}" ${malas ? 'loading="lazy" decoding="async"' : ''} onerror="this.parentNode.classList.add('tanpa-gambar');this.remove()">`;
+}
+function sampulMisi(m, kelas = 'km-sampul') {
+  return `<div class="${kelas}">${gambar(`misi-${m.id}.jpg`, m.judul)}<span class="km-emoji">${m.ikon}</span></div>`;
+}
+
 function kartuMisi(m) {
   const n = kemajuan(m);
   return `<a class="kartu-misi" href="#/misi/${m.id}/1" style="--aksen:${m.warna}">
-    <div class="km-ikon">${m.ikon}</div>
+    ${sampulMisi(m)}
     <div class="km-isi">
       <span class="km-kelas">${esc(m.kelas)}</span>
       <h3>${esc(m.judul)}</h3>
@@ -108,6 +117,7 @@ function halBeranda() {
   const c = bacaAI();
   APP.innerHTML = `
   <section class="hero">
+    <div class="hero-gambar">${gambar('hero.jpg', 'Murid SMP merancang roket air, kincir angin, jembatan stik, dan penjernih air di halaman sekolah tepi pantai', '', false)}</div>
     <div class="hero-teks">
       <span class="pil">Pembelajaran IPA berbasis STEM · Fase D</span>
       <h1>Berpikir kritis seperti <em>ilmuwan</em> dan <em>insinyur</em>.</h1>
@@ -117,10 +127,17 @@ function halBeranda() {
         <a class="tombol" href="#/uji-nalar">Coba Uji Nalar</a>
       </div>
     </div>
-    <div class="hero-kartu">
+  </section>
+
+  <section class="kenalan-nala kartu">
+    <div class="nala-foto">${gambar('kak-nala.jpg', 'Kak Nala, AI Tutor')}<span class="km-emoji">🧑‍🔬</span></div>
+    <div class="nala-teks">
+      <span class="pil">AI Tutor Sokratik</span>
+      <h2>Kenalan dengan Kak Nala</h2>
+      <p class="redup">Kak Nala tidak memberi jawaban. Ia membaca data ujimu, lalu mengajukan pertanyaan yang membuatmu berpikir lebih tajam.</p>
       <div class="chat-contoh">
         <div class="gelembung siswa">Kak, jawabannya apa? Perahu yang paling bagus ukurannya berapa?</div>
-        <div class="gelembung nala"><b>Kak Nala:</b> Kakak yakin kamu bisa menemukannya sendiri! 😊 Di uji 1 perahumu tenggelam dengan muatan 3 kg. Di uji 2 kamu hanya memperbesar tinggi dinding. <b>Apa yang berubah pada kedalaman celupnya?</b></div>
+        <div class="gelembung nala">Kakak yakin kamu bisa menemukannya sendiri! 😊 Di uji 1 perahumu tenggelam dengan muatan 3 kg. Di uji 2 kamu hanya memperbesar tinggi dinding. <b>Apa yang berubah pada kedalaman celupnya?</b></div>
       </div>
     </div>
   </section>
@@ -182,7 +199,7 @@ function halMisi(id, no) {
   APP.innerHTML = `
   <div class="kepala-misi" style="--aksen:${m.warna}">
     <a href="#/misi" class="kembali">← Semua misi</a>
-    <div class="km-judul"><span class="km-ikon besar">${m.ikon}</span><div><span class="km-kelas">${esc(m.kelas)}</span><h1>${esc(m.judul)}</h1></div></div>
+    <div class="km-judul">${sampulMisi(m, 'km-ikon besar')}<div><span class="km-kelas">${esc(m.kelas)}</span><h1>${esc(m.judul)}</h1></div></div>
   </div>
   <nav class="stepper" style="--aksen:${m.warna}">
     ${LANGKAH.map(x => `<a href="#/misi/${id}/${x.no}" class="${x.no === L.no ? 'aktif' : ''} ${langkahTerisi(m, st, x) ? 'beres' : ''}">
@@ -262,7 +279,7 @@ function perbaruiStepper(m, st) {
 
 function kartuNilai(h) {
   return `<div class="kartu-nilai">
-    <div class="kn-kepala"><b>Umpan balik Kak Nala</b><span class="sumber ${h.sumber}">${h.sumber === 'ai' ? '✨ AI Gemini' : h.sumber === 'memori' ? '🧠 Memori Kak Nala' : '⚙️ Tutor lokal'}</span></div>
+    <div class="kn-kepala"><b class="kn-judul">${gambar('kak-nala-wajah.jpg', '', 'avatar-kecil')}Umpan balik Kak Nala</b><span class="sumber ${h.sumber}">${h.sumber === 'ai' ? '✨ AI Gemini' : h.sumber === 'memori' ? '🧠 Memori Kak Nala' : '⚙️ Tutor lokal'}</span></div>
     <div class="kn-skor">${Object.entries(h.skor).map(([id, n]) => {
       const I = INDIKATOR.find(x => x.id === id);
       return `<div class="skor" style="--c:${I.warna}"><span>${I.nama}</span><div class="titik">${[1, 2, 3, 4].map(k => `<i class="${k <= n ? 'isi' : ''}"></i>`).join('')}</div><small>${n} · ${tingkatNama(n)}</small></div>`;
@@ -276,7 +293,7 @@ function kartuNilai(h) {
 }
 
 function isiLangkah(m, st, L) {
-  if (L.id === 'pahami') return `<div class="kartu kisah" style="--aksen:${m.warna}"><h3>📖 Kisah masalah</h3><p>${m.kisah}</p></div>`;
+  if (L.id === 'pahami') return `<div class="kartu kisah" style="--aksen:${m.warna}">${sampulMisi(m, 'kisah-gambar')}<h3>📖 Kisah masalah</h3><p>${m.kisah}</p></div>`;
   if (L.id === 'konsep') return `<div class="kartu konsep"><h3>🔬 Kartu konsep</h3>${m.konsep}</div>`;
   if (L.id === 'hipotesis') return `<div class="kartu"><h3>🧪 Hal yang bisa kamu atur di laboratorium maya</h3>
     <div class="chip-var">${m.variabel.map(v => `<span>${esc(v.label)}${v.tipe === 'range' ? ` (${v.min}–${v.max} ${v.satuan})` : ''}</span>`).join('')}</div>
@@ -360,7 +377,7 @@ function htmlIsiNyata(m, st) {
 
 function htmlTabelNyata(m, st) {
   const N = NYATA[m.id], ny = st.nyata;
-  if (!ny.uji.length) return '<p class="redup">Belum ada hasil uji nyata.</p>';
+  if (!ny.uji.length) return '<div class="kosong">' + gambar('kosong.jpg', '', 'kosong-gambar') + '<p class="redup">Belum ada hasil uji nyata. Catat hasil pengukuran prototipemu di atas.</p></div>';
   return `<div class="tabel-gulir"><table class="tabel">
     <thead><tr><th>Uji</th><th>Acuan</th>${N.ukur.map(u => `<th>${esc(u.label)}</th>`).join('')}<th>Catatan</th><th>Foto</th><th></th></tr></thead>
     <tbody>${ny.uji.map((u, i) => {
@@ -480,7 +497,7 @@ function htmlLab(m, st) {
 }
 
 function htmlTabelUji(m, st) {
-  if (!st.uji.length) return `<div class="kartu"><h3>📋 Tabel data uji</h3><p class="redup">Belum ada data. Lakukan uji di laboratorium maya.</p></div>`;
+  if (!st.uji.length) return `<div class="kartu"><h3>📋 Tabel data uji</h3><div class="kosong">${gambar('kosong.jpg', '', 'kosong-gambar')}<p class="redup">Belum ada data. Lakukan uji di laboratorium maya.</p></div></div>`;
   return `<div class="kartu"><div class="lab-kepala"><h3>📋 Tabel data uji</h3>
     <button class="tombol kecil" id="bHapusUji" type="button">Hapus semua uji</button></div>
     <div class="tabel-gulir"><table class="tabel">
@@ -755,7 +772,7 @@ function halUjiNalar() {
   const K = S.kuis;
   if (!K.urutan || K.urutan.length !== UJI_NALAR.length) { K.urutan = UJI_NALAR.map(() => acak([0, 1, 2, 3])); simpan(); }
   const benar = UJI_NALAR.filter((q, i) => K.jawab[i] === 0).length;
-  APP.innerHTML = `<h1 class="judul-hal">Uji Nalar</h1>
+  APP.innerHTML = `<div class="spanduk-hal">${gambar('uji-nalar.jpg', '')}</div><h1 class="judul-hal">Uji Nalar</h1>
   <p class="redup">${UJI_NALAR.length} soal tentang cara ilmuwan berpikir: menilai klaim, membaca data, dan menarik kesimpulan. Pilih jawaban paling tepat, lalu tekan <b>Periksa</b>.</p>
   ${K.diperiksa ? `<div class="kartu skor-kuis"><span><b>Skormu: ${benar}/${UJI_NALAR.length}</b> · nilai ${Math.round(benar / UJI_NALAR.length * 100)}</span><button class="tombol" id="bUlangKuis">Ulangi dengan urutan baru</button></div>` : ''}
   <div class="daftar-soal">${UJI_NALAR.map((q, i) => {
@@ -801,6 +818,7 @@ function halPortofolio() {
   const nonAwal = semuaUji.filter(u => u.adil !== null);
   const persenAdil = nonAwal.length ? Math.round(nonAwal.filter(u => u.adil).length / nonAwal.length * 100) : null;
   APP.innerHTML = `<div class="kepala-porto">
+    <div class="spanduk-hal no-print">${gambar('portofolio.jpg', '')}</div>
     <div><h1 class="judul-hal">Portofolio Berpikir Kritis</h1>
     <p class="redup">${S.profil.nama ? `<b>${esc(S.profil.nama)}</b>${S.profil.kelas ? ' · Kelas ' + esc(S.profil.kelas) : ''}` : 'Isi namamu di Beranda agar tercetak di sini.'} · dicetak ${new Date().toLocaleDateString('id-ID', { dateStyle: 'long' })}</p></div>
     <div class="aksi-porto no-print"><button class="tombol utama" onclick="window.print()">🖨️ Cetak / simpan PDF</button><button class="tombol" id="bSalin">📋 Salin ringkasan</button></div>
@@ -834,7 +852,7 @@ function halPortofolio() {
           ${L.isian.map(f => st.isian[f.id] ? `<p class="jawab"><small>${esc(f.label)}</small>${esc(st.isian[f.id])}</p>` : '').join('')}</details>`;
       }).join('')}
     </div>`;
-  }).join('') || '<div class="kartu"><p class="redup">Belum ada misi yang dikerjakan.</p></div>'}
+  }).join('') || '<div class="kartu kosong">' + gambar('kosong.jpg', '', 'kosong-gambar') + '<p class="redup">Belum ada misi yang dikerjakan. <a href="#/misi">Mulai misi pertamamu →</a></p></div>'}
   <div class="no-print zona-bahaya"><button class="tombol bahaya" id="bReset">Hapus semua data belajarku</button></div>`;
   gambarRadar($('#radar'), rata);
   $('#bSalin').onclick = () => {

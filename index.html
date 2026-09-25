@@ -6,7 +6,16 @@
   <title>NalarSTEM — Lab IPA STEM dengan AI Tutor</title>
   <meta name="description" content="Aplikasi pembelajaran IPA berbasis STEM untuk melatih berpikir kritis murid SMP, dilengkapi AI Tutor Sokratik Kak Nala.">
   <meta name="theme-color" content="#0d9488">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>">
+  <link rel="icon" type="image/png" href="assets/img/ikon-64.png">
+  <link rel="apple-touch-icon" href="assets/img/ikon-180.png">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NalarSTEM — Lab IPA STEM dengan AI Tutor">
+  <meta property="og:description" content="8 misi STEM IPA SMP dengan laboratorium maya, praktik nyata, dan AI Tutor Kak Nala yang melatih berpikir kritis.">
+  <meta property="og:image" content="https://nalar-stem.vercel.app/assets/img/og-cover.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preload" as="image" href="assets/img/hero.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +23,7 @@
 </head>
 <body>
   <header class="atas">
-    <a href="#/" class="merek"><span class="logo">🧪</span><span>Nalar<b>STEM</b></span></a>
+    <a href="#/" class="merek"><img class="logo" src="assets/img/logo.jpg" alt="" width="36" height="36"><span>Nalar<b>STEM</b></span></a>
     <button id="tombolMenu" class="tombol-menu" aria-label="Buka menu">☰</button>
     <nav class="nav">
       <a href="#/">Beranda</a>
@@ -31,11 +40,11 @@
   <footer class="kaki">NalarSTEM · Media pembelajaran IPA berbasis STEM untuk melatih berpikir kritis · Simulasi memakai model yang disederhanakan</footer>
 
   <!-- AI Tutor -->
-  <button id="fabTutor" class="fab-tutor" aria-label="Buka AI Tutor Kak Nala"><span class="avatar">🧑‍🔬</span><span class="fab-teks">Tanya Kak Nala</span></button>
+  <button id="fabTutor" class="fab-tutor" aria-label="Buka AI Tutor Kak Nala"><img class="avatar" src="assets/img/kak-nala-wajah.jpg" alt="" width="40" height="40"><span class="fab-teks">Tanya Kak Nala</span></button>
   <div id="latarTutor" class="latar-tutor"></div>
   <aside class="laci-tutor" aria-label="AI Tutor Kak Nala">
     <div class="laci-kepala">
-      <span class="avatar besar">🧑‍🔬</span>
+      <img class="avatar besar" src="assets/img/kak-nala-wajah.jpg" alt="Kak Nala" width="44" height="44">
       <div><b>Kak Nala</b> <span id="tutorStatus" class="status-ai">AI Gemini</span><small id="tutorSub">Tanya apa saja tentang IPA</small></div>
       <button id="bBersihChat" class="ikon-tombol" title="Hapus percakapan">🗑️</button>
       <button id="tutupTutor" class="ikon-tombol" aria-label="Tutup">✕</button>
