@@ -44,8 +44,17 @@ function kemajuan(m) {
   if (!st) return 0;
   return LANGKAH.filter(L => langkahTerisi(m, st, L)).length;
 }
+// Ubah sisa LaTeX sederhana dari AI ($CO_2$, H_2O) menjadi teks biasa dengan subskrip Unicode.
+function rapikanLatex(t) {
+  const sub = { 0: '₀', 1: '₁', 2: '₂', 3: '₃', 4: '₄', 5: '₅', 6: '₆', 7: '₇', 8: '₈', 9: '₉' };
+  return String(t || '')
+    .replace(/\\text\{([^}]*)\}|\\mathrm\{([^}]*)\}/g, (_, a, b) => a || b)
+    .replace(/_\{?(\d+)\}?/g, (_, d) => d.split('').map(x => sub[x]).join(''))
+    .replace(/\\(times|cdot)/g, '×').replace(/\\rightarrow|\\to/g, '→')
+    .replace(/\$+/g, '');
+}
 function mdLite(t) {
-  let h = esc(t);
+  let h = esc(rapikanLatex(t));
   h = h.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/(^|\s)\*(\S.+?)\*(?=\s|$|[.,!?])/g, '$1<i>$2</i>');
   h = h.replace(/^\s*[-•]\s+(.+)$/gm, '<li>$1</li>').replace(/(<li>.*<\/li>)(?!\s*<li>)/gs, '<ul>$1</ul>');
   return h.replace(/\n/g, '<br>').replace(/<\/li><br>/g, '</li>').replace(/<ul><br>/g, '<ul>');
@@ -75,6 +84,7 @@ function rute() {
   if (hal === 'portofolio') return halPortofolio();
   if (hal === 'guru') return halGuru();
   if (hal === 'pengaturan') return halPengaturan();
+  if (hal === 'kurasi') return halKurasi();
   halBeranda();
 }
 window.addEventListener('hashchange', rute);
@@ -235,7 +245,7 @@ function halMisi(id, no) {
     st.nilai[L.id] = hasil; simpan();
     $('#hasilNilai').innerHTML = kartuNilai(hasil);
     b.disabled = false; b.textContent = '🔍 Periksa lagi';
-    if (hasil.galat) toast('AI tidak tersambung — dinilai tutor lokal', 'peringatan');
+    if (hasil.galat) toast(hasil.sumber === 'memori' ? 'AI tidak tersambung — dinilai dari memori Kak Nala' : 'AI tidak tersambung — dinilai tutor lokal', 'peringatan');
   };
   if (L.id === 'uji') pasangLab(m, st);
   if (L.id === 'evaluasi') pasangGrafik(m, st);
@@ -252,7 +262,7 @@ function perbaruiStepper(m, st) {
 
 function kartuNilai(h) {
   return `<div class="kartu-nilai">
-    <div class="kn-kepala"><b>Umpan balik Kak Nala</b><span class="sumber ${h.sumber}">${h.sumber === 'ai' ? '✨ AI Gemini' : '⚙️ Tutor lokal'}</span></div>
+    <div class="kn-kepala"><b>Umpan balik Kak Nala</b><span class="sumber ${h.sumber}">${h.sumber === 'ai' ? '✨ AI Gemini' : h.sumber === 'memori' ? '🧠 Memori Kak Nala' : '⚙️ Tutor lokal'}</span></div>
     <div class="kn-skor">${Object.entries(h.skor).map(([id, n]) => {
       const I = INDIKATOR.find(x => x.id === id);
       return `<div class="skor" style="--c:${I.warna}"><span>${I.nama}</span><div class="titik">${[1, 2, 3, 4].map(k => `<i class="${k <= n ? 'isi' : ''}"></i>`).join('')}</div><small>${n} · ${tingkatNama(n)}</small></div>`;
@@ -685,14 +695,14 @@ function gambarChat() {
   if (!riwayat.length) {
     box.innerHTML = `<div class="gelembung nala">Hai${S.profil.nama ? ' ' + esc(S.profil.nama.split(' ')[0]) : ''}! Aku <b>Kak Nala</b> 👋 Aku tidak akan memberi jawaban langsung, tapi aku akan menemanimu berpikir lewat pertanyaan. Mau mulai dari mana?</div>`;
   } else {
-    box.innerHTML = riwayat.map(r => `<div class="gelembung ${r.peran === 'model' ? 'nala' : 'siswa'}">${r.peran === 'model' ? mdLite(r.teks) : esc(r.teks)}${r.lokal ? '<small class="tanda-lokal">tutor lokal</small>' : ''}</div>`).join('');
+    box.innerHTML = riwayat.map(r => `<div class="gelembung ${r.peran === 'model' ? 'nala' : 'siswa'}">${r.peran === 'model' ? mdLite(r.teks) : esc(r.teks)}${r.memori ? '<small class="tanda-lokal">🧠 dari memori Kak Nala</small>' : r.lokal ? '<small class="tanda-lokal">tutor lokal</small>' : ''}</div>`).join('');
   }
   box.scrollTop = box.scrollHeight;
   const c = bacaAI();
   const st = $('#tutorStatus');
   const terakhir = [...riwayat].reverse().find(r => r.peran === 'model');
-  const lokal = c.sumber === 'lokal' || (terakhir && terakhir.lokal);
-  if (st) { st.textContent = c.sumber === 'lokal' ? 'Tutor lokal' : lokal ? 'AI belum tersambung' : 'AI Gemini'; st.className = 'status-ai ' + (lokal ? 'lokal' : ''); }
+  const lokal = c.sumber === 'lokal' || (terakhir && (terakhir.lokal || terakhir.memori));
+  if (st) { st.textContent = c.sumber === 'lokal' ? 'Tutor lokal' : terakhir && terakhir.memori ? 'Memori (AI belum tersambung)' : lokal ? 'AI belum tersambung' : 'AI Gemini'; st.className = 'status-ai ' + (lokal ? 'lokal' : ''); }
 }
 
 function bukaTutor(pesanAwal, tingkat) {
@@ -716,11 +726,13 @@ async function kirimChat(teks, tingkat = 1) {
   box.insertAdjacentHTML('beforeend', '<div class="gelembung nala mengetik"><span></span><span></span><span></span></div>');
   box.scrollTop = box.scrollHeight;
   const riwayat = S.chat[k].map((r, i, a) => ({ peran: r.peran, teks: i === a.length - 1 ? `[Tingkat petunjuk: ${tingkat}] ${r.teks}` : r.teks }));
-  const hasil = await tutorBalas(teksKonteks(), S.profil.nama, riwayat);
-  S.chat[k].push({ peran: 'model', teks: hasil.teks, lokal: hasil.sumber === 'lokal' });
+  const K = KONTEKS_TUTOR;
+  const info = { misi: K.jenis === 'misi' ? K.m.id : K.jenis, langkah: K.jenis === 'misi' ? K.L.id : '', pertanyaan: teks };
+  const hasil = await tutorBalas(teksKonteks(), S.profil.nama, riwayat, info);
+  S.chat[k].push({ peran: 'model', teks: hasil.teks, lokal: hasil.sumber === 'lokal', memori: hasil.sumber === 'memori' });
   if (S.chat[k].length > 40) S.chat[k] = S.chat[k].slice(-40);
   simpan(); gambarChat();
-  if (hasil.galat) toast('AI tidak tersambung: ' + hasil.galat, 'peringatan');
+  if (hasil.galat) toast(hasil.sumber === 'memori' ? 'AI tidak tersambung — Kak Nala menjawab dari memori' : 'AI tidak tersambung: ' + hasil.galat, 'peringatan');
   sedangKirim = false;
 }
 
@@ -909,9 +921,149 @@ function halGuru() {
       <tr><td>Data &amp; dokumentasi</td><td>Uji diulang ≥ 3 kali, data lengkap dengan satuan, ada foto.</td><td>Uji hanya sekali atau data tidak lengkap.</td></tr>
       <tr><td>Refleksi model</td><td>Menjelaskan selisih nyata–simulasi dengan faktor spesifik dan mengusulkan perbaikan.</td><td>Hanya menyebut "hasilnya beda" tanpa alasan jelas.</td></tr>
     </tbody></table>
+    <h3>🧠 Memori Kak Nala</h3>
+    <p>Setiap jawaban dan penilaian AI direkam <b>tanpa nama murid</b> (email, nomor telepon, dan tautan juga disamarkan) ke database sekolah. Saat AI tidak tersedia, Kak Nala mencari tanya-jawab yang mirip di misi dan langkah yang sama, dan penilaian lembar kerja memakai skor jawaban-jawaban serupa yang pernah dinilai AI. Salinan memori juga tersimpan di perangkat murid untuk dipakai saat offline.</p>
+    <p>Guru memeriksa isi memori di halaman <a href="#/kurasi"><b>Kurasi Memori</b></a> (bersandi): <b>setujui</b> jawaban yang baik agar diutamakan, <b>rapikan</b> jawaban yang merujuk data murid tertentu agar berlaku umum, atau <b>tolak</b> yang kurang tepat. Murid dapat menonaktifkan perekaman di Pengaturan AI.</p>
     <h3>Pengumpulan hasil</h3>
     <p>Data tersimpan di perangkat masing-masing murid. Minta murid membuka <b>Portofolio</b> → <b>Cetak / simpan PDF</b>, atau <b>Salin ringkasan</b> lalu kirim ke guru.</p>
   </div>`;
+}
+
+/* ---------------- Kurasi memori Kak Nala (guru) ---------------- */
+const SANDI_GURU = 'nalarstem-guru';
+let filterKurasi = { status: 'baru', filterMisi: '', filterJenis: '', cari: '', lewati: 0 };
+
+function sandiGuru() { try { return sessionStorage.getItem(SANDI_GURU) || ''; } catch (e) { return ''; } }
+function setSandiGuru(s) { try { if (s) sessionStorage.setItem(SANDI_GURU, s); else sessionStorage.removeItem(SANDI_GURU); } catch (e) { /* abaikan */ } }
+function namaMisi(id) { const m = MISI.find(x => x.id === id); return m ? `${m.ikon} ${m.judul}` : id === 'kuis' ? '🧩 Uji Nalar' : '💬 Umum'; }
+function namaLangkah(id) { const L = LANGKAH.find(x => x.id === id); return L ? `Langkah ${L.no}: ${L.judul}` : ''; }
+
+function halKurasi() {
+  if (location.protocol === 'file:') { APP.innerHTML = '<h1 class="judul-hal">Kurasi Memori</h1><p class="peringatan">Kurasi memori memerlukan server — buka aplikasi lewat alamat web.</p>'; return; }
+  if (!sandiGuru()) {
+    APP.innerHTML = `<h1 class="judul-hal">🔐 Kurasi Memori Kak Nala</h1>
+    <div class="kartu prosa" style="max-width:520px">
+      <p>Halaman ini khusus guru. Di sini guru memeriksa tanya-jawab yang direkam dari AI: menyetujui yang baik (akan diutamakan saat AI tidak tersedia), mengedit, atau menolak yang kurang tepat.</p>
+      <form id="fSandi" class="baris-form"><input type="password" id="sandiGuru" placeholder="Sandi guru" autocomplete="current-password" required><button class="tombol utama">Masuk</button></form>
+      <p class="galat" id="galatSandi" hidden></p>
+    </div>`;
+    $('#fSandi').onsubmit = async e => {
+      e.preventDefault();
+      const s = $('#sandiGuru').value, g = $('#galatSandi'); g.hidden = true;
+      try {
+        const d = await memoriApi({ aksi: 'guru_cek', sandi: s }, 15000);
+        if (!d.ok) { g.textContent = 'Sandi salah.'; g.hidden = false; return; }
+        setSandiGuru(s); halKurasi();
+      } catch (err) { g.textContent = 'Tidak bisa menghubungi server: ' + err.message; g.hidden = false; }
+    };
+    return;
+  }
+  const f = filterKurasi;
+  APP.innerHTML = `<div class="kepala-porto"><h1 class="judul-hal">🧠 Kurasi Memori Kak Nala</h1>
+    <div class="aksi-porto"><button class="tombol" id="bKeluarGuru">Keluar</button></div></div>
+  <div class="kartu"><div class="statistik" id="statMemori"><div><b>…</b><small>Total</small></div></div>
+    <p class="redup kecil">Jawaban <b>disetujui</b> diutamakan saat AI tidak tersedia. Jawaban <b>baru</b> tetap bisa dipakai (prioritas lebih rendah); yang <b>ditolak</b> tidak pernah dipakai. Jawaban yang merujuk data uji murid tertentu sebaiknya dirapikan dulu agar berlaku umum.</p></div>
+  <div class="kartu filter-memori">
+    <label class="ctl"><span>Status</span><select id="kStatus">${[['baru', 'Baru (perlu diperiksa)'], ['disetujui', 'Disetujui'], ['ditolak', 'Ditolak'], ['', 'Semua']].map(([v, n]) => `<option value="${v}" ${f.status === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="ctl"><span>Misi</span><select id="kMisi"><option value="">Semua misi</option>${[...MISI.map(m => m.id), 'kuis', 'umum'].map(id => `<option value="${id}" ${f.filterMisi === id ? 'selected' : ''}>${esc(namaMisi(id))}</option>`).join('')}</select></label>
+    <label class="ctl"><span>Jenis</span><select id="kJenis">${[['', 'Semua'], ['chat', 'Tanya-jawab'], ['nilai', 'Penilaian']].map(([v, n]) => `<option value="${v}" ${f.filterJenis === v ? 'selected' : ''}>${n}</option>`).join('')}</select></label>
+    <label class="ctl"><span>Cari kata</span><input id="kCari" value="${esc(f.cari)}" placeholder="mis. tekanan"></label>
+  </div>
+  <div id="daftarMemori"><p class="redup">Memuat…</p></div>
+  <div class="aksi-lembar" style="justify-content:center"><button class="tombol" id="bMuatLagi" hidden>Muat lebih banyak</button></div>
+  <details class="kartu"><summary><b>Ganti sandi guru</b></summary>
+    <form id="fGantiSandi" class="baris-form" style="margin-top:10px"><input type="password" id="sandiBaru" placeholder="Sandi baru (min. 8 karakter)" minlength="8" required autocomplete="new-password"><button class="tombol">Simpan sandi</button></form>
+  </details>`;
+
+  let baris = [];
+  const muat = async (tambah = false) => {
+    if (!tambah) { f.lewati = 0; baris = []; }
+    try {
+      const d = await memoriApi({ aksi: 'guru_daftar', sandi: sandiGuru(), status: f.status || null, filterMisi: f.filterMisi || null, filterJenis: f.filterJenis || null, cari: f.cari || null, batas: 20, lewati: f.lewati }, 15000);
+      baris = baris.concat(d.baris || []);
+      const st = d.statistik || {};
+      $('#statMemori').innerHTML = [['total', 'Total'], ['baru', 'Baru'], ['disetujui', 'Disetujui'], ['ditolak', 'Ditolak'], ['dipakai', 'Kali dipakai']].map(([k, n]) => `<div><b>${(st[k] || 0).toLocaleString('id-ID')}</b><small>${n}</small></div>`).join('');
+      gambar();
+      $('#bMuatLagi').hidden = baris.length >= (d.total || 0);
+    } catch (e) {
+      if (e.status === 401) { setSandiGuru(''); toast('Sandi guru tidak berlaku lagi', 'peringatan'); halKurasi(); return; }
+      $('#daftarMemori').innerHTML = `<p class="galat">Gagal memuat memori: ${esc(e.message)}</p>`;
+    }
+  };
+  const gambar = () => {
+    const box = $('#daftarMemori');
+    if (!baris.length) { box.innerHTML = '<div class="kartu"><p class="redup">Tidak ada rekaman untuk filter ini.</p></div>'; return; }
+    box.innerHTML = baris.map((r, i) => {
+      let umpan = null;
+      if (r.jenis === 'nilai') { try { umpan = JSON.parse(r.jawaban); } catch (e) { umpan = null; } }
+      return `<div class="kartu memori-item status-${r.status}" data-i="${i}">
+        <div class="meta-memori"><span class="lencana ${r.status === 'disetujui' ? 'hijau' : r.status === 'ditolak' ? 'merah' : ''}">${r.status}</span>
+          <span>${r.jenis === 'nilai' ? '📝 Penilaian' : '💬 Tanya-jawab'}</span><span>${esc(namaMisi(r.misi))}</span>${r.langkah ? `<span>${esc(namaLangkah(r.langkah))}</span>` : ''}
+          <span>${new Date(r.dibuat).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span><span>dipakai ${r.dipakai}×</span>${r.spesifik ? '<span class="lencana kuning">merujuk data spesifik</span>' : ''}</div>
+        <p class="redup kecil">${r.jenis === 'nilai' ? 'Jawaban murid yang dinilai' : 'Pertanyaan murid'}:</p>
+        <div class="kutip-memori">${esc(r.pertanyaan)}</div>
+        ${r.jenis === 'nilai'
+          ? `<p class="redup kecil">Hasil penilaian AI:</p><div class="kutip-memori">${Object.entries(r.skor || {}).map(([id, n]) => `<b>${esc((INDIKATOR.find(x => x.id === id) || {}).nama || id)}: ${n}</b>`).join(' · ')}${umpan ? `<br>👍 ${esc(umpan.kekuatan || '-')}<br>🔧 ${esc(umpan.perbaikan || '-')}${umpan.miskonsepsi ? `<br>⚠️ ${esc(umpan.miskonsepsi)}` : ''}` : ''}</div>`
+          : `<label class="isian"><span class="kecil">Jawaban Kak Nala (boleh diedit sebelum disetujui):</span><textarea rows="4" data-jawab>${esc(r.jawaban)}</textarea></label>`}
+        <div class="aksi-lembar">
+          <button class="tombol utama kecil" data-aksi="setujui">✔ Setujui${r.jenis === 'chat' ? ' & simpan' : ''}</button>
+          <button class="tombol kecil" data-aksi="tolak">✘ Tolak</button>
+          ${r.jenis === 'chat' ? '<button class="tombol kecil" data-aksi="rapikan">✨ Rapikan agar berlaku umum</button>' : ''}
+          <button class="tombol kecil bahaya" data-aksi="hapus">🗑 Hapus</button>
+        </div>
+      </div>`;
+    }).join('');
+    $$('.memori-item [data-aksi]').forEach(b => b.onclick = () => aksi(b));
+  };
+  const aksi = async b => {
+    const kartu = b.closest('.memori-item'), r = baris[+kartu.dataset.i], jenis = b.dataset.aksi;
+    const ta = $('[data-jawab]', kartu);
+    b.disabled = true;
+    try {
+      if (jenis === 'rapikan') {
+        b.textContent = '⏳ Merapikan…';
+        const t = await panggilAI({
+          sistem: 'Tulis ulang jawaban tutor IPA berikut agar berlaku umum untuk murid SMP mana pun: hapus angka, nomor uji, dan data milik murid tertentu; pertahankan gaya Sokratik (tidak memberi jawaban akhir), Bahasa Indonesia yang hangat, maksimal 90 kata, akhiri dengan tepat satu pertanyaan pemantik. Keluarkan HANYA teks jawabannya.',
+          riwayat: [{ peran: 'user', teks: `Pertanyaan murid: ${r.pertanyaan}\n\nJawaban asli: ${ta.value}` }], json: false
+        });
+        ta.value = t.trim(); r.spesifik = jawabanSpesifik(ta.value);
+        toast('Sudah dirapikan — periksa lalu tekan Setujui'); b.textContent = '✨ Rapikan agar berlaku umum'; b.disabled = false;
+        return;
+      }
+      if (jenis === 'hapus') {
+        if (!confirm('Hapus rekaman ini secara permanen?')) { b.disabled = false; return; }
+        await memoriApi({ aksi: 'guru_hapus', sandi: sandiGuru(), id: r.id });
+      } else {
+        await memoriApi({
+          aksi: 'guru_ubah', sandi: sandiGuru(), id: r.id, status: jenis === 'setujui' ? 'disetujui' : 'ditolak',
+          jawaban: ta && jenis === 'setujui' ? ta.value : undefined,
+          spesifik: ta && jenis === 'setujui' ? jawabanSpesifik(ta.value) : undefined
+        });
+      }
+      toast(jenis === 'hapus' ? 'Rekaman dihapus' : jenis === 'setujui' ? 'Disetujui' : 'Ditolak');
+      kartu.classList.add('selesai');
+      setTimeout(() => muat(), 350);
+    } catch (e) {
+      if (e.status === 401) { setSandiGuru(''); halKurasi(); return; }
+      toast('Gagal: ' + e.message, 'peringatan'); b.disabled = false;
+      if (jenis === 'rapikan') b.textContent = '✨ Rapikan agar berlaku umum';
+    }
+  };
+  const ubahFilter = () => {
+    f.status = $('#kStatus').value; f.filterMisi = $('#kMisi').value; f.filterJenis = $('#kJenis').value; f.cari = $('#kCari').value.trim();
+    muat();
+  };
+  ['#kStatus', '#kMisi', '#kJenis'].forEach(s => { $(s).onchange = ubahFilter; });
+  let tunda; $('#kCari').oninput = () => { clearTimeout(tunda); tunda = setTimeout(ubahFilter, 400); };
+  $('#bMuatLagi').onclick = () => { f.lewati = baris.length; muat(true); };
+  $('#bKeluarGuru').onclick = () => { setSandiGuru(''); halKurasi(); };
+  $('#fGantiSandi').onsubmit = async e => {
+    e.preventDefault();
+    const baru = $('#sandiBaru').value;
+    try { await memoriApi({ aksi: 'guru_sandi', sandi: sandiGuru(), sandiBaru: baru }, 15000); setSandiGuru(baru); $('#sandiBaru').value = ''; toast('Sandi guru diganti'); }
+    catch (err) { toast('Gagal mengganti sandi: ' + err.message, 'peringatan'); }
+  };
+  muat();
 }
 
 /* ---------------- Pengaturan AI ---------------- */
@@ -924,18 +1076,38 @@ function halPengaturan() {
       <fieldset class="pilihan-sumber">
         <label><input type="radio" name="sumber" value="bawaan" ${c.sumber === 'bawaan' ? 'checked' : ''}><span><b>Server sekolah</b><small>Kunci Gemini disimpan di server (Vercel). Murid tidak perlu mengisi apa pun.</small></span></label>
         <label><input type="radio" name="sumber" value="pribadi" ${c.sumber === 'pribadi' ? 'checked' : ''}><span><b>Kunci Gemini pribadi</b><small>Dapatkan gratis di aistudio.google.com → "Get API key". Kunci hanya disimpan di browser ini.</small></span></label>
-        <label><input type="radio" name="sumber" value="lokal" ${c.sumber === 'lokal' ? 'checked' : ''}><span><b>Tanpa AI (tutor lokal)</b><small>Bekerja offline. Petunjuk & penilaian memakai aturan sederhana.</small></span></label>
+        <label><input type="radio" name="sumber" value="lokal" ${c.sumber === 'lokal' ? 'checked' : ''}><span><b>Tanpa AI (tutor lokal)</b><small>Bekerja offline. Menjawab dari memori Kak Nala, lalu aturan sederhana.</small></span></label>
       </fieldset>
+      <label class="cek-aman"><input type="checkbox" id="aiRekam" ${c.rekam ? 'checked' : ''}><span><b>Bantu Kak Nala belajar.</b> Tanya-jawab dan penilaian AI disimpan <b>tanpa nama</b> ke memori sekolah, agar Kak Nala tetap bisa membantu saat AI tidak tersedia. Guru memeriksa isi memori sebelum diutamakan.</span></label>
       <label class="isian" id="baris-kunci" ${c.sumber === 'pribadi' ? '' : 'hidden'}><span>Kunci API Gemini</span><input id="aiKunci" type="password" value="${esc(c.kunci)}" placeholder="AIza..." autocomplete="off"></label>
       <label class="isian"><span>Model</span><select id="aiModel">
         ${MODEL_PILIHAN.map(([x, n]) => `<option value="${x}" ${x === c.model ? 'selected' : ''}>${n}</option>`).join('')}
       </select></label>
       <div class="aksi-lembar"><button class="tombol utama">Simpan</button><button type="button" class="tombol" id="bTesAI">Uji koneksi</button><span id="hasilTes" class="redup"></span></div>
     </form>
-    ${location.protocol === 'file:' ? '<p class="peringatan">Aplikasi dibuka langsung dari berkas (file://). Mode "Server sekolah" tidak tersedia — pakai kunci pribadi atau tutor lokal.</p>' : ''}
+    ${location.protocol === 'file:' ? '<p class="peringatan">Aplikasi dibuka langsung dari berkas (file://). Mode "Server sekolah" dan memori sekolah tidak tersedia — pakai kunci pribadi atau tutor lokal.</p>' : ''}
+  </div>
+  <div class="kartu prosa">
+    <h3>🧠 Memori Kak Nala</h3>
+    <p>Kak Nala merekam jawaban AI (tanpa nama murid) ke memori sekolah. Saat AI tidak tersedia, ia mencari jawaban untuk pertanyaan yang mirip. Salinan memori juga disimpan di perangkat ini untuk dipakai saat offline.</p>
+    <p id="statusMemori" class="redup">Memeriksa salinan memori…</p>
+    <div class="aksi-lembar"><button type="button" class="tombol" id="bPerbaruiMemori">🔄 Perbarui salinan offline</button><a class="tombol" href="#/kurasi">🔐 Kurasi memori (guru)</a></div>
   </div>`;
+  const tulisStatusMemori = () => {
+    const p = paketLokal();
+    $('#statusMemori').textContent = p.waktu
+      ? `Salinan offline: ${p.hasil.length} jawaban (${p.hasil.filter(x => x.status === 'disetujui').length} disetujui guru), diperbarui ${new Date(p.waktu).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}.`
+      : 'Belum ada salinan offline di perangkat ini.';
+  };
+  tulisStatusMemori();
+  $('#bPerbaruiMemori').onclick = async () => {
+    const b = $('#bPerbaruiMemori'); b.disabled = true;
+    try { await perbaruiPaketMemori(true); tulisStatusMemori(); toast('Salinan memori diperbarui'); }
+    catch (e) { toast('Gagal memperbarui memori: ' + e.message, 'peringatan'); }
+    b.disabled = false;
+  };
   $$('[name=sumber]').forEach(r => r.onchange = () => { $('#baris-kunci').hidden = r.value !== 'pribadi' || !r.checked; });
-  const ambil = () => ({ sumber: $('[name=sumber]:checked').value, kunci: $('#aiKunci').value.trim(), model: $('#aiModel').value });
+  const ambil = () => ({ sumber: $('[name=sumber]:checked').value, kunci: $('#aiKunci').value.trim(), model: $('#aiModel').value, rekam: $('#aiRekam').checked });
   $('#fAI').onsubmit = e => { e.preventDefault(); simpanAI(ambil()); toast('Pengaturan AI tersimpan'); gambarChat(); };
   $('#bTesAI').onclick = async () => {
     simpanAI(ambil());
@@ -953,3 +1125,4 @@ function halPengaturan() {
 $('#tombolMenu').onclick = () => document.body.classList.toggle('menu-buka');
 pasangTutor();
 rute();
+perbaruiPaketMemori().catch(() => { /* offline: pakai salinan yang ada */ });

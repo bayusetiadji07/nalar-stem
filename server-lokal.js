@@ -15,20 +15,21 @@ if (fs.existsSync(env)) {
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2];
   }
 }
-const tutor = require('./api/tutor.js');
+const API = { '/api/tutor': require('./api/tutor.js'), '/api/memori': require('./api/memori.js') };
 
 const JENIS = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.json': 'application/json', '.ico': 'image/x-icon' };
 
 http.createServer((req, res) => {
   const url = decodeURIComponent(req.url.split('?')[0]);
-  if (url === '/api/tutor') {
+  const fungsi = API[url];
+  if (fungsi) {
     let data = '';
     req.on('data', c => { data += c; if (data.length > 200000) req.destroy(); });
     req.on('end', () => {
       try { req.body = JSON.parse(data || '{}'); } catch (e) { req.body = null; }
       res.status = k => { res.statusCode = k; return res; };
       res.json = o => { res.setHeader('Content-Type', 'application/json'); res.end(JSON.stringify(o)); };
-      tutor(req, res).catch(e => { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); });
+      fungsi(req, res).catch(e => { res.statusCode = 500; res.end(JSON.stringify({ error: e.message })); });
     });
     return;
   }

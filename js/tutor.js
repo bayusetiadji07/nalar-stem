@@ -22,7 +22,7 @@ function bacaAI() {
   const dariBerkas = location.protocol === 'file:';
   // model lama yang sudah ditutup Google (mis. gemini-2.5-flash-lite) otomatis diganti bawaan
   const model = MODEL_DAFTAR.includes(c.model) ? c.model : MODEL_DAFTAR[0];
-  return { sumber: c.sumber || (dariBerkas ? 'lokal' : 'bawaan'), kunci: c.kunci || '', model };
+  return { sumber: c.sumber || (dariBerkas ? 'lokal' : 'bawaan'), kunci: c.kunci || '', model, rekam: c.rekam !== false };
 }
 function simpanAI(c) {
   try { localStorage.setItem(AI_KUNCI_SIMPAN, JSON.stringify(c)); } catch (e) { /* abaikan */ }
@@ -103,7 +103,7 @@ ATURAN WAJIB:
 7. Jika murid memaksa minta jawaban, jelaskan dengan ramah bahwa kamu ingin dia menemukannya sendiri, lalu naikkan tingkat petunjuk.
 8. Tingkat petunjuk: [1] pertanyaan terbuka; [2] arahkan ke konsep/variabel yang relevan; [3] petunjuk konkret (misal "bandingkan uji 2 dan 3, apa yang berbeda?") tetapi tetap tanpa jawaban akhir.
 9. Jika pertanyaan di luar pembelajaran IPA/STEM, arahkan kembali dengan sopan. Tolak hal yang tidak pantas atau berbahaya. Untuk keselamatan (misal air minum), ingatkan dengan tegas.
-10. Boleh memakai **tebal** untuk kata kunci. Jangan memakai judul markdown.
+10. Boleh memakai **tebal** untuk kata kunci. Jangan memakai judul markdown. JANGAN memakai LaTeX atau tanda dolar; tulis rumus dengan teks biasa dan subskrip Unicode (contoh: CO₂, H₂O, F = m × a).
 11. PRAKTIK NYATA: jika murid membuat/menguji prototipe sungguhan, KESELAMATAN SELALU DI ATAS metode Sokratik. Untuk hal yang menyangkut bahaya, beri arahan keselamatan secara LANGSUNG dan tegas (boleh tanpa pertanyaan), lalu sarankan melibatkan guru. Tolak dengan sopan modifikasi berbahaya (misal: cuka biang/asam kuat, botol kaca, api, listrik PLN dekat air, es kering, memperbesar tekanan secara berlebihan, meminum air hasil saringan) dan tawarkan alternatif aman. Jika arah petunjuk masalah di konteks memuat kata "KESELAMATAN", atau masalahnya menyangkut tekanan/benda yang bisa melesat, panas, listrik, atau bahan kimia, WAJIB awali balasan dengan instruksi keselamatan itu secara langsung (misal: "Jangan dekati botol, tunggu 2 menit, minta guru membuka sumbat dengan wajah menjauh"), baru kemudian pertanyaan pemantik. Untuk masalah teknis yang aman (bocor, lambat, meleset), tetap bantu murid menemukan penyebab lewat pertanyaan dan membandingkan hasil nyata dengan prediksi simulasi.
 
 KONTEKS BELAJAR MURID SAAT INI:
@@ -130,14 +130,25 @@ Keluarkan HANYA JSON valid dengan format:
 }
 
 /* ---------------- API tingkat tinggi ---------------- */
-async function tutorBalas(konteks, nama, riwayat) {
+// info = { misi, langkah, pertanyaan } dipakai untuk merekam & mencari di memori Kak Nala.
+async function tutorBalas(konteks, nama, riwayat, info = {}) {
+  const pertanyaan = info.pertanyaan || riwayat[riwayat.length - 1].teks;
   try {
-    const teks = await panggilAI({ sistem: promptSistemTutor(konteks, nama), riwayat: riwayat.slice(-14), json: false });
-    return { teks: teks.trim(), sumber: 'ai' };
+    const teks = (await panggilAI({ sistem: promptSistemTutor(konteks, nama), riwayat: riwayat.slice(-14), json: false })).trim();
+    rekamMemori({ jenis: 'chat', misi: info.misi, langkah: info.langkah, pertanyaan, jawaban: teks });
+    return { teks, sumber: 'ai' };
   } catch (e) {
-    const lokal = tutorLokal(riwayat[riwayat.length - 1].teks);
-    return { teks: lokal, sumber: 'lokal', galat: e.message === 'LOKAL' ? '' : e.message };
+    const galat = e.message === 'LOKAL' ? '' : e.message;
+    const ingat = (await cariMemori('chat', info.misi || 'umum', info.langkah || '', pertanyaan).catch(() => []))[0];
+    if (ingat && ingat.kemiripan >= AMBANG_MIRIP) {
+      return { teks: samarkanNama(ingat.jawaban, nama), sumber: 'memori', galat };
+    }
+    return { teks: tutorLokal(pertanyaan), sumber: 'lokal', galat };
   }
+}
+
+function teksIsian(langkah, isian) {
+  return langkah.isian.map(f => (isian[f.id] || '').trim()).join('\n');
 }
 
 async function periksaIsian(konteks, langkah, isian, misi) {
@@ -148,12 +159,46 @@ async function periksaIsian(konteks, langkah, isian, misi) {
     const j = JSON.parse(teks.replace(/^```(json)?|```$/g, '').trim());
     const skor = {};
     indikator.forEach(i => { skor[i.id] = jepit(Math.round(+((j.skor || {})[i.id]) || 1), 1, 4); });
-    return { skor, kekuatan: j.kekuatan || '', perbaikan: j.perbaikan || '', pemantik: (j.pemantik || []).slice(0, 3), miskonsepsi: j.miskonsepsi || '', sumber: 'ai' };
+    const hasil = { skor, kekuatan: j.kekuatan || '', perbaikan: j.perbaikan || '', pemantik: (j.pemantik || []).slice(0, 3), miskonsepsi: j.miskonsepsi || '', sumber: 'ai' };
+    rekamMemori({
+      jenis: 'nilai', misi: misi ? misi.id : 'umum', langkah: langkah.id, pertanyaan: teksIsian(langkah, isian),
+      jawaban: JSON.stringify({ kekuatan: hasil.kekuatan, perbaikan: hasil.perbaikan, pemantik: hasil.pemantik, miskonsepsi: hasil.miskonsepsi }),
+      skor, spesifik: false
+    });
+    return hasil;
   } catch (e) {
-    const hasil = penilaiLokal(langkah, isian, misi);
-    hasil.galat = e.message === 'LOKAL' ? '' : e.message;
+    const galat = e.message === 'LOKAL' ? '' : e.message;
+    const hasil = await penilaiMemori(langkah, isian, misi).catch(() => null) || penilaiLokal(langkah, isian, misi);
+    hasil.galat = galat;
     return hasil;
   }
+}
+
+// Penilaian tanpa AI dengan membandingkan jawaban murid ke jawaban lain yang pernah dinilai AI.
+async function penilaiMemori(langkah, isian, misi) {
+  const teks = teksIsian(langkah, isian);
+  const mirip = (await cariMemori('nilai', misi ? misi.id : 'umum', langkah.id, teks, 5))
+    .filter(m => m.kemiripan >= AMBANG_MIRIP && m.skor);
+  if (!mirip.length) return null;
+  const dasar = penilaiLokal(langkah, isian, misi);
+  const skor = {};
+  langkah.indikator.forEach(id => {
+    let jumlah = 0, bobot = 0;
+    mirip.forEach(m => { if (m.skor[id]) { jumlah += m.skor[id] * m.kemiripan; bobot += m.kemiripan; } });
+    // campur skor rujukan memori (bobot besar) dengan penilai aturan
+    skor[id] = bobot ? jepit(Math.round((jumlah / bobot) * 0.75 + dasar.skor[id] * 0.25), 1, 4) : dasar.skor[id];
+  });
+  let umpan = {};
+  try { umpan = JSON.parse(mirip[0].jawaban); } catch (e) { /* abaikan */ }
+  const sangatMirip = mirip[0].kemiripan >= 0.55;
+  return {
+    skor,
+    kekuatan: sangatMirip && umpan.kekuatan ? umpan.kekuatan : dasar.kekuatan,
+    perbaikan: sangatMirip && umpan.perbaikan ? umpan.perbaikan : dasar.perbaikan,
+    pemantik: (umpan.pemantik && umpan.pemantik.length ? umpan.pemantik : dasar.pemantik).slice(0, 3),
+    miskonsepsi: sangatMirip ? (umpan.miskonsepsi || '') : '',
+    sumber: 'memori'
+  };
 }
 
 /* ---------------- Tutor & penilai lokal (tanpa AI) ---------------- */

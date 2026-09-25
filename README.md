@@ -28,6 +28,15 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
 
 Model: `gemini-3.6-flash` (tercepat, ± 2 detik), dengan rantai cadangan otomatis `3.5-flash-lite` → `3.5-flash` → `flash-lite-latest` → `2.5-flash` (batas 12 detik per model) saat model sibuk (503), kuota habis (429), atau sudah ditutup Google (404). Model yang tak lagi tersedia di pengaturan lama otomatis diganti bawaan.
 
+## Memori Kak Nala (kecerdasan lokal)
+- Setiap jawaban chat & penilaian AI direkam **tanpa nama** (email/telepon/tautan disamarkan) ke Supabase,
+  tabel `nalar_memori` (proyek bersama `wddfpmsurcftapbczise`, migrasi `nalar_memori_kak_nala`).
+- Tabel dikunci RLS tanpa policy; akses hanya lewat fungsi `nalar_*` (SECURITY DEFINER) melalui `api/memori.js`.
+- Saat AI gagal: chat mencari tanya-jawab mirip (trigram `pg_trgm`, misi & langkah sama, yang **disetujui guru** diutamakan);
+  penilaian memakai rata-rata berbobot skor jawaban-jawaban serupa. Tanpa internet: salinan di localStorage (`nalarstem-memori`, diperbarui tiap 6 jam).
+- Guru mengkurasi di `#/kurasi` (sandi guru disimpan bcrypt di `nalar_pengaturan`; bisa diganti dari halaman itu).
+- Murid bisa mematikan perekaman di Pengaturan AI.
+
 ## Menjalankan
 ```bash
 node server-lokal.js      # http://localhost:3140
