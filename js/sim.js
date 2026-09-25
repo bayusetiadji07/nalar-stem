@@ -770,7 +770,179 @@ function gambarRoketAir(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   7. JEMBATAN STIK ES KRIM — gaya tekan, gaya tarik, struktur rangka
+   Beban titik di tengah bentang 40 cm, dua rangka sejajar berbagi beban.
+   Batang tarik dibatasi kekuatan sambungan lem; batang tekan dibatasi
+   tekuk Euler (π²EI/L²) atau hancur. Stik ditumpuk n lapis: bila lemnya
+   baik, lapisan bekerja sebagai satu batang tebal (I ∝ n³).
+   --------------------------------------------------------- */
+const LEM_JEMBATAN = {
+  kertas: { nama: 'Lem kertas', sambung: 30, q: 0.3 },
+  kayu:   { nama: 'Lem kayu (PVAc)', sambung: 120, q: 1.0 },
+  tembak: { nama: 'Lem tembak', sambung: 70, q: 0.7 }
+};
+const NAMA_DESAIN = { balok: 'Balok datar', warren: 'Rangka Warren', pratt: 'Rangka Pratt', howe: 'Rangka Howe', lengkung: 'Lengkung (busur)' };
+
+function hitungJembatan(v) {
+  const g = 9.8, L = 0.40, panel = 0.10, E = 10e9;
+  const n = +v.lapis, h = +v.tinggi / 100, lem = LEM_JEMBATAN[v.lem];
+  const I1 = 0.0095 * 0.002 ** 3 / 12;
+  const Ief = I1 * (n + (n ** 3 - n) * lem.q);
+  // batang lebih panjang dari satu stik (10,5 cm) harus disambung → kekuatan tekan turun
+  const tekan = Lm => Math.min(Math.PI ** 2 * E * Ief / (Lm * Lm), 30e6 * 0.0095 * 0.002 * n) * (Lm > 0.105 ? 0.5 : 1); // N
+  const tarik = () => Math.min(lem.sambung * n, 800 * n);                                                           // N
+  const M = g * L / 4;       // momen per kg beban (N·m)
+  const V = g / 2;           // gaya lintang per kg (N)
+  const bagi = 2;            // dua rangka sejajar
+  const batang = [];         // { nama, jenis, gayaPerKg, kapasitas }
+  let stikRangka = 0;
+  const stikBatang = len => Math.ceil(len / 0.105) * n;
+  if (v.desain === 'balok') {
+    // balok datar 4 stik berjajar; sambungan di serat bawah menahan tarik
+    const tebal = 0.002 * n;
+    batang.push({ nama: 'Sambungan serat bawah balok', jenis: 'tarik', gayaPerKg: M / (0.67 * tebal), kapasitas: tarik() * 4 });
+    stikRangka = 4 * 5 * n;
+  } else if (v.desain === 'lengkung') {
+    const dorong = M / h;                       // gaya dorong busur
+    const panjangBusur = L * (1 + 8 / 3 * (h / L) ** 2);
+    // beban titik di tengah membuat busur ikut melentur → gaya pada busur jauh lebih besar dari dorongan murni
+    batang.push({ nama: 'Busur (batang tekan)', jenis: 'tekan', gayaPerKg: dorong * 2.5 / bagi, kapasitas: tekan(panel) });
+    batang.push({ nama: 'Tali/penggantung lantai', jenis: 'tarik', gayaPerKg: V / bagi, kapasitas: tarik() });
+    batang.push({ nama: 'Lantai pengikat (menahan dorongan busur)', jenis: 'tarik', gayaPerKg: dorong / bagi, kapasitas: tarik() });
+    stikRangka = 2 * (stikBatang(panjangBusur) + 5 * stikBatang(h * 0.6));
+  } else {
+    const chord = M / h / bagi;
+    // batang atas bisa menekuk ke samping di antara dua pengaku silang (berjarak 2 panel)
+    batang.push({ nama: 'Batang atas (tekan)', jenis: 'tekan', gayaPerKg: chord, kapasitas: tekan(2 * panel) * 2 });
+    batang.push({ nama: 'Batang bawah (tarik)', jenis: 'tarik', gayaPerKg: chord, kapasitas: tarik() });
+    const dW = Math.hypot(panel / 2, h), dP = Math.hypot(panel, h);
+    let web = 0;
+    if (v.desain === 'warren') {
+      batang.push({ nama: 'Diagonal (tekan)', jenis: 'tekan', gayaPerKg: V * dW / h / bagi, kapasitas: tekan(dW) });
+      web = 8 * stikBatang(dW);
+    } else if (v.desain === 'pratt') {
+      batang.push({ nama: 'Batang tegak (tekan)', jenis: 'tekan', gayaPerKg: V / bagi, kapasitas: tekan(h) });
+      batang.push({ nama: 'Diagonal (tarik)', jenis: 'tarik', gayaPerKg: V * dP / h / bagi, kapasitas: tarik() });
+      web = 5 * stikBatang(h) + 4 * stikBatang(dP);
+    } else { // howe
+      batang.push({ nama: 'Diagonal (tekan)', jenis: 'tekan', gayaPerKg: V * dP / h / bagi, kapasitas: tekan(dP) });
+      batang.push({ nama: 'Batang tegak (tarik)', jenis: 'tarik', gayaPerKg: V / bagi, kapasitas: tarik() });
+      web = 5 * stikBatang(h) + 4 * stikBatang(dP);
+    }
+    stikRangka = 2 * (2 * 5 * n + web);
+  }
+  batang.forEach(b => { b.bebanMaks = b.kapasitas / b.gayaPerKg; });
+  let lemah = batang.reduce((a, b) => (b.bebanMaks < a.bebanMaks ? b : a));
+  // rangka yang tinggi tetapi lebar jembatannya hanya ± 8 cm mudah terpuntir/terguling ke samping
+  if (v.desain !== 'balok' && h > 0.07) {
+    const samping = { nama: 'Kestabilan samping (rangka terlalu tinggi & ramping)', jenis: 'tekan', gayaPerKg: 1, kapasitas: 0 };
+    samping.bebanMaks = lemah.bebanMaks * Math.pow(0.07 / h, 2);
+    if (samping.bebanMaks < lemah.bebanMaks * 0.97) { batang.push(samping); lemah = samping; }
+  }
+  const bebanMaks = lemah.bebanMaks;
+  const stik = stikRangka + 20 + (v.desain === 'balok' ? 0 : 10); // + lantai + pengaku silang
+  const massa = stik * 1.6 * 1.1; // g (stik ± 1,6 g + lem)
+  const beban = +v.beban;
+  const runtuh = beban > bebanMaks;
+  return {
+    bebanMaks: bulat(bebanMaks, 1), lemah: lemah.nama, gaya: bulat(beban * lemah.gayaPerKg, 0),
+    stik, massa: Math.round(massa), efisiensi: Math.round(bebanMaks * 1000 / massa),
+    status: runtuh ? 'Runtuh' : beban > bebanMaks * 0.8 ? 'Hampir runtuh' : 'Kuat',
+    _batang: batang, _lemah: lemah, _runtuh: runtuh, _rasio: bebanMaks ? beban / bebanMaks : 9
+  };
+}
+
+function kriteriaJembatan(v, h) {
+  return [
+    { teks: 'Menahan beban ≥ 15 kg', lulus: h.bebanMaks >= 15, nilai: `maks ${h.bebanMaks} kg` },
+    { teks: 'Memakai ≤ 120 stik', lulus: h.stik <= 120, nilai: `${h.stik} stik` },
+    { teks: 'Efisiensi ≥ 80 (beban ÷ massa jembatan)', lulus: h.efisiensi >= 80, nilai: `${h.efisiensi}` }
+  ];
+}
+
+function gambarJembatan(ctx, W, H, v, h, p) {
+  ctx.fillStyle = '#f0f9ff'; ctx.fillRect(0, 0, W, H);
+  const lantaiY = H * 0.52, kiri = W * 0.14, kanan = W * 0.86, bentang = kanan - kiri;
+  // tebing & air saluran
+  ctx.fillStyle = '#a16207';
+  ctx.beginPath(); ctx.moveTo(0, lantaiY); ctx.lineTo(kiri + 6, lantaiY); ctx.lineTo(kiri - 20, H); ctx.lineTo(0, H); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(W, lantaiY); ctx.lineTo(kanan - 6, lantaiY); ctx.lineTo(kanan + 20, H); ctx.lineTo(W, H); ctx.fill();
+  ctx.fillStyle = '#7dd3fc'; ctx.fillRect(kiri - 12, H - 38, bentang + 24, 38);
+  const beban = +v.beban, rasio = h._rasio;
+  const turun = mulus(jepit(p / 0.5, 0, 1));
+  const patah = h._runtuh && p > 0.55;
+  const lendut = Math.min(1, rasio) * 10 * turun + (patah ? mulus(jepit((p - 0.55) / 0.3, 0, 1)) * 60 : 0);
+  const sag = x => { const u = (x - kiri) / bentang; return lendut * Math.sin(Math.PI * u); };
+  const tinggiPx = Math.min(bentang * (+v.tinggi / 40), H * 0.36);
+  const tebal = 1.5 + +v.lapis * 1.3;
+  const warnaBatang = b => (b && b === h._lemah && (patah || rasio > 0.8) ? '#dc2626' : b && b.jenis === 'tekan' ? '#ea580c' : '#2563eb');
+  const cari = kata => h._batang.find(b => b.nama.toLowerCase().includes(kata));
+  const garis = (x1, y1, x2, y2, b, putus) => {
+    ctx.strokeStyle = warnaBatang(b); ctx.lineWidth = tebal; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    for (let k = 0; k <= 16; k++) { const x = lerp(x1, x2, k / 16), y = lerp(y1, y2, k / 16); ctx.lineTo(x, y + sag(x)); } // ikut melendut sepanjang batang
+    ctx.stroke();
+    if (putus) { ctx.strokeStyle = '#f0f9ff'; ctx.lineWidth = tebal + 3; ctx.beginPath(); const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 + sag((x1 + x2) / 2); ctx.moveTo(mx - 3, my - 3); ctx.lineTo(mx + 3, my + 3); ctx.stroke(); }
+  };
+  const nPanel = 4, px = bentang / nPanel;
+  // lantai
+  ctx.fillStyle = '#e9c98b';
+  for (let i = 0; i <= 20; i++) { const x = kiri + bentang * i / 20; ctx.fillRect(x - 1.5, lantaiY + sag(x) - 2, 3, 5); }
+  if (v.desain === 'balok') {
+    const b = h._batang[0];
+    for (let k = 0; k < +v.lapis; k++) garis(kiri, lantaiY - 3 - k * 3, kanan, lantaiY - 3 - k * 3, b, patah && k === 0);
+  } else if (v.desain === 'lengkung') {
+    const busur = cari('busur'), tali = cari('tali');
+    ctx.strokeStyle = warnaBatang(busur); ctx.lineWidth = tebal; ctx.beginPath();
+    for (let i = 0; i <= 40; i++) { const u = i / 40, x = kiri + bentang * u; ctx.lineTo(x, lantaiY - tinggiPx * 4 * u * (1 - u) + sag(x)); }
+    ctx.stroke();
+    for (let i = 1; i < 5; i++) { const u = i / 5, x = kiri + bentang * u; garis(x, lantaiY - tinggiPx * 4 * u * (1 - u), x, lantaiY, tali, false); }
+  } else {
+    const atas = cari('atas'), bawah = cari('bawah'), diag = cari('diagonal'), tegak = cari('tegak');
+    const yA = lantaiY - tinggiPx, yB = lantaiY;
+    garis(kiri + (v.desain === 'warren' ? px / 2 : 0), yA, kanan - (v.desain === 'warren' ? px / 2 : 0), yA, atas, patah && h._lemah === atas);
+    garis(kiri, yB, kanan, yB, bawah, patah && h._lemah === bawah);
+    for (let i = 0; i < nPanel; i++) {
+      const x0 = kiri + i * px, x1 = x0 + px, tengah = i < nPanel / 2;
+      if (v.desain === 'warren') {
+        // diagonal yang naik ke arah tengah tertekan, yang turun ke arah tengah tertarik
+        const diagTarik = { jenis: 'tarik' };
+        garis(x0, yB, x0 + px / 2, yA, tengah ? diag : diagTarik, patah && h._lemah === diag && i === 1);
+        garis(x0 + px / 2, yA, x1, yB, tengah ? diagTarik : diag, false);
+      }
+      else {
+        garis(x0, yB, x0, yA, tegak, patah && h._lemah === tegak && i === 2);
+        const naik = v.desain === 'pratt' ? tengah : !tengah;
+        if (naik) garis(x0, yA, x1, yB, diag, patah && h._lemah === diag && i === 1); else garis(x0, yB, x1, yA, diag, false);
+      }
+    }
+    if (v.desain !== 'warren') garis(kanan, yB, kanan, yA, tegak, false);
+  }
+  // tumpuan
+  ctx.fillStyle = '#475569';
+  [kiri, kanan].forEach(x => { ctx.beginPath(); ctx.moveTo(x, lantaiY + 3); ctx.lineTo(x - 8, lantaiY + 15); ctx.lineTo(x + 8, lantaiY + 15); ctx.fill(); });
+  // beban
+  if (beban > 0) {
+    const bx = W / 2, by = lantaiY + sag(bx) + 6;
+    const ukuran = 16 + Math.min(26, beban * 1.6);
+    const yBeban = lerp(by - 140, by, turun) + (patah ? 60 * mulus(jepit((p - 0.55) / 0.3, 0, 1)) : 0);
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(bx, yBeban - 4); ctx.lineTo(bx, yBeban + 10); ctx.stroke();
+    ctx.fillStyle = '#475569'; kotakBulat(ctx, bx - ukuran / 2, yBeban + 10, ukuran, ukuran, 4); ctx.fill();
+    label(ctx, `${fx(beban)} kg`, bx, yBeban + 10 + ukuran / 2, { rata: 'center', ukuran: 11, warna: '#fff', tebal: true });
+  }
+  // legenda
+  label(ctx, '■ tarik', W - 12, H - 12, { rata: 'right', ukuran: 11, warna: '#2563eb', latar: 'rgba(255,255,255,.85)' });
+  label(ctx, '■ tekan', W - 66, H - 12, { rata: 'right', ukuran: 11, warna: '#ea580c', latar: 'rgba(255,255,255,.85)' });
+  label(ctx, `${NAMA_DESAIN[v.desain]} · bentang 40 cm`, 12, H - 12, { ukuran: 11, warna: '#0c4a6e', latar: 'rgba(255,255,255,.85)' });
+  if (p >= 1) {
+    const warna = h._runtuh ? '#b91c1c' : h._rasio > 0.8 ? '#b45309' : '#15803d';
+    label(ctx, h._runtuh ? `RUNTUH — ${h.lemah} gagal` : `${h.status.toUpperCase()} · mampu ± ${fx(h.bebanMaks)} kg`, W / 2, 20, { rata: 'center', tebal: true, ukuran: 13, warna: '#fff', latar: warna });
+  }
+}
+
 const SIM = {
+  jembatan: { hitung: hitungJembatan, kriteria: kriteriaJembatan, gambar: gambarJembatan, sumbuX: ['tinggi', 'lapis', 'beban'], sumbuY: ['bebanMaks', 'efisiensi', 'stik', 'gaya'] },
   roketair: { hitung: hitungRoketAir, kriteria: kriteriaRoketAir, gambar: gambarRoketAir, sumbuX: ['air', 'tekanan', 'sudut'], sumbuY: ['jarak', 'tinggi', 'kecepatan', 'dorong'] },
   roket: { hitung: hitungRoket, kriteria: kriteriaRoket, gambar: gambarRoket, sumbuX: ['cuka', 'soda', 'sudut'], sumbuY: ['jarak', 'tinggi', 'tekanan', 'gas'] },
   perahu: { hitung: v => hitungPerahu(v), kriteria: kriteriaPerahu, gambar: gambarPerahu, sumbuX: ['panjang', 'lebar', 'tinggi', 'muatan'], sumbuY: ['celup', 'bebas', 'kapasitas', 'biaya'] },

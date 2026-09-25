@@ -422,6 +422,56 @@ const NYATA = {
       { gejala: 'Roket berputar atau jatuh dekat', kunci: 'berputar|oleng|jatuh dekat|melenceng|belok', petunjuk: ['Apakah sirip sama besar dan terpasang lurus?', 'Di mana titik berat roketmu? Apa pengaruh beban di bagian depan?'] },
       { gejala: 'Jarak jauh berbeda dari simulasi', kunci: 'beda|berbeda|pendek|jauh', petunjuk: ['Apakah tekanan saat lepas sama dengan tekanan rancangan? Adakah tekanan yang hilang lewat kebocoran?', 'Faktor apa di lapangan (angin, bentuk sirip, berat lakban) yang tidak ada di simulasi?'] }
     ]
+  },
+  jembatan: {
+    waktu: '3 × 40 menit (merakit, menunggu lem kering 1 malam, lalu uji beban)',
+    alat: [
+      'Stik es krim (± 120 buah) — pilih yang lurus dan tidak retak',
+      'Lem sesuai rancangan: lem kayu PVAc (paling kuat, kering 1 malam), lem tembak, atau lem kertas',
+      'Kertas pola bergaris, penggaris, pensil, penjepit jemuran/klip untuk menahan saat lem mengering',
+      'Dua meja/tumpukan buku yang berjarak 40 cm sebagai tumpuan',
+      'Tali, gantungan (hanger/S-hook), dan ember kecil sebagai wadah beban',
+      'Beban: botol air 1,5 L (± 1,5 kg) atau pasir yang ditimbang per 1 kg; timbangan',
+      'Kacamata pelindung dan kardus/bantal di bawah jembatan'
+    ],
+    keselamatan: [
+      'Lem tembak panas — jangan menyentuh ujung pistol dan lelehan lem; letakkan pistol di atas alas tahan panas.',
+      'Pakai kacamata saat uji beban: stik bisa patah dan serpihannya terlempar.',
+      'Letakkan kardus/bantal di bawah ember beban agar tidak menimpa kaki saat jembatan runtuh.',
+      'Tambah beban pelan-pelan dari samping; jangan menaruh tangan atau kaki di bawah jembatan yang dibebani.',
+      'Rapikan serpihan stik yang tajam setelah pengujian.'
+    ],
+    langkah: [
+      'Gambar pola rangka sesuai rancanganmu dalam ukuran asli (bentang 40 cm, tinggi sesuai rancangan) di kertas.',
+      'Buat DUA rangka sisi yang sama persis di atas pola. Tumpuk stik sesuai jumlah lapis rancangan; sambungan antarstik dibuat berselang-seling (tidak di tempat yang sama pada setiap lapis).',
+      'Jepit sambungan dan biarkan lem kering (lem kayu: 1 malam).',
+      'Hubungkan kedua rangka dengan stik lantai (± 20 buah) dan pengaku silang di bagian atas, sehingga lebar jembatan ± 8 cm.',
+      'Hitung jumlah stik dan timbang jembatan kosong.',
+      'Letakkan jembatan di atas dua tumpuan berjarak 40 cm. Gantung ember di TENGAH lantai jembatan dengan tali.',
+      'Tambahkan beban 1 kg demi 1 kg sambil mengamati: bagian mana yang melengkung, berbunyi, atau patah lebih dulu.',
+      'Catat beban terakhir sebelum jembatan runtuh (beban maksimum), lalu foto bagian yang patah.'
+    ],
+    takaran: v => {
+      const nama = { balok: 'balok datar', warren: 'rangka Warren (segitiga berselang-seling)', pratt: 'rangka Pratt (diagonal miring ke arah tengah)', howe: 'rangka Howe (diagonal miring ke arah tumpuan)', lengkung: 'busur' }[v.desain];
+      const h = hitungJembatan(v);
+      return [
+        `Bentuk: ${nama}; tinggi ${v.tinggi} cm; setiap batang ${v.lapis} lapis stik; direkatkan dengan ${LEM_JEMBATAN[v.lem].nama.replace(/^Lem /, 'lem ')}.`,
+        `Perkiraan kebutuhan: ${h.stik} stik (termasuk ± 20 stik lantai${v.desain === 'balok' ? '' : ' dan 10 stik pengaku silang'}), massa ± ${h.massa} g.`,
+        `Menurut simulasi, bagian yang paling mungkin gagal lebih dulu: ${h.lemah.toLowerCase()} — beri perhatian khusus pada bagian ini saat merakit.`,
+        `Prediksi beban maksimum ± ${fxd(h.bebanMaks)} kg ≈ ${fxd(h.bebanMaks / 1.5)} botol air 1,5 L.`
+      ];
+    },
+    ukur: [
+      { id: 'bebanMaks', label: 'Beban maksimum nyata', satuan: 'kg', sim: 'bebanMaks' },
+      { id: 'massa', label: 'Massa jembatan', satuan: 'g', sim: 'massa' },
+      { id: 'stik', label: 'Jumlah stik terpakai', satuan: 'stik', sim: 'stik' }
+    ],
+    masalah: [
+      { gejala: 'Sambungan lepas sebelum stik patah', kunci: 'lepas|sambungan|lem', petunjuk: ['Apakah lemnya sudah benar-benar kering? Berapa lama kamu menunggu?', 'Seberapa luas bidang stik yang saling menempel di sambungan itu?'] },
+      { gejala: 'Batang atas melengkung ke samping', kunci: 'melengkung|menekuk|bengkok|samping', petunjuk: ['Batang atas menerima gaya apa — tekan atau tarik?', 'Apa yang terjadi pada batang tekan jika dibuat lebih tebal atau diberi pengaku silang lebih rapat?'] },
+      { gejala: 'Jembatan terpuntir atau miring', kunci: 'puntir|terpuntir|miring|goyang|guling', petunjuk: ['Apakah kedua rangka sisi sama persis dan dipasang tegak?', 'Seberapa tinggi rangkamu dibanding lebar jembatannya?'] },
+      { gejala: 'Beban maksimum jauh berbeda dari simulasi', kunci: 'beda|berbeda|jauh|lebih kecil', petunjuk: ['Apakah beban benar-benar tepat di tengah dan ditambah pelan-pelan?', 'Faktor apa di jembatan nyata (stik bengkok, lem tidak rata, sambungan sejajar) yang tidak ada di simulasi?'] }
+    ]
   }
 };
 
@@ -659,6 +709,44 @@ const MISI = [
       { id: 'stabilitas', label: 'Kestabilan', satuan: '' },
       { id: 'keamanan', label: 'Keamanan tekanan', satuan: '' }
     ]
+  },
+  {
+    id: 'jembatan',
+    judul: 'Jembatan Stik Es Krim',
+    ikon: '🌉',
+    kelas: 'Kelas 8 · Gerak & Gaya (Gaya Tekan, Gaya Tarik, Struktur)',
+    warna: '#b45309',
+    ringkas: 'Rancang model jembatan dari stik es krim yang kuat menahan beban, tetapi hemat bahan dan ringan.',
+    kisah: 'Jembatan kayu di atas saluran irigasi dekat sawah rusak diterjang banjir. Sebelum membangun yang baru, dinas desa ingin membandingkan beberapa bentuk jembatan menggunakan <b>model dari stik es krim</b>. Model harus membentang <b>40 cm</b>, menahan beban di tengah <b>minimal 15 kg</b>, memakai <b>paling banyak 120 stik</b>, dan <b>efisien</b> — kuat tetapi tidak boros bahan.',
+    kriteria: [
+      'Jembatan menahan beban di tengah minimal 15 kg',
+      'Efisiensi (beban maksimum ÷ massa jembatan) minimal 80'
+    ],
+    kendala: ['Bentang 40 cm; panjang satu stik hanya ± 11 cm, jadi batang panjang harus disambung', 'Paling banyak 120 stik es krim'],
+    konsep: `
+      <p><b>Gaya</b> adalah tarikan atau dorongan. Saat jembatan dibebani, setiap batangnya menerima <b>gaya tekan</b> (didorong memendek) atau <b>gaya tarik</b> (ditarik memanjang).</p>
+      <p>Pada jembatan yang dibebani di tengah, bagian <b>atas melengkung ke dalam → tertekan</b>, bagian <b>bawah meregang → tertarik</b>.</p>
+      <p class="rumus">Gaya pada batang atas/bawah ≈ momen ÷ tinggi rangka &nbsp;·&nbsp; M = F × L ÷ 4</p>
+      <p><b>Segitiga</b> adalah bentuk yang tidak berubah bentuk bila sambungannya kuat — karena itu rangka jembatan (Warren, Pratt, Howe) tersusun dari segitiga. Rangka yang lebih <b>tinggi</b> memperkecil gaya pada batang atas-bawah, tetapi rangka yang terlalu tinggi dan ramping mudah <b>terpuntir ke samping</b>.</p>
+      <p><b>Batang tekan</b> yang panjang dan tipis mudah <b>menekuk</b> (melengkung lalu patah) jauh sebelum kayunya hancur. Menumpuk stik yang direkatkan dengan baik membuat batang jauh lebih kaku. <b>Batang tarik</b> biasanya gagal di <b>sambungan lemnya</b>.</p>
+      <p><b>Busur</b> menyalurkan beban sebagai gaya tekan ke tumpuan, tetapi mendorong tumpuan ke samping — dorongan itu harus ditahan.</p>`,
+    kataKunci: ['gaya', 'tekan', 'tarik', 'segitiga', 'rangka', 'tekuk', 'menekuk', 'sambungan', 'lem', 'momen', 'tumpuan', 'busur', 'beban', 'kaku', 'struktur'],
+    variabel: [
+      { id: 'desain', label: 'Bentuk jembatan', tipe: 'select', awal: 'balok', opsi: [['balok', 'Balok datar (tanpa rangka)'], ['warren', 'Rangka Warren (segitiga)'], ['pratt', 'Rangka Pratt'], ['howe', 'Rangka Howe'], ['lengkung', 'Lengkung (busur)']] },
+      { id: 'tinggi', label: 'Tinggi rangka/busur', tipe: 'range', min: 2, max: 15, step: 1, satuan: 'cm', awal: 5 },
+      { id: 'lapis', label: 'Tumpukan stik per batang', tipe: 'range', min: 1, max: 4, step: 1, satuan: 'lapis', awal: 1 },
+      { id: 'lem', label: 'Jenis lem', tipe: 'select', awal: 'kertas', opsi: [['kertas', 'Lem kertas'], ['tembak', 'Lem tembak'], ['kayu', 'Lem kayu (PVAc)']] },
+      { id: 'beban', label: 'Beban uji di tengah', tipe: 'range', min: 0, max: 40, step: 1, satuan: 'kg', awal: 3 }
+    ],
+    keluaran: [
+      { id: 'bebanMaks', label: 'Beban maksimum', satuan: 'kg' },
+      { id: 'lemah', label: 'Bagian yang gagal lebih dulu', satuan: '' },
+      { id: 'gaya', label: 'Gaya pada bagian terlemah', satuan: 'N' },
+      { id: 'stik', label: 'Jumlah stik', satuan: 'stik' },
+      { id: 'massa', label: 'Massa jembatan', satuan: 'g' },
+      { id: 'efisiensi', label: 'Efisiensi', satuan: '' },
+      { id: 'status', label: 'Saat diuji', satuan: '' }
+    ]
   }
 ];
 
@@ -820,5 +908,16 @@ const UJI_NALAR = [
       'Benar, asalkan airnya juga dua kali lipat.'
     ],
     bahas: 'Satu data belum cukup untuk menyimpulkan pola sebanding. Banyak hubungan di alam tidak lurus (linier). Cara ilmiahnya: kumpulkan beberapa data pada tekanan berbeda (variabel lain tetap), lalu lihat polanya — sambil tetap menjaga keselamatan.'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Jembatan stik A menahan 20 kg dan massanya 400 g. Jembatan B menahan 15 kg dan massanya 150 g. Juri lomba menilai "rancangan paling baik" berdasarkan efisiensi. Penilaian yang paling tepat adalah …',
+    opsi: [
+      'Jembatan B lebih baik: efisiensinya 100 (15.000 g ÷ 150 g), sedangkan A hanya 50 — B menahan beban lebih besar untuk setiap gram bahannya.',
+      'Jembatan A lebih baik karena menahan beban paling besar.',
+      'Keduanya sama baiknya karena sama-sama menahan lebih dari 10 kg.',
+      'Jembatan A lebih baik karena lebih berat sehingga lebih kokoh.'
+    ],
+    bahas: 'Menilai dengan kritis berarti memakai kriteria yang disepakati. Bila kriterianya efisiensi, bandingkan beban per massa bahan, bukan beban mentah saja. Dengan kriteria lain (misalnya beban terbesar), jawabannya bisa berbeda.'
   }
 ];
