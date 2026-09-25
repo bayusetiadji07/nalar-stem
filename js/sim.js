@@ -649,7 +649,129 @@ function gambarRoket(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   6. ROKET AIR — tekanan gas, semburan air, aksi-reaksi
+   Integrasi numerik: udara memuai adiabatik (γ = 1,4), semburan air
+   lewat mulut botol Ø 21 mm, hambatan udara, dan gravitasi.
+   --------------------------------------------------------- */
+function hitungRoketAir(v) {
+  const PATM = 101325, RHO = 1000, g = 9.8;
+  const botol = +v.botol;
+  const Vb = botol / 1e6;
+  const Vw0 = Math.min(+v.air, botol * 0.9) / 1e6;
+  const A = Math.PI * 0.0105 ** 2;
+  const tanpaSirip = v.stabil === 'tanpa', kerucut = v.stabil === 'kerucut';
+  const mKering = (botol === 1500 ? 0.09 : 0.06) + (tanpaSirip ? 0 : 0.012) + (kerucut ? 0.02 : 0);
+  const Adepan = Math.PI * (botol === 1500 ? 0.045 : 0.0325) ** 2;
+  const Cd = tanpaSirip ? 1.4 : kerucut ? 0.4 : 0.6;
+  const th = +v.sudut * Math.PI / 180;
+  const Va0 = Vb - Vw0, P0 = +v.tekanan * 1e5 + PATM;
+  let Va = Va0, P = P0, mw = Vw0 * RHO;
+  let x = 0, y = 0, vx = 0, vy = 0, t = 0, tDorong = 0, vMaks = 0, yMaks = 0, lepas = false;
+  const dt = 0.0005, jalur = [[0, 0, 0]];
+  while (t < 30) {
+    const laju = Math.hypot(vx, vy);
+    const diRel = Math.hypot(x, y) < 0.5; // rel peluncur 0,5 m
+    const ux = diRel || laju < 1 ? Math.cos(th) : vx / laju, uy = diRel || laju < 1 ? Math.sin(th) : vy / laju;
+    let F = 0;
+    if (mw > 0 && P > PATM) {                 // fase semburan air
+      const ve = Math.sqrt(2 * (P - PATM) / RHO);
+      F = 2 * A * (P - PATM);
+      const dm = Math.min(mw, RHO * A * ve * dt);
+      mw -= dm; Va += dm / RHO; P = P0 * Math.pow(Va0 / Va, 1.4); tDorong = t;
+    } else if (P > PATM * 1.02) {              // sisa udara bertekanan menyembur singkat
+      F = A * (P - PATM); P -= (P - PATM) * dt * 120; // massa udara hanya beberapa gram → dorongan singkat
+    }
+    const m = mKering + Math.max(mw, 0);
+    const hambat = 0.5 * 1.2 * Cd * Adepan * laju * laju;
+    const ax = (F * ux - (laju ? hambat * vx / laju : 0)) / m;
+    let ay = (F * uy - (laju ? hambat * vy / laju : 0)) / m - g;
+    if (!lepas && y <= 0 && ay < 0) ay = 0;     // belum cukup kuat untuk terangkat
+    vx += ax * dt; vy += ay * dt; x += vx * dt; y += vy * dt; t += dt;
+    if (y > 0.01) lepas = true;
+    vMaks = Math.max(vMaks, Math.hypot(vx, vy)); yMaks = Math.max(yMaks, y);
+    if (Math.round(t / dt) % 40 === 0) jalur.push([x, Math.max(0, y), t]);
+    if (lepas && y <= 0) break;
+    if (!lepas && F === 0 && t > 0.2) break;  // tidak pernah terangkat
+  }
+  jalur.push([x, 0, t]);
+  const aman = +v.tekanan <= 4;
+  return {
+    kecepatan: bulat(vMaks, 1), dorong: bulat(tDorong, 2), tinggi: bulat(yMaks, 1), jarak: bulat(Math.max(0, x), 1),
+    waktu: bulat(t, 1), stabilitas: tanpaSirip ? 'Berputar (tidak stabil)' : kerucut ? 'Sangat stabil' : 'Stabil',
+    keamanan: aman ? 'Aman (≤ 4 bar)' : 'MELEBIHI batas aman',
+    _jalur: jalur, _aman: aman, _stabil: !tanpaSirip, _isi: Vw0 / Vb
+  };
+}
+
+function kriteriaRoketAir(v, h) {
+  return [
+    { teks: 'Mendarat di zona 40–60 m', lulus: h.jarak >= 40 && h.jarak <= 60, nilai: `${h.jarak} m` },
+    { teks: 'Tekanan pompa ≤ 4 bar (aman)', lulus: h._aman, nilai: `${v.tekanan} bar` },
+    { teks: 'Terbang stabil (tidak berputar)', lulus: h._stabil, nilai: h.stabilitas }
+  ];
+}
+
+function gambarRoketAir(ctx, W, H, v, h, p) {
+  ctx.fillStyle = '#e0f2fe'; ctx.fillRect(0, 0, W, H);
+  const tanah = H - 34, x0 = 30, jMaks = 70;
+  const s = Math.min((W - x0 - 14) / jMaks, (tanah - 40) / Math.max(12, h.tinggi * 1.15));
+  const X = m => x0 + m * s, Y = m => tanah - m * s;
+  ctx.fillStyle = '#86efac'; ctx.fillRect(0, tanah, W, H - tanah);
+  ctx.fillStyle = 'rgba(22,163,74,.22)'; ctx.fillRect(X(40), tanah - 6, X(60) - X(40), 10);
+  label(ctx, 'Zona target', (X(40) + X(60)) / 2, tanah - 16, { rata: 'center', ukuran: 11, warna: '#15803d' });
+  ctx.strokeStyle = '#78716c'; ctx.lineWidth = 2;
+  for (let k = 0; k < 4; k++) { ctx.beginPath(); ctx.moveTo(X(65) + k * 5, tanah); ctx.lineTo(X(65) + k * 5, tanah - 22); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(X(65) - 2, tanah - 16); ctx.lineTo(X(65) + 17, tanah - 16); ctx.stroke();
+  for (let m = 0; m <= jMaks; m += 10) {
+    ctx.fillStyle = '#166534'; ctx.fillRect(X(m) - 0.5, tanah, 1, 6);
+    label(ctx, `${m} m`, X(m), tanah + 16, { rata: 'center', ukuran: 10, warna: '#14532d' });
+  }
+  const th = +v.sudut * Math.PI / 180;
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x0 - 12, tanah); ctx.lineTo(x0, tanah - 12); ctx.lineTo(x0 + 12, tanah); ctx.stroke();
+  const fase = 0.28;
+  if (p < fase) {
+    const q = p / fase, rot = Math.PI / 2 - th;
+    gambarBentukRoket(ctx, x0, tanah - 26, rot);
+    ctx.save(); ctx.translate(x0, tanah - 26); ctx.rotate(rot);
+    ctx.fillStyle = 'rgba(56,189,248,.75)';
+    const tc = Math.min(30, 32 * h._isi); ctx.fillRect(-6, 17 - tc, 12, tc);
+    ctx.restore();
+    // pompa & pengukur tekanan
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x0, tanah - 4); ctx.quadraticCurveTo(x0 + 30, tanah + 6, x0 + 58, tanah - 8); ctx.stroke();
+    ctx.fillStyle = '#334155'; ctx.fillRect(x0 + 54, tanah - 40 + Math.sin(q * 30) * 6, 8, 32);
+    const tek = +v.tekanan * mulus(q);
+    label(ctx, `Tekanan ${fx(tek)} bar${tek > 4 ? ' ⚠' : ''}`, x0 + 70, tanah - 44, { ukuran: 12, tebal: true, warna: tek > 4 ? '#fff' : '#0369a1', latar: tek > 4 ? '#dc2626' : 'rgba(255,255,255,.95)' });
+    return;
+  }
+  const u = Math.min(1, (p - fase) / (1 - fase));
+  const J = h._jalur, tAkhir = J[J.length - 1][2] || 1, tNow = u * tAkhir;
+  let i = J.findIndex(q => q[2] >= tNow); if (i < 0) i = J.length - 1;
+  ctx.strokeStyle = 'rgba(2,132,199,.5)'; ctx.setLineDash([4, 5]); ctx.lineWidth = 2;
+  ctx.beginPath(); for (let k = 0; k <= i; k++) ctx.lineTo(X(J[k][0]), Y(J[k][1])); ctx.stroke(); ctx.setLineDash([]);
+  const a = J[Math.max(0, i - 1)], b = J[i];
+  let rot = Math.atan2(-(b[1] - a[1]), (b[0] - a[0]) || 0.0001) + Math.PI / 2;
+  if (i === 0) rot = Math.PI / 2 - th;
+  if (!h._stabil && u < 1) rot += tNow * 14;           // berputar-putar bila tanpa sirip
+  if (u >= 1) rot = Math.PI / 2 + (h.jarak > 1 ? 0.9 : Math.PI / 2);
+  gambarBentukRoket(ctx, X(b[0]), Math.min(Y(b[1]) - 12, tanah - 12), rot);
+  if (tNow < h.dorong + 0.05 && i > 0) { // semburan air
+    ctx.fillStyle = 'rgba(56,189,248,.8)';
+    for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.arc(X(b[0]) - Math.sin(rot) * 0 - Math.cos(rot - Math.PI / 2) * (14 + k * 5), Y(b[1]) - 12 - Math.sin(rot - Math.PI / 2) * (14 + k * 5), 2.5, 0, 7); ctx.fill(); }
+  }
+  if (p < 1) label(ctx, `t = ${fx(tNow)} s`, W - 12, 18, { rata: 'right', ukuran: 11, warna: '#0f172a', latar: 'rgba(255,255,255,.9)' });
+  if (p >= 1) {
+    const kena = h.jarak >= 40 && h.jarak <= 60;
+    const teks = h.jarak > 65 ? `Melewati pagar! (${fx(h.jarak)} m)` : `Mendarat di ${fx(h.jarak)} m · tinggi maks ${fx(h.tinggi)} m`;
+    label(ctx, teks, W / 2, 22, { rata: 'center', tebal: true, ukuran: 13, warna: '#fff', latar: kena && h._aman ? '#15803d' : '#b45309' });
+    if (!h._aman) label(ctx, '⚠ Tekanan melebihi batas aman botol bekas!', W / 2, 48, { rata: 'center', ukuran: 12, warna: '#fff', latar: '#dc2626' });
+  }
+}
+
 const SIM = {
+  roketair: { hitung: hitungRoketAir, kriteria: kriteriaRoketAir, gambar: gambarRoketAir, sumbuX: ['air', 'tekanan', 'sudut'], sumbuY: ['jarak', 'tinggi', 'kecepatan', 'dorong'] },
   roket: { hitung: hitungRoket, kriteria: kriteriaRoket, gambar: gambarRoket, sumbuX: ['cuka', 'soda', 'sudut'], sumbuY: ['jarak', 'tinggi', 'tekanan', 'gas'] },
   perahu: { hitung: v => hitungPerahu(v), kriteria: kriteriaPerahu, gambar: gambarPerahu, sumbuX: ['panjang', 'lebar', 'tinggi', 'muatan'], sumbuY: ['celup', 'bebas', 'kapasitas', 'biaya'] },
   penjernih: { hitung: hitungPenjernih, kriteria: kriteriaPenjernih, gambar: gambarPenjernih, sumbuX: ['tebalPasir', 'tebalArang', 'ulang'], sumbuY: ['keruh', 'bau', 'debit', 'biaya'] },

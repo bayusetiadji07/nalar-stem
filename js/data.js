@@ -374,6 +374,54 @@ const NYATA = {
       { gejala: 'Roket berbelok atau berputar di udara', kunci: 'belok|berputar|oleng|melenceng', petunjuk: ['Apakah sirip terpasang lurus dan sama besar?', 'Di mana titik berat roketmu? Apa pengaruh kerucut di bagian atas?'] },
       { gejala: 'Jarak jauh lebih pendek dari simulasi', kunci: 'pendek|dekat|kurang jauh|beda', petunjuk: ['Berapa lama jeda antara memasukkan soda dan menyumbat? Berapa banyak gas yang lolos?', 'Faktor apa di lapangan (angin, sumbat, berat sirip) yang tidak ada di simulasi?'] }
     ]
+  },
+  roketair: {
+    waktu: '2 × 40 menit (membuat + peluncuran di lapangan)',
+    alat: [
+      'Botol plastik bekas minuman bersoda (600 mL atau 1,5 L) yang tidak penyok, tergores dalam, atau pernah terkena panas',
+      'Sumbat karet yang diberi pentil ban (atau peluncur roket air sekolah)',
+      'Pompa sepeda/kaki yang memiliki pengukur tekanan (manometer)',
+      'Karton tebal atau plastik map untuk sirip, lakban, gunting',
+      'Kerucut dari kertas tebal dan plastisin/tanah liat ± 20 g sebagai beban hidung (bila memakai kerucut)',
+      'Gelas takar, busur derajat, meteran 60 m (atau tali bertanda tiap 5 m), patok/kapur',
+      'Peluncur dengan tali pelepas panjang (≥ 3 m) dan kacamata pelindung untuk SEMUA orang'
+    ],
+    keselamatan: [
+      'Semua orang di area peluncuran wajib memakai kacamata pelindung.',
+      'Tekanan TIDAK BOLEH melebihi 4 bar (± 58 psi) — selalu baca pengukur tekanan pompa, dan pompa dilakukan/diawasi guru.',
+      'Hanya botol plastik bekas minuman BERSODA yang utuh — jangan botol air mineral tipis, botol kaca, atau botol retak/penyok.',
+      'Peluncuran di lapangan terbuka; penonton di belakang garis aman 5 m dan tidak ada orang, jendela, atau kendaraan di arah luncur.',
+      'Jangan pernah berdiri di atas atau di depan roket bertekanan; lepaskan roket dengan tali pelepas dari jarak ≥ 3 m.',
+      'Jika roket tidak meluncur: JANGAN didekati dari depan. Guru membuang tekanan lebih dulu (lepas selang/katup pentil) sebelum roket disentuh.'
+    ],
+    langkah: [
+      'Tempelkan 3 sirip sama besar di dekat mulut botol (bagian bawah roket). Bila rancanganmu memakai kerucut, pasang kerucut berbeban di dasar botol (ujung atas roket).',
+      'Pastikan sumbat berpentil masuk rapat ke mulut botol dan tidak bocor.',
+      'Takar air dengan gelas takar sesuai rancangan, lalu masukkan ke botol.',
+      'Pasang sumbat, lalu letakkan roket di peluncur. Atur sudut peluncur dengan busur.',
+      'Semua orang memakai kacamata dan berdiri di belakang garis aman. Hubungkan selang pompa ke pentil.',
+      'Pompa perlahan sambil membaca pengukur tekanan. Berhenti tepat di tekanan rancanganmu — maksimal 4 bar.',
+      'Hitung mundur, lalu tarik tali pelepas dari jarak aman.',
+      'Ukur jarak dari peluncur ke titik jatuh pertama. Ukur lama terbang dengan stopwatch. Catat arah dan kekuatan angin.',
+      'Ulangi dengan rancangan yang sama minimal 2 kali, lalu ubah SATU variabel saja.'
+    ],
+    takaran: v => [
+      `Air ${v.air} mL ≈ ${fxd(+v.air / 250)} gelas belimbing (250 mL) — ${Math.round(+v.air / +v.botol * 100)}% dari volume botol.`,
+      `Tekanan ${fxd(v.tekanan)} bar ≈ ${Math.round(+v.tekanan * 14.5)} psi (banyak pengukur pompa sepeda memakai satuan psi).${+v.tekanan > 4 ? ' ⚠ MELEBIHI batas aman 4 bar — turunkan dulu di simulasi!' : ''}`,
+      `Botol ${v.botol === '1500' ? '1,5 L' : '600 mL'}; penstabil: ${({ tanpa: 'tanpa sirip', sirip: '3 sirip karton', kerucut: '3 sirip + kerucut berbeban ± 20 g' })[v.stabil]}.`,
+      `Sudut peluncur ${v.sudut}° dari tanah (ukur dengan busur).`
+    ],
+    ukur: [
+      { id: 'jarak', label: 'Jarak mendarat', satuan: 'm', sim: 'jarak' },
+      { id: 'waktu', label: 'Lama terbang', satuan: 's', sim: 'waktu' },
+      { id: 'tekanan', label: 'Tekanan terbaca saat lepas', satuan: 'bar' }
+    ],
+    masalah: [
+      { gejala: 'Roket tidak lepas dari peluncur', kunci: 'tidak lepas|tidak meluncur|macet|diam', petunjuk: ['KESELAMATAN DULU: jangan dekati roket dari depan. Guru membuang tekanan lewat katup/selang sebelum roket disentuh.', 'Setelah aman: apakah pengait peluncur terlalu kencang, atau sumbat terlalu rapat?'] },
+      { gejala: 'Air bocor saat dipompa', kunci: 'bocor|menetes|rembes', petunjuk: ['Di mana tepatnya air keluar — di sekeliling sumbat atau di pentil?', 'Apa akibat kebocoran bagi tekanan maksimum yang bisa dicapai?'] },
+      { gejala: 'Roket berputar atau jatuh dekat', kunci: 'berputar|oleng|jatuh dekat|melenceng|belok', petunjuk: ['Apakah sirip sama besar dan terpasang lurus?', 'Di mana titik berat roketmu? Apa pengaruh beban di bagian depan?'] },
+      { gejala: 'Jarak jauh berbeda dari simulasi', kunci: 'beda|berbeda|pendek|jauh', petunjuk: ['Apakah tekanan saat lepas sama dengan tekanan rancangan? Adakah tekanan yang hilang lewat kebocoran?', 'Faktor apa di lapangan (angin, bentuk sirip, berat lakban) yang tidak ada di simulasi?'] }
+    ]
   }
 };
 
@@ -571,6 +619,46 @@ const MISI = [
       { id: 'jarak', label: 'Jarak mendarat', satuan: 'm' },
       { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'roketair',
+    judul: 'Roket Air Bertekanan',
+    ikon: '💦',
+    kelas: 'Kelas 8 · Tekanan Zat (Tekanan Gas & Aksi–Reaksi)',
+    warna: '#0369a1',
+    ringkas: 'Pompa udara ke botol berisi air, lalu temukan paduan air, tekanan, dan sudut agar roket mendarat tepat di zona target dengan aman.',
+    kisah: 'Ekstrakurikuler sains mengadakan <b>lomba roket air antarkelas</b> di lapangan sekolah. Roket dibuat dari botol bekas, diisi air, lalu dipompa dengan pompa sepeda. Roket harus mendarat di <b>zona target 40–60 m</b> (pagar lapangan ada di 65 m). Demi keselamatan, <b>tekanan tidak boleh lebih dari 4 bar</b>, dan roket harus terbang stabil — tidak berputar-putar ke arah penonton.',
+    kriteria: [
+      'Roket mendarat di zona target 40–60 m',
+      'Tekanan pompa paling tinggi 4 bar (batas aman botol bekas)',
+      'Roket terbang stabil, tidak berputar'
+    ],
+    kendala: ['Bahan: botol plastik bekas minuman bersoda, air, dan pompa sepeda berpengukur tekanan', 'Tidak boleh memakai bahan bakar atau zat kimia apa pun'],
+    konsep: `
+      <p><b>Tekanan gas</b> timbul karena partikel udara terus bertumbukan dengan dinding wadah. Memompa udara ke dalam botol tertutup menambah jumlah partikel, sehingga tekanannya naik.</p>
+      <p class="rumus">Tekanan: P = F ÷ A &nbsp;&nbsp;·&nbsp;&nbsp; 1 bar = 100.000 Pa ≈ 14,5 psi</p>
+      <p><b>Hukum Boyle:</b> pada suhu tetap, tekanan gas berbanding terbalik dengan volumenya (P₁V₁ = P₂V₂). Saat air menyembur keluar, ruang udara membesar sehingga tekanannya turun — dorongan roket makin lemah.</p>
+      <p><b>Hukum III Newton (aksi–reaksi):</b> udara bertekanan mendorong air keluar ke bawah dengan cepat (aksi), dan air mendorong botol ke atas (reaksi). Air berperan sebagai "massa dorong".</p>
+      <p><b>Menimbang jumlah air:</b> tanpa air, hampir tidak ada massa yang didorong keluar. Terlalu banyak air membuat roket berat dan ruang udaranya sempit, sehingga tekanan cepat habis.</p>
+      <p><b>Kestabilan:</b> sirip di bagian belakang dan kerucut berbeban di depan membuat roket lurus menembus udara, sehingga hambatan udaranya kecil.</p>
+      <p class="peringatan">⚠️ Botol bekas bisa pecah jika dipompa berlebihan. Batas aman lomba ini 4 bar, selalu diperiksa dengan pengukur tekanan pompa.</p>`,
+    kataKunci: ['tekanan', 'gas', 'udara', 'partikel', 'boyle', 'volume', 'newton', 'aksi', 'reaksi', 'dorong', 'massa', 'hambatan', 'sirip', 'pascal', 'bar'],
+    variabel: [
+      { id: 'air', label: 'Volume air', tipe: 'range', min: 50, max: 1000, step: 50, satuan: 'mL', awal: 100 },
+      { id: 'tekanan', label: 'Tekanan pompa', tipe: 'range', min: 1, max: 6, step: 0.5, satuan: 'bar', awal: 2 },
+      { id: 'botol', label: 'Ukuran botol', tipe: 'select', awal: '600', opsi: [['600', 'Botol 600 mL'], ['1500', 'Botol 1,5 L']] },
+      { id: 'stabil', label: 'Penstabil', tipe: 'select', awal: 'tanpa', opsi: [['tanpa', 'Tanpa sirip'], ['sirip', '3 sirip karton'], ['kerucut', '3 sirip + kerucut berbeban 20 g']] },
+      { id: 'sudut', label: 'Sudut peluncuran', tipe: 'range', min: 30, max: 90, step: 5, satuan: '°', awal: 60 }
+    ],
+    keluaran: [
+      { id: 'kecepatan', label: 'Kecepatan maksimum', satuan: 'm/s' },
+      { id: 'dorong', label: 'Lama semburan', satuan: 's' },
+      { id: 'tinggi', label: 'Tinggi maksimum', satuan: 'm' },
+      { id: 'jarak', label: 'Jarak mendarat', satuan: 'm' },
+      { id: 'waktu', label: 'Lama terbang', satuan: 's' },
+      { id: 'stabilitas', label: 'Kestabilan', satuan: '' },
+      { id: 'keamanan', label: 'Keamanan tekanan', satuan: '' }
+    ]
   }
 ];
 
@@ -721,5 +809,16 @@ const UJI_NALAR = [
       'Kurang tepat, karena perubahan kimia selalu menghasilkan api.'
     ],
     bahas: 'Kemiripan tampilan (sama-sama bergelembung) belum tentu berarti proses yang sama. Kuncinya: apakah terbentuk zat baru? Gas CO₂ dan natrium asetat adalah zat baru. Perubahan kimia juga tidak harus disertai api atau kenaikan suhu.'
+  },
+  {
+    ind: 'inferensi',
+    soal: 'Dina meluncurkan roket air bertekanan 2 bar dan roketnya terbang 20 m. Ia menyimpulkan: "Kalau tekanannya 4 bar, roketku pasti terbang tepat 40 m." Tanggapan paling kritis adalah …',
+    opsi: [
+      'Belum tentu: hubungan tekanan dan jarak belum tentu sebanding (ada hambatan udara, tekanan turun saat air keluar), jadi perlu diuji — dengan tetap mematuhi batas aman tekanan botol.',
+      'Benar, karena tekanan dua kali lipat pasti menghasilkan jarak dua kali lipat.',
+      'Salah, karena tekanan tidak berpengaruh pada jarak roket.',
+      'Benar, asalkan airnya juga dua kali lipat.'
+    ],
+    bahas: 'Satu data belum cukup untuk menyimpulkan pola sebanding. Banyak hubungan di alam tidak lurus (linier). Cara ilmiahnya: kumpulkan beberapa data pada tekanan berbeda (variabel lain tetap), lalu lihat polanya — sambil tetap menjaga keselamatan.'
   }
 ];
