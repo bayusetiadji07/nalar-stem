@@ -1,7 +1,7 @@
 // Proxy AI Tutor → Google Gemini. Kunci disimpan di env GEMINI_API_KEY (Vercel / .env lokal).
 // Rantai cadangan: bila satu model sibuk (503), kuota habis (429), atau sudah ditutup (404),
 // otomatis mencoba model berikutnya.
-const MODEL_DAFTAR = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+const MODEL_DAFTAR = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
 const COBA_LAGI = [404, 429, 500, 503];
 
 function badanGemini(model, { sistem, riwayat, json }, pakaiThinking) {
@@ -26,7 +26,8 @@ async function mintaGemini(kunci, model, permintaan, pakaiThinking) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': kunci },
-    body: JSON.stringify(badanGemini(model, permintaan, pakaiThinking))
+    body: JSON.stringify(badanGemini(model, permintaan, pakaiThinking)),
+    signal: AbortSignal.timeout(12000)
   });
   const d = await r.json().catch(() => ({}));
   return { status: r.status, ok: r.ok, d };

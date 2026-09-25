@@ -7,10 +7,10 @@
    ========================================================= */
 
 const AI_KUNCI_SIMPAN = 'nalarstem-ai';
-const MODEL_DAFTAR = ['gemini-3.5-flash', 'gemini-3.6-flash', 'gemini-2.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-lite-latest'];
+const MODEL_DAFTAR = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
 const MODEL_PILIHAN = [
-  ['gemini-3.5-flash', 'Gemini 3.5 Flash (disarankan)'],
-  ['gemini-3.6-flash', 'Gemini 3.6 Flash'],
+  ['gemini-3.6-flash', 'Gemini 3.6 Flash (disarankan, tercepat)'],
+  ['gemini-3.5-flash', 'Gemini 3.5 Flash'],
   ['gemini-2.5-flash', 'Gemini 2.5 Flash'],
   ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (hemat kuota)']
 ];
@@ -55,7 +55,8 @@ function teksGemini(data) {
 async function mintaLangsung(kunci, model, permintaan, pakaiThinking) {
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': kunci },
-    body: JSON.stringify(badanGemini(model, permintaan, pakaiThinking))
+    body: JSON.stringify(badanGemini(model, permintaan, pakaiThinking)),
+    signal: AbortSignal.timeout(12000)
   });
   return { status: r.status, ok: r.ok, d: await r.json().catch(() => ({})) };
 }
@@ -68,7 +69,8 @@ async function panggilAI(permintaan) {
     const daftar = [c.model, ...MODEL_DAFTAR.filter(m => m !== c.model)];
     const catatan = [];
     for (const model of daftar) {
-      let h = await mintaLangsung(c.kunci, model, permintaan, true);
+      let h;
+      try { h = await mintaLangsung(c.kunci, model, permintaan, true); } catch (e) { catatan.push(`${model}: waktu habis`); continue; }
       if (h.status === 400 && !/API key/i.test((h.d.error && h.d.error.message) || '')) h = await mintaLangsung(c.kunci, model, permintaan, false);
       if (h.ok) { const t = teksGemini(h.d); if (t) return t; catatan.push(`${model}: kosong`); continue; }
       catatan.push(`${model}: ${h.status}`);
