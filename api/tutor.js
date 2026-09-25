@@ -20,7 +20,7 @@ function badanGemini(model, { sistem, riwayat, json }) {
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Gunakan POST' });
-  const kunci = process.env.GEMINI_API_KEY;
+  const kunci = (process.env.GEMINI_API_KEY || '').replace(/^﻿/, '').trim();
   if (!kunci) return res.status(500).json({ error: 'GEMINI_API_KEY belum diatur di server.' });
 
   let b = req.body;
