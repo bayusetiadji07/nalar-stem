@@ -858,6 +858,7 @@ function halPortofolio() {
       }).join('')}
     </div>`;
   }).join('') || '<div class="kartu kosong">' + gambar('kosong.jpg', '', 'kosong-gambar') + '<p class="redup">Belum ada misi yang dikerjakan. <a href="#/misi">Mulai misi pertamamu →</a></p></div>'}
+  <p class="kredit-cetak">NalarSTEM · Dikembangkan oleh PakBay07 — spentribes</p>
   <div class="no-print zona-bahaya"><button class="tombol bahaya" id="bReset">Hapus semua data belajarku</button></div>`;
   gambarRadar($('#radar'), rata);
   $('#bSalin').onclick = () => {

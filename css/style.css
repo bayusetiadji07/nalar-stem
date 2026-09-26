@@ -38,6 +38,11 @@ p { margin: 0 0 .8em; }
 
 .wadah { max-width: 1180px; margin: 0 auto; padding: 28px 24px 120px; }
 .kaki { text-align: center; color: var(--redup); font-size: .82rem; padding: 20px 16px 90px; border-top: 1px solid var(--garis); }
+.kaki p { margin: 0 0 4px; }
+.kaki .kredit { font-size: .9rem; color: var(--teks); }
+.kaki .kredit b { color: var(--utama-tua); }
+.kredit-cetak { display: none; }
+@media print { .kredit-cetak { display: block; text-align: center; font-size: 9pt; color: #555; margin-top: 18px; } }
 
 /* ---------- Umum ---------- */
 .kartu { background: var(--kartu); border: 1px solid var(--garis); border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--bayang); margin-bottom: 16px; }
