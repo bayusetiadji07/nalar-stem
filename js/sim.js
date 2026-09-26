@@ -47,7 +47,7 @@ function label(ctx, teks, x, y, opsi = {}) {
    mengembalikan null dan simulasi memakai gambar kode seperti biasa. */
 const ASET_SIM = {};
 const BERKAS_ASET = {
-  'bg-perahu': 'jpg', 'bg-penjernih': 'jpg', 'bg-pendingin': 'jpg', 'bg-hidroponik': 'jpg', 'bg-lapangan': 'jpg', 'bg-jembatan': 'jpg', 'bg-angin': 'jpg'
+  'bg-perahu': 'jpg', 'bg-penjernih': 'jpg', 'bg-pendingin': 'jpg', 'bg-hidroponik': 'jpg', 'bg-lapangan': 'jpg', 'bg-jembatan': 'jpg', 'bg-angin': 'jpg', 'bg-listrik': 'jpg', 'bg-magnet': 'jpg', 'bg-tambak': 'jpg', 'bg-kelas-gelap': 'jpg', 'bg-pentas': 'jpg'
 };
 function aset(nama) {
   let a = ASET_SIM[nama];
@@ -1294,6 +1294,7 @@ function aliranArus(ctx, titik, mA, t) {
 function gambarListrik(ctx, W, H, v, h, p) {
   // papan rangkaian
   ctx.fillStyle = '#efe4cf'; ctx.fillRect(0, 0, W, H);
+  if (latar(ctx, W, H, 'bg-listrik')) { ctx.fillStyle = 'rgba(239,228,207,.82)'; kotakBulat(ctx, 16, H * 0.08, W - 28, H * 0.84, 14); ctx.fill(); }
   ctx.fillStyle = 'rgba(120,90,50,.18)';
   for (let y = 14; y < H; y += 18) for (let x = 14; x < W; x += 18) { ctx.beginPath(); ctx.arc(x, y, 1.3, 0, 7); ctx.fill(); }
   const s = h._s, n = +v.baterai, m = +v.lampu, seri = v.susunan === 'seri', R = +v.resistor, led = v.jenisLampu === 'led';
@@ -1432,11 +1433,13 @@ function kriteriaMagnet(v, h) {
 
 function gambarMagnet(ctx, W, H, v, h, p) {
   // meja bank sampah
-  ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#e2e8f0'; for (let x = 0; x < W; x += 36) ctx.fillRect(x, 0, 1, H * 0.78);
   const meja = H * 0.8;
-  ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
-  ctx.fillStyle = '#ca8a04'; ctx.fillRect(0, meja, W, 6);
+  if (!latar(ctx, W, H, 'bg-magnet', 0.8, meja)) {
+    ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#e2e8f0'; for (let x = 0; x < W; x += 36) ctx.fillRect(x, 0, 1, H * 0.78);
+    ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
+    ctx.fillStyle = '#ca8a04'; ctx.fillRect(0, meja, W, 6);
+  }
   const N = +v.lilitan, benda = h._benda;
   // fase: 0–0.15 diam, 0.15–0.7 saklar ON, 0.7–1 saklar OFF (uji lepas)
   const on = p > 0.15 && p < 0.7, fOn = mulus(jepit((p - 0.15) / 0.25, 0, 1)), fOff = mulus(jepit((p - 0.72) / 0.2, 0, 1));
@@ -1590,9 +1593,11 @@ function gambarPesawat(ctx, W, H, v, h, p) {
   const tanah = H - 40;
   const gr = ctx.createLinearGradient(0, 0, 0, tanah);
   gr.addColorStop(0, '#bae6fd'); gr.addColorStop(1, '#f0f9ff');
-  ctx.fillStyle = gr; ctx.fillRect(0, 0, W, tanah);
-  ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, tanah, W, H - tanah);
-  ctx.fillStyle = '#fafaf9'; for (let x = 10; x < W; x += 70) ctx.fillRect(x, tanah + 10, 50, 8); // petak garam
+  if (!latar(ctx, W, H, 'bg-tambak', 0.93, tanah)) {
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, tanah);
+    ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, tanah, W, H - tanah);
+    ctx.fillStyle = '#fafaf9'; for (let x = 10; x < W; x += 70) ctx.fillRect(x, tanah + 10, 50, 8); // petak garam
+  }
   const s = (tanah - 60) / 2.6;                 // piksel per meter
   const q = mulus(jepit((p - 0.1) / 0.75, 0, 1)); // kemajuan mengangkat
   const gagal = h.status !== 'Berhasil';
@@ -1742,6 +1747,7 @@ function gambarFilm(ctx, x, y, w, h, balik) {
 
 function gambarOptik(ctx, W, H, v, h, p) {
   ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H); // ruang kelas digelapkan
+  if (latar(ctx, W, H, 'bg-kelas-gelap')) { ctx.fillStyle = 'rgba(15,23,42,.35)'; ctx.fillRect(0, 0, W, H); }
   const K = h._K, s = +v.jarakBenda, D = +v.jarakLayar, f = h._f, sumbuY = H * 0.5;
   const cermin = K.cermin;
   // skala horizontal terpisah: sisi benda (cm kecil) & sisi layar (cm besar)
@@ -1906,9 +1912,11 @@ function suaraBunyi(v, h) {
 }
 
 function gambarBunyi(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#fef3c7'; ctx.fillRect(0, 0, W, H);
   const S = h._S, meja = H * 0.72;
-  ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
+  if (!latar(ctx, W, H, 'bg-pentas', 0.74, meja)) {
+    ctx.fillStyle = '#fef3c7'; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
+  }
   // kotak resonansi
   const kiri = W * 0.06, lebarMaks = W * 0.56, Lpx = lebarMaks * (+v.panjang / 60);
   const kx = kiri, ky = meja - 70, kw = lebarMaks + 30;
