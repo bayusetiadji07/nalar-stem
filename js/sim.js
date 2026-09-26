@@ -1304,9 +1304,11 @@ function gambarListrik(ctx, W, H, v, h, p) {
   const tc = Math.min(40, (yB - yA - 40) / n), atasBat = (yA + yB) / 2 - n * tc / 2;
   for (let i = 0; i < n; i++) {
     const y = atasBat + i * tc;
-    ctx.fillStyle = '#1f2937'; kotakBulat(ctx, bx - 13, y + 3, 26, tc - 4, 4); ctx.fill();
-    ctx.fillStyle = '#d97706'; ctx.fillRect(bx - 13, y + 3, 26, (tc - 4) * 0.3);
-    ctx.fillStyle = '#9ca3af'; ctx.fillRect(bx - 4, y, 8, 3);
+    if (!benda(ctx, 'baterai-aa', bx, y + tc / 2, tc - 2, { rot: -Math.PI / 2 })) {
+      ctx.fillStyle = '#1f2937'; kotakBulat(ctx, bx - 13, y + 3, 26, tc - 4, 4); ctx.fill();
+      ctx.fillStyle = '#d97706'; ctx.fillRect(bx - 13, y + 3, 26, (tc - 4) * 0.3);
+      ctx.fillStyle = '#9ca3af'; ctx.fillRect(bx - 4, y, 8, 3);
+    }
     label(ctx, '+', bx + 18, y + 8, { ukuran: 11, warna: '#b91c1c', tebal: true });
   }
   label(ctx, `${n} × 1,5 V`, bx, atasBat + n * tc + 14, { rata: 'center', ukuran: 11, warna: '#334155', latar: 'rgba(255,255,255,.85)' });
@@ -1440,7 +1442,7 @@ function gambarMagnet(ctx, W, H, v, h, p) {
     ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
     ctx.fillStyle = '#ca8a04'; ctx.fillRect(0, meja, W, 6);
   }
-  const N = +v.lilitan, benda = h._benda;
+  const N = +v.lilitan, bendaUji = h._benda;
   // fase: 0–0.15 diam, 0.15–0.7 saklar ON, 0.7–1 saklar OFF (uji lepas)
   const on = p > 0.15 && p < 0.7, fOn = mulus(jepit((p - 0.15) / 0.25, 0, 1)), fOff = mulus(jepit((p - 0.72) / 0.2, 0, 1));
   // derek
@@ -1467,7 +1469,10 @@ function gambarMagnet(ctx, W, H, v, h, p) {
   }
   // kabel ke baterai & saklar
   const bx = W * 0.8, by = meja - 60, n = +v.baterai;
-  for (let i = 0; i < n; i++) { ctx.fillStyle = '#1f2937'; kotakBulat(ctx, bx - 26 + i * 20, by, 17, 40, 3); ctx.fill(); ctx.fillStyle = '#d97706'; ctx.fillRect(bx - 26 + i * 20, by, 17, 10); }
+  for (let i = 0; i < n; i++) {
+    if (benda(ctx, 'baterai-aa', bx - 17.5 + i * 20, by + 20, 40, { rot: -Math.PI / 2 })) continue;
+    ctx.fillStyle = '#1f2937'; kotakBulat(ctx, bx - 26 + i * 20, by, 17, 40, 3); ctx.fill(); ctx.fillStyle = '#d97706'; ctx.fillRect(bx - 26 + i * 20, by, 17, 10);
+  }
   label(ctx, `${n} × 1,5 V`, bx + n * 10 - 16, by + 54, { rata: 'center', ukuran: 11, warna: '#fff', latar: 'rgba(15,23,42,.6)' });
   ctx.strokeStyle = '#b91c1c'; ctx.lineWidth = 2.5;
   ctx.beginPath(); ctx.moveTo(ujungX + 10, yInti0 + 6); ctx.bezierCurveTo(ujungX + 80, yInti0 - 20, bx - 90, by - 40, bx - 60, by - 10); ctx.stroke();
@@ -1494,6 +1499,8 @@ function gambarMagnet(ctx, W, H, v, h, p) {
   const tertarik = h.angkat, tertahan = h.sisa;
   const total = 40;
   const gambarBenda = (x, y, rot) => {
+    const aset = { paku: ['paku', 20], klip: ['klip', 15], aluminium: ['kaleng-alu', 16] }[v.benda];
+    if (benda(ctx, aset[0], x, y, aset[1], { rot })) return;
     ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
     if (v.benda === 'paku') { ctx.fillStyle = '#6b7280'; ctx.fillRect(-9, -1.2, 18, 2.4); ctx.fillRect(-10, -3, 2.5, 6); }
     else if (v.benda === 'klip') { ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.4; kotakBulat(ctx, -7, -3, 14, 6, 3); ctx.stroke(); }
@@ -1520,7 +1527,7 @@ function gambarMagnet(ctx, W, H, v, h, p) {
   label(ctx, `A: ${fx(on ? h.arus : 0, 2)} A`, 12, 16, { ukuran: 12, tebal: true, warna: '#fff', latar: '#0f766e' });
   label(ctx, `${N} lilitan · ${INTI_MAGNET[v.inti].nama}`, W - 12, 16, { rata: 'right', ukuran: 11, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
   if (p >= 1) {
-    const teks = !benda.magnetik ? `Aluminium tidak tertarik magnet — 0 terangkat` : h.angkat === 0 ? 'Tidak ada yang terangkat' : `${h.angkat} ${benda.nama} terangkat · ${h.sisa ? `${h.sisa} tertahan saat OFF` : 'semua lepas saat OFF'}`;
+    const teks = !bendaUji.magnetik ? `Aluminium tidak tertarik magnet — 0 terangkat` : h.angkat === 0 ? 'Tidak ada yang terangkat' : `${h.angkat} ${bendaUji.nama} terangkat · ${h.sisa ? `${h.sisa} tertahan saat OFF` : 'semua lepas saat OFF'}`;
     label(ctx, teks, W / 2, H - 14, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: h.angkat >= 15 && !h.sisa && h.panas <= 3 ? '#15803d' : '#b45309' });
   }
 }
@@ -1770,8 +1777,10 @@ function gambarOptik(ctx, W, H, v, h, p) {
   void xF;
   // HP (benda)
   const hpH = 46, hpW = 26;
-  ctx.fillStyle = '#1f2937'; kotakBulat(ctx, xBenda - 5, sumbuY - hpH, 10, hpH, 3); ctx.fill();
-  gambarFilm(ctx, xBenda, sumbuY - hpH / 2, 8, hpH - 8, v.hp === 'terbalik');
+  if (!benda(ctx, 'hp-layar', xBenda, sumbuY - hpH / 2, hpH, { rot: Math.PI / 2 + (v.hp === 'terbalik' ? Math.PI : 0) })) {
+    ctx.fillStyle = '#1f2937'; kotakBulat(ctx, xBenda - 5, sumbuY - hpH, 10, hpH, 3); ctx.fill();
+    gambarFilm(ctx, xBenda, sumbuY - hpH / 2, 8, hpH - 8, v.hp === 'terbalik');
+  }
   label(ctx, v.hp === 'terbalik' ? 'HP (diputar terbalik)' : 'HP', xBenda, sumbuY + 26, { rata: 'center', ukuran: 10, warna: '#cbd5e1' });
   // komponen optik
   const tinggiK = 30 + +v.diameter * 7;
@@ -1827,11 +1836,16 @@ function gambarOptik(ctx, W, H, v, h, p) {
   const muncul = mulus(jepit((p - 0.6) / 0.35, 0, 1));
   if (h._nyata && muncul > 0) {
     const tinggiGambar = jepit(h.lebar * 0.75 / 150, 0.2, 1) * (H - 80);
-    const lebarGambar = Math.min(60, tinggiGambar * 0.6);
+    const layarHP = aset('hp-layar');
+    const lebarGambar = layarHP ? tinggiGambar * 0.3 : Math.min(60, tinggiGambar * 0.6);
     const gx = xLayar - lebarGambar / 2; // gambar jatuh tepat di dinding
     ctx.save(); ctx.globalAlpha = muncul * jepit(h.terang / 100, 0.08, 1);
     if (h._tajam < 0.95) ctx.filter = `blur(${Math.round((1 - h._tajam) * 8)}px)`;
-    gambarFilm(ctx, gx + lebarGambar / 2, sumbuY, lebarGambar, tinggiGambar, !h._tegak);
+    if (layarHP) { // isi layar HP (tata surya) diproyeksikan; matahari di atas = tegak
+      const iw = layarHP.naturalWidth, ih = layarHP.naturalHeight;
+      ctx.translate(gx + lebarGambar / 2, sumbuY); ctx.rotate(Math.PI / 2 + (h._tegak ? 0 : Math.PI));
+      ctx.drawImage(layarHP, iw * 0.05, ih * 0.1, iw * 0.9, ih * 0.8, -tinggiGambar / 2, -lebarGambar / 2, tinggiGambar, lebarGambar);
+    } else gambarFilm(ctx, gx + lebarGambar / 2, sumbuY, lebarGambar, tinggiGambar, !h._tegak);
     ctx.restore();
   } else if (!h._nyata && muncul > 0) {
     const g2 = ctx.createRadialGradient(xLayar, sumbuY, 4, xLayar, sumbuY, 60);
@@ -1930,8 +1944,12 @@ function gambarBunyi(ctx, W, H, v, h, p) {
   // botol beban
   const botH = 20 + Math.min(60, +v.beban * 10), botY = meja + 8;
   ctx.strokeStyle = S.warna === '#e2e8f0' ? '#cbd5e1' : S.warna; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(katrolX + 9, yS + 8); ctx.lineTo(katrolX + 9, botY); ctx.stroke();
-  ctx.fillStyle = 'rgba(56,189,248,.7)'; kotakBulat(ctx, katrolX - 2, botY, 22, botH, 5); ctx.fill(); ctx.strokeStyle = '#0369a1'; ctx.stroke();
-  label(ctx, `${fx(+v.beban, 2)} kg`, katrolX + 9, botY + botH + 12, { rata: 'center', ukuran: 10, warna: '#fff', latar: 'rgba(3,105,161,.8)' });
+  const tinggiBotol = 28 + Math.min(72, +v.beban * 11);
+  const adaBotol = benda(ctx, 'botol-beban', katrolX + 9, botY - tinggiBotol * 0.1, tinggiBotol * 86 / 320, { ay: 0 });
+  if (!adaBotol) { ctx.fillStyle = 'rgba(56,189,248,.7)'; kotakBulat(ctx, katrolX - 2, botY, 22, botH, 5); ctx.fill(); ctx.strokeStyle = '#0369a1'; ctx.stroke(); }
+  const lebarSasando = Math.min(56, W * 0.072); // hiasan: sasando asli dari Rote (tidak menutupi penala)
+  benda(ctx, 'sasando', W - lebarSasando / 2 - 4, meja + 2, lebarSasando, { ay: 1, alpha: 0.95 });
+  label(ctx, `${fx(+v.beban, 2)} kg`, katrolX + 9, (adaBotol ? botY + tinggiBotol * 0.9 : botY + botH) + 12, { rata: 'center', ukuran: 10, warna: '#fff', latar: 'rgba(3,105,161,.8)' });
   // senar bergetar (gelombang berdiri, amplitudo meluruh)
   const petik = p > 0.12, luruh = petik ? Math.exp(-(p - 0.12) * (v.senar === 'karet' ? 6 : 2.2)) : 0;
   const amp = (v.petikan === 'kuat' ? 12 : 6) * luruh;

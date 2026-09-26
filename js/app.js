@@ -578,7 +578,7 @@ function pasangLab(m, st) {
       const p = Math.min(1, (t - mulai) / durasi);
       const { ctx, W, H } = siapkanKanvas(cv, tinggiKanvas());
       sim.gambar(ctx, W, H, st.v, h, p);
-      if (p >= 1 && sim.kriteria(st.v, h).every(k => k.lulus)) benda(ctx, 'piala', W - 36, 58, 40); // semua kriteria terpenuhi
+      if (p >= 1 && sim.kriteria(st.v, h).every(k => k.lulus)) benda(ctx, 'piala', 12, H - 6, 28, { ax: 0, ay: 1 }); // semua kriteria terpenuhi
       if (p < 1) anim = requestAnimationFrame(langkahAnim);
       else {
         b.disabled = false;
