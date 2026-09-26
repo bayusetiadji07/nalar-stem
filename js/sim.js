@@ -1379,7 +1379,151 @@ function gambarListrik(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   10. ELEKTROMAGNET — kemagnetan, lilitan, arus, inti
+   Kawat tembaga dililit pada inti sepanjang 6 cm (keliling ± 3,8 cm).
+   H = N·I/l ; B = μ0·μr·H (jenuh) ; gaya angkat ∝ B²·A/(2μ0).
+   Panas kawat P = I²R ; lama baterai = 2000 mAh / I.
+   --------------------------------------------------------- */
+const INTI_MAGNET = {
+  besi:      { nama: 'Paku besi (besi lunak)', mu: 120, jenuh: 1.5, sisa: 0.03, harga: 500 },
+  baja:      { nama: 'Baut baja keras', mu: 60, jenuh: 1.2, sisa: 0.45, harga: 1500 },
+  aluminium: { nama: 'Batang aluminium', mu: 1, jenuh: 0, sisa: 0, harga: 2000 },
+  udara:     { nama: 'Tanpa inti (udara)', mu: 1, jenuh: 0, sisa: 0, harga: 0 }
+};
+const KAWAT_MAGNET = { tipis: { nama: 'Kawat email 0,3 mm', ohmPerM: 0.24, harga: 500 }, tebal: { nama: 'Kawat email 0,6 mm', ohmPerM: 0.06, harga: 1500 } };
+const BENDA_MAGNET = { paku: { nama: 'paku kecil', massa: 2, magnetik: true }, klip: { nama: 'klip kertas', massa: 0.5, magnetik: true }, aluminium: { nama: 'potongan kaleng aluminium', massa: 1, magnetik: false } };
+
+function hitungMagnet(v) {
+  const N = +v.lilitan, n = +v.baterai, inti = INTI_MAGNET[v.inti], kawat = KAWAT_MAGNET[v.kawat], benda = BENDA_MAGNET[v.benda];
+  const panjang = N * 0.038 + 0.3;               // m
+  const Rk = panjang * kawat.ohmPerM;
+  const E = n * 1.5, r = n * 0.15 + 0.05;
+  const I = E / (r + Rk);                        // A
+  const H = N * I / 0.06;
+  const mu0 = 4 * Math.PI * 1e-7;
+  let B = mu0 * inti.mu * H;
+  if (inti.jenuh) B = Math.min(B, inti.jenuh * (1 - Math.exp(-B / inti.jenuh)) + B * 0.02); // mendekati jenuh
+  const F = B * B * 2.8e-5 / (2 * mu0) * 0.15;   // N, ujung inti Ø 6 mm
+  const angkat = benda.magnetik ? Math.floor(F / (benda.massa / 1000 * 9.8) + 1e-9) : 0;
+  const Fsisa = F * inti.sisa;
+  const sisa = benda.magnetik ? Math.floor(Fsisa / (benda.massa / 1000 * 9.8) + 1e-9) : 0;
+  const panas = I * I * Rk;
+  const tahan = 2000 / (I * 1000) * 60;          // menit
+  const biaya = 5000 * n + inti.harga + Math.ceil(panjang) * kawat.harga + 5000;
+  return {
+    arus: bulat(I, 2), medan: Math.round(B * 1000), gaya: bulat(F, 2), angkat: Math.min(angkat, 200), sisa: Math.min(sisa, 200),
+    panas: bulat(panas, 1), tahan: Math.round(tahan), panjang: bulat(panjang, 1), biaya,
+    suhu: panas > 3 ? 'Panas! (berbahaya)' : panas > 1.5 ? 'Hangat' : 'Aman',
+    _F: F, _benda: benda, _inti: inti
+  };
+}
+
+function kriteriaMagnet(v, h) {
+  const p = v.benda === 'paku' ? h : hitungMagnet({ ...v, benda: 'paku' }); // kriteria dinilai dengan paku
+  return [
+    { teks: 'Mengangkat ≥ 15 paku kecil', lulus: p.angkat >= 15, nilai: `${p.angkat} paku` },
+    { teks: 'Paku terlepas saat saklar dimatikan', lulus: p.sisa === 0, nilai: p.sisa ? `${p.sisa} paku tertahan` : 'semua lepas' },
+    { teks: 'Kawat tidak kepanasan (≤ 3 W)', lulus: p.panas <= 3, nilai: `${p.panas} W` },
+    { teks: 'Baterai tahan ≥ 30 menit dinyalakan', lulus: p.tahan >= 30, nilai: `${p.tahan} menit` },
+    { teks: 'Biaya ≤ Rp 30.000', lulus: p.biaya <= 30000, nilai: rp(p.biaya) }
+  ];
+}
+
+function gambarMagnet(ctx, W, H, v, h, p) {
+  // meja bank sampah
+  ctx.fillStyle = '#f1f5f9'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#e2e8f0'; for (let x = 0; x < W; x += 36) ctx.fillRect(x, 0, 1, H * 0.78);
+  const meja = H * 0.8;
+  ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
+  ctx.fillStyle = '#ca8a04'; ctx.fillRect(0, meja, W, 6);
+  const N = +v.lilitan, benda = h._benda;
+  // fase: 0–0.15 diam, 0.15–0.7 saklar ON, 0.7–1 saklar OFF (uji lepas)
+  const on = p > 0.15 && p < 0.7, fOn = mulus(jepit((p - 0.15) / 0.25, 0, 1)), fOff = mulus(jepit((p - 0.72) / 0.2, 0, 1));
+  // derek
+  const tiangX = W * 0.14, lenganY = H * 0.12, ujungX = W * 0.5;
+  ctx.fillStyle = '#f59e0b'; ctx.fillRect(tiangX - 6, lenganY, 12, meja - lenganY); ctx.fillRect(tiangX, lenganY - 6, ujungX - tiangX + 10, 12);
+  ctx.strokeStyle = '#b45309'; ctx.lineWidth = 2;
+  for (let x = tiangX + 20; x < ujungX; x += 26) { ctx.beginPath(); ctx.moveTo(x, lenganY - 6); ctx.lineTo(x + 13, lenganY + 6); ctx.stroke(); }
+  const naik = on ? fOn : (p >= 0.7 ? 1 - fOff * 0.15 : 0);
+  const intiAtas = lenganY + 30, intiBawah = lerp(meja - 70, meja - 150, naik); // derek mengangkat setelah menyala
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ujungX, lenganY + 6); ctx.lineTo(ujungX, intiAtas); ctx.stroke();
+  // inti
+  const lebarInti = 12, warnaInti = { besi: '#64748b', baja: '#334155', aluminium: '#cbd5e1', udara: 'rgba(0,0,0,0)' }[v.inti];
+  const yInti0 = intiBawah - 80;
+  if (v.inti !== 'udara') { ctx.fillStyle = warnaInti; ctx.fillRect(ujungX - lebarInti / 2, yInti0, lebarInti, 84); }
+  ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ujungX, intiAtas); ctx.lineTo(ujungX, yInti0); ctx.stroke();
+  // lilitan (jumlah garis sebanding lilitan)
+  const panas = h.panas > 3 && on;
+  const garisLilit = Math.min(34, 6 + Math.round(N / 10));
+  for (let i = 0; i < garisLilit; i++) {
+    const y = yInti0 + 8 + i * (64 / garisLilit);
+    ctx.strokeStyle = panas ? `rgb(${220},${80 + (i % 2) * 30},40)` : i % 2 ? '#b45309' : '#d97706';
+    ctx.lineWidth = v.kawat === 'tebal' ? 3.2 : 2;
+    ctx.beginPath(); ctx.ellipse(ujungX, y, lebarInti / 2 + 5, 3, 0, 0, Math.PI * 2); ctx.stroke();
+  }
+  // kabel ke baterai & saklar
+  const bx = W * 0.8, by = meja - 60, n = +v.baterai;
+  for (let i = 0; i < n; i++) { ctx.fillStyle = '#1f2937'; kotakBulat(ctx, bx - 26 + i * 20, by, 17, 40, 3); ctx.fill(); ctx.fillStyle = '#d97706'; ctx.fillRect(bx - 26 + i * 20, by, 17, 10); }
+  label(ctx, `${n} × 1,5 V`, bx + n * 10 - 16, by + 54, { rata: 'center', ukuran: 11, warna: '#fff', latar: 'rgba(15,23,42,.6)' });
+  ctx.strokeStyle = '#b91c1c'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(ujungX + 10, yInti0 + 6); ctx.bezierCurveTo(ujungX + 80, yInti0 - 20, bx - 90, by - 40, bx - 60, by - 10); ctx.stroke();
+  ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(ujungX + 10, yInti0 + 70); ctx.bezierCurveTo(ujungX + 90, yInti0 + 110, bx - 60, by + 60, bx - 26, by + 30); ctx.stroke();
+  // saklar
+  const sx = bx - 50, sy = by - 10;
+  ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(sx - 10, sy, 3.5, 0, 7); ctx.arc(sx + 12, sy + 8, 3.5, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx - 10, sy); on ? ctx.lineTo(sx + 12, sy + 8) : ctx.lineTo(sx + 8, sy - 14); ctx.stroke();
+  label(ctx, on ? 'saklar ON' : 'saklar OFF', sx, sy - 24, { rata: 'center', ukuran: 11, tebal: true, warna: on ? '#15803d' : '#64748b', latar: 'rgba(255,255,255,.9)' });
+  // garis medan magnet
+  const kuat = jepit(h.medan / 800, 0, 1);
+  if (on && h.medan > 5) {
+    ctx.strokeStyle = `rgba(37,99,235,${0.2 + 0.45 * kuat * fOn})`; ctx.lineWidth = 1.5; ctx.setLineDash([5, 4]);
+    for (let k = 1; k <= 1 + Math.round(4 * kuat); k++) {
+      ctx.beginPath(); ctx.ellipse(ujungX, yInti0 + 42, 14 + k * 16, 50 + k * 10, 0, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    label(ctx, 'U', ujungX, yInti0 - 6, { rata: 'center', ukuran: 11, tebal: true, warna: '#b91c1c' });
+    label(ctx, 'S', ujungX, yInti0 + 96, { rata: 'center', ukuran: 11, tebal: true, warna: '#1d4ed8' });
+  }
+  if (panas) { ctx.strokeStyle = 'rgba(148,163,184,.7)'; ctx.lineWidth = 2; for (let k = 0; k < 3; k++) { ctx.beginPath(); for (let j = 0; j < 12; j++) ctx.lineTo(ujungX - 30 + k * 12 + Math.sin(j + p * 30) * 3, yInti0 - j * 3); ctx.stroke(); } }
+  // tumpukan benda di meja
+  const ujungY = yInti0 + 84;
+  const tertarik = h.angkat, tertahan = h.sisa;
+  const total = 40;
+  const gambarBenda = (x, y, rot) => {
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot);
+    if (v.benda === 'paku') { ctx.fillStyle = '#6b7280'; ctx.fillRect(-9, -1.2, 18, 2.4); ctx.fillRect(-10, -3, 2.5, 6); }
+    else if (v.benda === 'klip') { ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.4; kotakBulat(ctx, -7, -3, 14, 6, 3); ctx.stroke(); }
+    else { ctx.fillStyle = '#e5e7eb'; ctx.strokeStyle = '#9ca3af'; ctx.lineWidth = 1; ctx.fillRect(-7, -4, 14, 8); ctx.strokeRect(-7, -4, 14, 8); }
+    ctx.restore();
+  };
+  const rng = k => { const s = Math.sin(k * 91.7) * 4375.5; return s - Math.floor(s); };
+  for (let i = 0; i < total; i++) {
+    const x0 = ujungX - 70 + rng(i) * 140, y0 = meja - 4 - rng(i + 0.3) * 10, r0 = rng(i + 0.6) * 3;
+    let x = x0, y = y0, rot = r0;
+    const naikBenda = i < Math.min(tertarik, total);
+    if (naikBenda && p > 0.15) {
+      const tempel = { x: ujungX + (rng(i + 0.9) - 0.5) * 26, y: ujungY + 4 + Math.floor(i / 6) * 5 + rng(i + 1.2) * 4 };
+      const q = mulus(jepit((p - 0.17 - (i % 10) * 0.006) / 0.12, 0, 1));
+      x = lerp(x0, tempel.x, q); y = lerp(y0, tempel.y, q); rot = lerp(r0, Math.PI / 2 + (rng(i) - 0.5), q);
+      if (p >= 0.7 && i >= tertahan) { // saklar OFF → jatuh kembali bila sisa kemagnetan kecil
+        const jatuh = mulus(jepit((p - 0.72 - (i % 7) * 0.01) / 0.12, 0, 1));
+        x = lerp(tempel.x, x0, jatuh); y = lerp(tempel.y, y0, jatuh); rot = lerp(rot, r0, jatuh);
+      }
+    }
+    gambarBenda(x, y, rot);
+  }
+  // pembacaan
+  label(ctx, `A: ${fx(on ? h.arus : 0, 2)} A`, 12, 16, { ukuran: 12, tebal: true, warna: '#fff', latar: '#0f766e' });
+  label(ctx, `${N} lilitan · ${INTI_MAGNET[v.inti].nama}`, W - 12, 16, { rata: 'right', ukuran: 11, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
+  if (p >= 1) {
+    const teks = !benda.magnetik ? `Aluminium tidak tertarik magnet — 0 terangkat` : h.angkat === 0 ? 'Tidak ada yang terangkat' : `${h.angkat} ${benda.nama} terangkat · ${h.sisa ? `${h.sisa} tertahan saat OFF` : 'semua lepas saat OFF'}`;
+    label(ctx, teks, W / 2, H - 14, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: h.angkat >= 15 && !h.sisa && h.panas <= 3 ? '#15803d' : '#b45309' });
+  }
+}
+
 const SIM = {
+  magnet: { hitung: hitungMagnet, kriteria: kriteriaMagnet, gambar: gambarMagnet, sumbuX: ['lilitan', 'baterai'], sumbuY: ['angkat', 'arus', 'panas', 'medan', 'tahan'] },
   listrik: { hitung: hitungListrik, kriteria: kriteriaListrik, gambar: gambarListrik, sumbuX: ['baterai', 'lampu', 'resistor'], sumbuY: ['cahaya', 'arus', 'tahan', 'arusLampu'] },
   angin: { hitung: hitungAngin, kriteria: kriteriaAngin, gambar: gambarAngin, sumbuX: ['angin', 'jari', 'bilah', 'sudutBilah'], sumbuY: ['daya', 'rpm', 'dayaAngin', 'mulai'] },
   jembatan: { hitung: hitungJembatan, kriteria: kriteriaJembatan, gambar: gambarJembatan, sumbuX: ['tinggi', 'lapis', 'beban'], sumbuY: ['bebanMaks', 'efisiensi', 'stik', 'gaya'] },

@@ -82,6 +82,11 @@ Illustration of a small homemade three-blade wind turbine made from cut PVC pipe
 Illustration of a cozy wooden table in a simple Indonesian coastal home at night during a power outage: a junior high girl in a white hijab studies with a notebook under a small homemade lamp made of three glowing white LEDs on a cardboard board, wired with red and black cables, resistors and an AA battery holder. Warm soft light on her face, the rest of the room dim blue, a window showing a dark fishing village. Hopeful, focused mood.
 ```
 
+### `misi-magnet.jpg` — Derek Elektromagnet Pemilah Sampah (misi ke-10)
+```
+Illustration of a school recycling station (bank sampah) in an Indonesian junior high school: two students operate a small homemade crane made of wood and popsicle sticks, with a copper-wire coil wrapped around a big iron nail hanging from the arm, connected to an AA battery holder and a switch. The electromagnet lifts a cluster of iron nails and a steel can from a mixed pile, while aluminum drink cans stay on the table; soft blue magnetic field lines around the coil. Sorting baskets labeled only with colors, no text.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)

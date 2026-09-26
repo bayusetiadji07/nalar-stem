@@ -573,6 +573,56 @@ const NYATA = {
       { gejala: 'Baterai atau kabel terasa panas', kunci: 'panas|hangat|bau|asap', petunjuk: ['KESELAMATAN DULU: segera lepas baterai dari dudukannya dan jangan disentuh sampai dingin.', 'Setelah aman: periksa apakah ada kabel yang menghubungkan + dan − secara langsung (hubung singkat) tanpa melewati lampu.'] },
       { gejala: 'Satu lampu mati, yang lain ikut mati', kunci: 'ikut mati|semua mati|ikut padam', petunjuk: ['Apakah semua lampumu berada dalam satu jalur saja?', 'Bagaimana susunan yang membuat setiap lampu punya jalur sendiri?'] }
     ]
+  },
+  magnet: {
+    waktu: '2 × 40 menit',
+    alat: [
+      'Paku besi besar ± 10 cm (inti besi lunak); bila ingin membandingkan: baut baja dan batang aluminium',
+      'Kawat email tembaga 0,3 mm atau 0,6 mm (± 5–12 m, sesuai jumlah lilitan)',
+      'Amplas halus untuk mengupas lapisan email di ujung kawat',
+      'Baterai AA dan dudukannya, saklar kecil, selotip',
+      'Paku kecil, klip kertas, dan potongan kaleng aluminium untuk diuji',
+      'Tiang dan lengan derek dari kayu/stik es krim, benang untuk menggantung',
+      'Kompas kecil dan multimeter (bila ada)'
+    ],
+    keselamatan: [
+      'Nyalakan elektromagnet paling lama ± 10 detik tiap uji, lalu matikan — kawat dan baterai bisa panas.',
+      'Jangan menghubungkan ujung kawat langsung ke baterai tanpa lilitan (hubung singkat).',
+      'Jika kawat atau baterai terasa panas: segera lepas baterai dan tunggu dingin.',
+      'Ujung kawat dan paku tajam — hati-hati saat mengupas dan melilit.',
+      'Jauhkan magnet dari HP, laptop, kartu ATM, dan orang yang memakai alat pacu jantung.',
+      'Buang baterai bekas di tempat sampah khusus (limbah B3).'
+    ],
+    langkah: [
+      'Sisakan ± 20 cm kawat di awal, lalu lilitkan kawat pada paku besi dengan rapi dan SEARAH, sambil menghitung jumlah lilitan sesuai rancangan.',
+      'Rekatkan ujung lilitan dengan selotip agar tidak terurai; sisakan ± 20 cm kawat di ujung akhir.',
+      'Amplas kedua ujung kawat ± 2 cm sampai warna tembaganya mengilap (lapisan email adalah isolator).',
+      'Sambungkan ujung kawat ke dudukan baterai lewat saklar. Gantung elektromagnet pada lengan derek.',
+      'Nyalakan saklar (maks. 10 detik), turunkan ke tumpukan paku kecil, lalu angkat. Hitung paku yang terangkat.',
+      'Arahkan derek ke keranjang lain, matikan saklar. Hitung paku yang masih menempel.',
+      'Ulangi dengan klip kertas dan potongan kaleng aluminium. Dekatkan kompas untuk melihat kutub elektromagnet.',
+      'Bila ada multimeter, ukur arus sesaat saja. Catat semua hasil.'
+    ],
+    takaran: v => {
+      const h = hitungMagnet({ ...v, benda: 'paku' });
+      return [
+        `${v.lilitan} lilitan ${KAWAT_MAGNET[v.kawat].nama.toLowerCase()} pada ${INTI_MAGNET[v.inti].nama.toLowerCase()} — butuh kawat ± ${fxd(h.panjang)} m.`,
+        `${v.baterai} baterai AA disusun seri (${fxd(+v.baterai * 1.5)} V).`,
+        `Prediksi simulasi: arus ± ${fxd(h.arus, 2)} A, mengangkat ± ${h.angkat} paku kecil, ${h.sisa ? `${h.sisa} paku tertahan saat dimatikan` : 'semua paku lepas saat dimatikan'}, panas kawat ± ${fxd(h.panas)} W.`,
+        'Tips menghitung lilitan: beri tanda dengan spidol setiap 10 lilitan.'
+      ];
+    },
+    ukur: [
+      { id: 'angkat', label: 'Paku kecil terangkat', satuan: 'buah', sim: 'angkat' },
+      { id: 'sisa', label: 'Paku tertahan saat OFF', satuan: 'buah', sim: 'sisa' },
+      { id: 'arus', label: 'Arus terukur', satuan: 'A', sim: 'arus' }
+    ],
+    masalah: [
+      { gejala: 'Tidak menarik apa pun', kunci: 'tidak menarik|tidak nempel|tidak bisa|tidak kuat', petunjuk: ['Apakah lapisan email di ujung kawat sudah diamplas sampai mengilap?', 'Periksa sambungan: apakah arus benar-benar mengalir? Bagaimana cara mengeceknya dengan kompas?'] },
+      { gejala: 'Kawat atau baterai panas', kunci: 'panas|hangat|bau', petunjuk: ['KESELAMATAN DULU: matikan saklar dan lepas baterai, tunggu sampai dingin.', 'Setelah aman: bagaimana jumlah lilitan dan tebal kawat memengaruhi hambatan dan arus?'] },
+      { gejala: 'Paku tetap menempel saat dimatikan', kunci: 'menempel|tidak lepas|nempel terus', petunjuk: ['Inti apa yang kamu pakai — besi lunak atau baja?', 'Apa bedanya magnet sementara dan magnet tetap menurut kartu konsep?'] },
+      { gejala: 'Daya angkat lemah', kunci: 'lemah|sedikit|kurang', petunjuk: ['Faktor apa saja yang memperkuat elektromagnet? Mana yang paling mudah kamu ubah?', 'Apakah lilitanmu searah semua? Apa yang terjadi jika sebagian lilitan berlawanan arah?'] }
+    ]
   }
 };
 
@@ -934,6 +984,48 @@ const MISI = [
       { id: 'daya', label: 'Daya', satuan: 'W' },
       { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'magnet',
+    judul: 'Derek Elektromagnet Pemilah Sampah',
+    ikon: '🧲',
+    kelas: 'Kelas 9 · Kemagnetan & Elektromagnet',
+    warna: '#be123c',
+    ringkas: 'Rancang derek elektromagnet mini yang mengangkat sampah besi, melepaskannya saat dimatikan, dan tidak membuat kawat kepanasan.',
+    kisah: 'Bank sampah sekolah menerima campuran sampah logam: <b>paku dan kaleng besi</b> bercampur dengan <b>kaleng minuman aluminium</b>. Petugas ingin alat pemilah berupa <b>derek elektromagnet mini</b>: saat dinyalakan mengangkat sampah besi (minimal <b>15 paku sekaligus</b>), dan saat dimatikan <b>melepaskannya</b> ke keranjang lain. Kawat lilitannya tidak boleh kepanasan dan baterainya harus awet.',
+    kriteria: [
+      'Mengangkat minimal 15 paku kecil sekaligus',
+      'Paku terlepas saat saklar dimatikan',
+      'Kawat tidak kepanasan (panas ≤ 3 W)',
+      'Baterai tahan minimal 30 menit dinyalakan'
+    ],
+    kendala: ['Biaya paling banyak Rp 30.000', 'Hanya baterai AA (paling banyak 4 buah)'],
+    konsep: `
+      <p><b>Magnet</b> punya dua kutub, utara (U) dan selatan (S). Kutub sejenis tolak-menolak, kutub berbeda tarik-menarik. Di sekitar magnet ada <b>medan magnet</b> yang digambarkan dengan garis-garis gaya.</p>
+      <p><b>Bahan magnetik</b> (ditarik magnet): besi, baja, nikel, kobalt. <b>Bahan nonmagnetik</b>: aluminium, tembaga, plastik, kayu. Perhatikan: aluminium juga logam, tetapi tidak ditarik magnet!</p>
+      <p><b>Elektromagnet:</b> kawat berarus listrik menimbulkan medan magnet (ditemukan Oersted). Bila kawat dililitkan menjadi kumparan, medannya menguat.</p>
+      <p class="rumus">Kekuatan elektromagnet ↑ bila: jumlah lilitan ↑ · arus ↑ · ada inti besi</p>
+      <p><b>Besi lunak</b> mudah dijadikan magnet dan mudah kehilangan kemagnetannya — cocok untuk elektromagnet yang harus bisa melepas benda. <b>Baja</b> sulit kehilangan kemagnetan (menjadi magnet tetap), sehingga benda bisa tetap menempel.</p>
+      <p>Arus besar membuat kawat <b>panas</b> (P = I² × R) dan baterai cepat habis. Kawat yang lebih panjang (lebih banyak lilitan) hambatannya lebih besar, sehingga arusnya lebih kecil.</p>
+      <p class="peringatan">⚠️ Elektromagnet dari baterai bisa panas bila dinyalakan lama. Nyalakan hanya sebentar, dan jauhkan magnet dari HP, kartu ATM, serta alat pacu jantung.</p>`,
+    kataKunci: ['magnet', 'kutub', 'medan', 'elektromagnet', 'lilitan', 'kumparan', 'arus', 'inti', 'besi lunak', 'baja', 'aluminium', 'magnetik', 'oersted', 'panas', 'hambatan'],
+    variabel: [
+      { id: 'lilitan', label: 'Jumlah lilitan', tipe: 'range', min: 20, max: 300, step: 20, satuan: 'lilitan', awal: 20 },
+      { id: 'baterai', label: 'Jumlah baterai AA (seri)', tipe: 'range', min: 1, max: 4, step: 1, satuan: 'buah', awal: 2 },
+      { id: 'inti', label: 'Inti kumparan', tipe: 'select', awal: 'udara', opsi: [['udara', 'Tanpa inti (udara)'], ['besi', 'Paku besi (besi lunak)'], ['baja', 'Baut baja keras'], ['aluminium', 'Batang aluminium']] },
+      { id: 'kawat', label: 'Kawat tembaga', tipe: 'select', awal: 'tebal', opsi: [['tebal', 'Kawat email tebal 0,6 mm'], ['tipis', 'Kawat email tipis 0,3 mm']] },
+      { id: 'benda', label: 'Benda yang diuji', tipe: 'select', awal: 'paku', opsi: [['paku', 'Paku kecil (2 g)'], ['klip', 'Klip kertas (0,5 g)'], ['aluminium', 'Potongan kaleng aluminium']] }
+    ],
+    keluaran: [
+      { id: 'arus', label: 'Arus', satuan: 'A' },
+      { id: 'medan', label: 'Kuat medan di ujung inti', satuan: 'mT' },
+      { id: 'angkat', label: 'Benda terangkat', satuan: 'buah' },
+      { id: 'sisa', label: 'Tertahan saat OFF', satuan: 'buah' },
+      { id: 'panas', label: 'Panas di kawat', satuan: 'W' },
+      { id: 'suhu', label: 'Suhu kawat', satuan: '' },
+      { id: 'tahan', label: 'Baterai tahan', satuan: 'menit' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -1128,5 +1220,16 @@ const UJI_NALAR = [
       'Lampu rumah tidak pernah bisa padam bersamaan.'
     ],
     bahas: 'Pola "satu putus, semua padam" adalah bukti jalur tunggal (seri). Pola "satu putus, yang lain tetap" adalah bukti jalur bercabang (paralel). Kesimpulan harus berdasar pola bukti, bukan dugaan tentang harga atau kekuatan listrik.'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Andi menguji sebuah kaleng minuman dengan magnet. Kaleng itu tidak tertarik sama sekali. Andi menyimpulkan: "Berarti kaleng ini bukan logam." Penilaian yang paling tepat terhadap kesimpulan Andi adalah …',
+    opsi: [
+      'Kurang tepat: tidak ditarik magnet hanya menunjukkan kaleng itu bukan bahan magnetik (misalnya aluminium), padahal aluminium juga logam.',
+      'Tepat, karena semua logam pasti ditarik magnet.',
+      'Tepat, karena kaleng minuman selalu terbuat dari plastik.',
+      'Kurang tepat, karena magnetnya pasti rusak.'
+    ],
+    bahas: 'Kesimpulan Andi melompat terlalu jauh dari buktinya. Bukti "tidak ditarik magnet" hanya berarti bukan bahan magnetik. Banyak logam — aluminium, tembaga, emas — tidak ditarik magnet. Pemikir kritis membedakan "bukan magnetik" dengan "bukan logam".'
   }
 ];
