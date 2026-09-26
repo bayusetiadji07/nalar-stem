@@ -76,5 +76,52 @@ Tambahkan: `isolated single object, centered, side view, transparent background,
 | `sawi-1.png` … `sawi-5.png` | a bok choy (sawi) plant in a white hydroponic net pot with roots visible, growth stage 1 (tiny seedling with 2 leaves) / 2 / 3 / 4 / 5 (large mature plant with many leaves) — buat 5 gambar dengan ukuran pot sama |
 | `sawi-layu.png` | the same mature bok choy plant but wilted and yellowish |
 
+---
+
+## TAHAP 3 — Aset "Rancang & Uji" untuk 5 misi terbaru
+Kelima misi ini (listrik, magnet, pesawat, optik, bunyi) masih polos. Pakai GAYA SIMULASI yang
+sama, 16:9, 1920×1080, tampak samping lurus. **Latar harus kalem & agak pudar di tengah** karena
+di atasnya digambar kabel, sinar, dan gelombang tipis yang harus tetap terbaca.
+
+### `bg-listrik.jpg` — Lampu belajar darurat (listrik padam)
+```
+Wide side-view background of a cozy Indonesian bedroom study corner at dusk during a power outage: dim bluish evening light through a window at the far left edge, a switched-off ceiling lamp and a candle only at the far right edge, a plain soft cream wall filling the large center area, a wooden desk top as a straight horizontal line at 90% of the image height. Very calm, low contrast, center wall completely empty for an electric circuit diagram.
+```
+
+### `bg-magnet.jpg` — Derek elektromagnet (meja di 80% tinggi)
+```
+Wide side-view background of a tidy school science workshop: a pale pegboard wall with a few tools hanging only at the far left and far right edges, a small window with daylight at the upper right, a sturdy wooden workbench top as a straight horizontal line at 80% of the image height. The center area is a plain, softly lit wall, empty for a model crane with a coil.
+```
+
+### `bg-tambak.jpg` — Pesawat sederhana di tambak garam (tanah di 92% tinggi)
+```
+Wide side-view background of traditional Indonesian salt ponds (tambak garam) on the Madura coast on a bright morning: a big pale blue sky filling most of the image, flat shallow salt pans with white salt piles and a small wooden salt shed on the far horizon, very small; the ground is a flat pale earthen dyke as a straight horizontal strip in the bottom 8% of the image. Center area open sky, empty for a lever and pulley system lifting a sack.
+```
+
+### `bg-kelas-gelap.jpg` — Proyektor HP (ruang kelas digelapkan)
+```
+Wide side-view background of an Indonesian classroom with the lights off and curtains closed: very dark navy blue tones, faint outlines of desks and chairs along the bottom edge, a closed curtain with a thin line of daylight at the far left, a plain dark wall on the right third where a picture will be projected. Overall very dark (mostly #0f172a to #1e293b), low detail, horizontal centerline completely empty for light rays.
+```
+
+### `bg-pentas.jpg` — Sasando Mini (meja di 72% tinggi)
+```
+Wide side-view background of an Indonesian school hall prepared for an art performance (pentas seni): a small wooden stage with deep red curtains only at the far left and right edges, warm string lights and batik-pattern bunting along the very top, a soft warm cream backdrop in the center, a wooden table top as a straight horizontal line at 72% of the image height. Warm, festive but uncluttered; center area empty for a string instrument and sound waves.
+```
+
+### Benda Tahap 3 (PNG transparan, 1024×1024 — tambahan yang sama seperti Tahap 2)
+| Berkas | Prompt |
+|---|---|
+| `baterai-aa.png` | a single AA battery lying horizontally, positive terminal on the right, blue and silver label without text |
+| `paku.png` | a small iron nail lying horizontally, gray metal, head on the left |
+| `klip.png` | a single silver metal paper clip, flat, horizontal |
+| `kaleng-alu.png` | a small crumpled piece of a silver aluminium soda can, flat |
+| `hp-layar.png` | a modern smartphone lying horizontally, seen from the side-front, screen glowing with a colorful simple picture of the solar system |
+| `botol-beban.png` | a 1.5 liter clear plastic water bottle filled with water, hanging upside-down from a string tied at its neck |
+| `sasando.png` | a traditional sasando musical instrument from Rote, East Nusa Tenggara: bamboo tube with strings surrounded by a fan-shaped dried lontar palm leaf resonator, standing upright |
+| `piala.png` | a small golden trophy with a star on top (dipakai saat semua kriteria terpenuhi) |
+
+Setelah ditempel ke `assets/img/sim/`, bilang "sudah" — Claude akan mengecilkan, menghapus latar
+putih bila perlu, lalu memasangnya ke simulasi dengan garis meja/tanah yang pas.
+
 Tips konsistensi Tahap 2: buat semua benda dalam SATU sesi chat AI yang sama, dan minta
 "same style, same scale, same lighting as the previous image".
