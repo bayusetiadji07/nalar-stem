@@ -675,6 +675,55 @@ const NYATA = {
       { gejala: 'Tuas melengkung atau patah', kunci: 'melengkung|patah|bengkok', petunjuk: ['Di bagian mana tuas paling tertekuk? Bagaimana momen di titik tumpu dipengaruhi lengan beban?', 'Bagaimana memilih bahan atau ukuran lengan agar momennya lebih kecil?'] },
       { gejala: 'Beban berputar atau berayun', kunci: 'berputar|berayun|goyang', petunjuk: ['Apakah beban digantung tepat di tengah?', 'Apakah tali-tali takal saling melilit? Bagaimana mencegahnya?'] }
     ]
+  },
+  optik: {
+    waktu: '2 × 40 menit',
+    alat: [
+      'Kotak kardus (kotak sepatu) dan kertas/cat hitam untuk melapisi bagian dalam',
+      'Lup/kaca pembesar (lensa cembung) diameter 5–10 cm',
+      'Cermin rias cekung (bila ingin membandingkan) dan cermin datar kecil',
+      'Penyangga HP dari kardus atau lilin mainan, selotip, cutter (dengan pendampingan guru)',
+      'Kertas putih, penggaris dan meteran',
+      'Ruangan yang bisa digelapkan dan dinding berwarna terang'
+    ],
+    keselamatan: [
+      'JANGAN pernah melihat matahari melalui lensa atau cermin cekung.',
+      'Jangan memusatkan cahaya matahari dengan lensa/cermin ke kulit, mata, kertas, atau kardus — bisa terbakar. Jangan tinggalkan lensa di bawah sinar matahari.',
+      'Memotong kardus dengan cutter didampingi guru.',
+      'Lensa dan cermin kaca mudah pecah — pegang tepinya dan simpan di tempat aman.',
+      'Jangan biarkan HP menyala dengan kecerahan penuh terlalu lama di dalam kotak tertutup (bisa panas).'
+    ],
+    langkah: [
+      'Ukur jarak fokus lensa: arahkan lensa ke jendela atau lampu yang jauh, lalu geser kertas di belakangnya sampai bayangan jendela tampak tajam. Jarak lensa–kertas itu adalah f.',
+      'Buat lubang seukuran lensa di salah satu sisi pendek kotak, pasang lensa dengan selotip. Lapisi bagian dalam kotak dengan kertas hitam.',
+      'Hitung jarak HP–lensa (s) memakai rumus 1/f = 1/s + 1/s\' dengan s\' = jarak lensa ke dinding.',
+      'Atur kecerahan HP maksimum, kunci rotasi layar, lalu letakkan HP di dalam kotak dengan posisi sesuai rancangan (tegak atau diputar terbalik).',
+      'Gelapkan ruangan. Arahkan lensa ke dinding pada jarak rancangan.',
+      'Geser HP maju-mundur perlahan sampai gambar di dinding paling tajam. Ukur jarak HP–lensa saat itu.',
+      'Ukur lebar gambar di dinding. Amati: apakah tegak atau terbalik? Apakah tulisan terbaca?',
+      'Coba ganti dengan cermin rias cekung atau lensa lain, dan catat perbedaannya.'
+    ],
+    takaran: v => {
+      const h = hitungOptik(v);
+      const K = KOMPONEN_OPTIK[v.komponen];
+      return [
+        `${K.nama}, jarak fokus ${v.fokus} cm, diameter ${v.diameter} cm.`,
+        `HP diletakkan ${v.jarakBenda} cm dari ${K.cermin ? 'cermin' : 'lensa'} dengan posisi ${v.hp === 'terbalik' ? 'DIPUTAR TERBALIK (180°)' : 'tegak biasa'}; dinding ${v.jarakLayar} cm dari ${K.cermin ? 'cermin' : 'lensa'}.`,
+        h._nyata ? `Prediksi: bayangan nyata ${fxd(h.bayangan)} cm dari ${K.cermin ? 'cermin' : 'lensa'}, lebar gambar ± ${h.lebar} cm, ${h.arah.toLowerCase()} di dinding.` : `Prediksi: bayangan ${h.sifat.toLowerCase()} — tidak akan tampak di dinding. Perbaiki dulu di simulasi.`,
+        'Tips: ukur jarak fokus lensamu yang sebenarnya lebih dulu — nilai f pada lup berbeda-beda.'
+      ];
+    },
+    ukur: [
+      { id: 'lebar', label: 'Lebar gambar di dinding', satuan: 'cm', sim: 'lebar' },
+      { id: 'fokus', label: 'Jarak fokus lensa terukur', satuan: 'cm' },
+      { id: 'jarak', label: 'Jarak HP–lensa saat gambar tajam', satuan: 'cm' }
+    ],
+    masalah: [
+      { gejala: 'Tidak ada gambar di dinding', kunci: 'tidak ada|tidak muncul|kosong|tidak terlihat', petunjuk: ['Komponen apa yang kamu pakai? Apakah bisa membentuk bayangan nyata?', 'Apakah HP berada di luar titik fokus lensa (s > f)?'] },
+      { gejala: 'Gambar buram', kunci: 'buram|kabur|tidak tajam', petunjuk: ['Geser HP maju-mundur sedikit demi sedikit. Ke arah mana gambar makin tajam?', 'Menurut rumus lensa, bagaimana s harus berubah bila dinding digeser menjauh?'] },
+      { gejala: 'Gambar terbalik atau tulisan terbalik', kunci: 'terbalik|kebalik', petunjuk: ['Bagaimana sifat bayangan nyata dari lensa cembung — tegak atau terbalik?', 'Apa yang terjadi jika HP diputar 180° sebelum diproyeksikan?'] },
+      { gejala: 'Gambar terlalu redup', kunci: 'redup|gelap|tidak terang', petunjuk: ['Apakah ruangan sudah cukup gelap dan kecerahan HP maksimum?', 'Menurut simulasi, bagaimana ukuran gambar dan diameter lensa memengaruhi kecerahan?'] }
+    ]
   }
 };
 
@@ -1120,6 +1169,50 @@ const MISI = [
       { id: 'status', label: 'Hasil', satuan: '' },
       { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'optik',
+    judul: 'Proyektor HP dari Kardus',
+    ikon: '🔍',
+    kelas: 'Kelas 8 · Cahaya & Alat Optik (Cermin dan Lensa)',
+    warna: '#4f46e5',
+    ringkas: 'Pilih cermin atau lensa yang tepat dan atur jaraknya agar video di HP terproyeksi besar, tajam, terang, dan tidak terbalik.',
+    kisah: 'Proyektor di sekolah rusak, padahal guru ingin memutar video pembelajaran di dinding kelas. Kelompokmu ditantang membuat <b>proyektor dari kotak kardus dan HP</b>. Gambar di dinding harus <b>benar-benar terbentuk</b>, <b>tajam</b>, <b>lebarnya minimal 60 cm</b>, <b>cukup terang</b>, dan <b>tidak terbalik</b> — dengan biaya paling banyak Rp 50.000.',
+    kriteria: [
+      'Bayangan nyata (bisa ditangkap dinding)',
+      'Gambar tajam (≥ 80%)',
+      'Lebar gambar di dinding minimal 60 cm',
+      'Cukup terang (≥ 40)',
+      'Gambar tegak, tidak terbalik'
+    ],
+    kendala: ['Biaya paling banyak Rp 50.000', 'Jarak dinding paling jauh 4 m (ukuran kelas); panjang kotak paling panjang 60 cm'],
+    konsep: `
+      <p>Cahaya merambat lurus. <b>Cermin</b> memantulkan cahaya; <b>lensa</b> membiaskan (membelokkan) cahaya. Cermin/lensa <b>cekung dan cembung</b> dapat mengumpulkan atau menyebarkan cahaya.</p>
+      <p class="rumus">1/f = 1/s + 1/s' &nbsp;·&nbsp; perbesaran M = s'/s</p>
+      <p>f = jarak fokus, s = jarak benda, s' = jarak bayangan. Pada lensa cembung dan cermin cekung f bertanda positif; pada lensa cekung dan cermin cembung f negatif.</p>
+      <p><b>Bayangan nyata</b> terbentuk dari perpotongan sinar-sinar sungguhan, sehingga <b>bisa ditangkap layar</b> — biasanya terbalik. <b>Bayangan maya</b> hanya "tampak" dari perpanjangan sinar, sehingga <b>tidak bisa ditangkap layar</b> (misalnya bayangan pada lup atau spion).</p>
+      <p>Lensa cembung membentuk bayangan nyata <b>bila benda berada di luar titik fokus</b> (s &gt; f). Bila benda sedikit di luar fokus, bayangannya jauh dan <b>sangat diperbesar</b> — prinsip proyektor.</p>
+      <p><b>Kecerahan:</b> cahaya dari HP yang terkumpul oleh lensa disebar ke seluruh gambar. Makin besar gambar, makin redup; lensa yang lebih lebar mengumpulkan lebih banyak cahaya.</p>
+      <p class="peringatan">⚠️ Jangan pernah melihat matahari melalui lensa atau memusatkan cahaya matahari ke kulit, mata, atau kertas — bisa membakar!</p>`,
+    kataKunci: ['cermin', 'lensa', 'cekung', 'cembung', 'fokus', 'bayangan', 'nyata', 'maya', 'terbalik', 'perbesaran', 'pembiasan', 'pemantulan', 'sinar', 'jarak benda', 'cahaya'],
+    variabel: [
+      { id: 'komponen', label: 'Komponen optik', tipe: 'select', awal: 'lensaCekung', opsi: [['lensaCekung', 'Lensa cekung'], ['lensaCembung', 'Lensa cembung (lup)'], ['cerminCekung', 'Cermin cekung (cermin rias)'], ['cerminCembung', 'Cermin cembung']] },
+      { id: 'fokus', label: 'Jarak fokus', tipe: 'range', min: 5, max: 30, step: 1, satuan: 'cm', awal: 10 },
+      { id: 'jarakBenda', label: 'Jarak HP ke lensa/cermin', tipe: 'range', min: 5, max: 60, step: 1, satuan: 'cm', awal: 20 },
+      { id: 'jarakLayar', label: 'Jarak lensa/cermin ke dinding', tipe: 'range', min: 30, max: 400, step: 10, satuan: 'cm', awal: 100 },
+      { id: 'diameter', label: 'Diameter lensa/cermin', tipe: 'range', min: 2, max: 10, step: 1, satuan: 'cm', awal: 3 },
+      { id: 'hp', label: 'Posisi HP', tipe: 'select', awal: 'tegak', opsi: [['tegak', 'Tegak (biasa)'], ['terbalik', 'Diputar terbalik (180°)']] }
+    ],
+    keluaran: [
+      { id: 'bayangan', label: "Jarak bayangan s'", satuan: 'cm' },
+      { id: 'perbesaran', label: 'Perbesaran', satuan: '×' },
+      { id: 'sifat', label: 'Sifat bayangan', satuan: '' },
+      { id: 'lebar', label: 'Lebar gambar di dinding', satuan: 'cm' },
+      { id: 'tajam', label: 'Ketajaman', satuan: '%' },
+      { id: 'terang', label: 'Kecerahan relatif', satuan: '' },
+      { id: 'arah', label: 'Arah gambar di dinding', satuan: '' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -1336,5 +1429,16 @@ const UJI_NALAR = [
       'Keliru, karena takal justru memperbesar gaya.'
     ],
     bahas: 'Usaha = gaya × jarak. Pesawat sederhana menukar gaya kecil dengan jarak yang lebih jauh; usahanya tidak berkurang. Klaim iklan mencampuradukkan "gaya" dan "usaha" — pemikir kritis memeriksa istilah yang dipakai.'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Dina berkata, "Lensa cembung (lup) selalu membuat benda tampak lebih besar." Tanggapan yang paling tepat adalah …',
+    opsi: [
+      'Belum tentu: sifat bayangan lensa cembung bergantung pada jarak benda. Bila benda jauh (lebih dari 2 kali jarak fokus), bayangannya justru nyata, terbalik, dan diperkecil.',
+      'Benar, karena lensa cembung memang disebut kaca pembesar.',
+      'Salah, karena lensa cembung selalu memperkecil bayangan.',
+      'Benar, asalkan lensanya bersih.'
+    ],
+    bahas: 'Kata "selalu" dalam sebuah klaim perlu diuji. Sifat bayangan lensa cembung berubah-ubah menurut posisi benda: di dalam fokus → maya, tegak, diperbesar (lup); antara f dan 2f → nyata, terbalik, diperbesar (proyektor); lebih dari 2f → nyata, terbalik, diperkecil (kamera).'
   }
 ];

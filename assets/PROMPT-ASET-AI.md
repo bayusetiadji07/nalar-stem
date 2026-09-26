@@ -92,6 +92,11 @@ Illustration of a school recycling station (bank sampah) in an Indonesian junior
 Illustration of bright white salt ponds (tambak garam) in coastal East Java at midday: a salt farmer and two junior high students lift a burlap sack of salt onto a wooden cart using a homemade wooden frame with a block-and-tackle pulley system; nearby, another student demonstrates a long wooden lever resting on a log fulcrum lifting a second sack. Small arrows suggest force direction. Piles of white salt, a thatched salt storage hut, and the sea in the background.
 ```
 
+### `misi-optik.jpg` — Proyektor HP dari Kardus (misi ke-12)
+```
+Illustration of a darkened Indonesian junior high classroom: students gather around a homemade projector made from a shoebox with a magnifying glass lens fixed on one end and a smartphone placed upside down inside; a bright cone of light travels from the lens to the wall, where a large sharp picture of a science video (a simple drawing of the solar system, no text) appears. One student holds a concave makeup mirror, another measures the distance with a tape measure. Warm, curious atmosphere.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)

@@ -1680,7 +1680,168 @@ function gambarPesawat(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   12. CERMIN & LENSA — proyektor HP kardus
+   Rumus lensa/cermin tipis: 1/f = 1/s + 1/s' ; M = −s'/s (negatif = terbalik).
+   Lensa/cermin cekung-cembung dengan tanda f sesuai jenisnya.
+   Gambar di layar (jarak D) tajam bila D ≈ s' ; perbesaran di layar ≈ D/s.
+   Kecerahan ∝ (diameter/s)² ÷ perbesaran²  (cahaya yang dikumpulkan dibagi luas gambar).
+   --------------------------------------------------------- */
+const KOMPONEN_OPTIK = {
+  lensaCembung: { nama: 'Lensa cembung (lup)', tanda: 1, cermin: false, pantul: 1, harga: d => 5000 + 3000 * d },
+  lensaCekung:  { nama: 'Lensa cekung', tanda: -1, cermin: false, pantul: 1, harga: () => 10000 },
+  cerminCekung: { nama: 'Cermin cekung (cermin rias)', tanda: 1, cermin: true, pantul: 0.85, harga: d => 12000 + 2000 * d },
+  cerminCembung:{ nama: 'Cermin cembung', tanda: -1, cermin: true, pantul: 0.85, harga: () => 12000 }
+};
+const LEBAR_HP = 7; // cm, lebar layar HP
+
+function hitungOptik(v) {
+  const K = KOMPONEN_OPTIK[v.komponen];
+  const f = K.tanda * +v.fokus, s = +v.jarakBenda, D = +v.jarakLayar, d = +v.diameter;
+  const takHingga = Math.abs(1 / f - 1 / s) < 1e-6;
+  const sb = takHingga ? Infinity : 1 / (1 / f - 1 / s);           // jarak bayangan (cm); negatif = maya
+  const M = takHingga ? Infinity : -sb / s;
+  const nyata = sb > 0 && isFinite(sb);
+  const tajam = nyata ? Math.max(0, 1 - Math.abs(D - sb) / (0.08 * sb)) : 0;
+  const Mlayar = nyata ? D / s : 0;
+  const lebar = nyata ? LEBAR_HP * Mlayar : 0;
+  const terang = nyata ? 57600 * K.pantul * Math.pow(d / s, 2) / Math.pow(Mlayar, 2) : 0;
+  const terbalikHP = v.hp === 'terbalik';
+  const tegakDiLayar = nyata ? (M < 0) === terbalikHP : false;     // lensa membalik; HP terbalik membalik lagi
+  const sifat = !isFinite(sb) ? 'Tidak terbentuk (benda tepat di titik fokus)'
+    : `${nyata ? 'Nyata' : 'Maya'}, ${M < 0 ? 'terbalik' : 'tegak'}, ${Math.abs(M) > 1.001 ? 'diperbesar' : Math.abs(M) < 0.999 ? 'diperkecil' : 'sama besar'}`;
+  const biaya = K.harga(d) + 5000;
+  return {
+    bayangan: isFinite(sb) ? bulat(sb, 1) : '∞', perbesaran: isFinite(M) ? bulat(Math.abs(M), 2) : '∞', sifat,
+    lebar: Math.round(lebar), tajam: Math.round(tajam * 100), terang: Math.round(terang),
+    arah: !nyata ? '—' : tegakDiLayar ? 'Tegak' : 'Terbalik', biaya,
+    _nyata: nyata, _sb: sb, _M: M, _f: f, _tegak: tegakDiLayar, _K: K, _tajam: tajam
+  };
+}
+
+function kriteriaOptik(v, h) {
+  return [
+    { teks: 'Bayangan nyata (bisa ditangkap dinding)', lulus: h._nyata, nilai: h.sifat },
+    { teks: 'Gambar tajam (≥ 80%)', lulus: h.tajam >= 80, nilai: `${h.tajam}%` },
+    { teks: 'Lebar gambar ≥ 60 cm', lulus: h.lebar >= 60, nilai: `${h.lebar} cm` },
+    { teks: 'Cukup terang (≥ 40)', lulus: h.terang >= 40, nilai: `${h.terang}` },
+    { teks: 'Gambar tegak (tidak terbalik) di dinding', lulus: h._tegak, nilai: h.arah },
+    { teks: 'Biaya ≤ Rp 50.000', lulus: h.biaya <= 50000, nilai: rp(h.biaya) }
+  ];
+}
+
+// "film" yang tampil di layar HP: langit, matahari, bukit, dan perahu
+function gambarFilm(ctx, x, y, w, h, balik) {
+  ctx.save(); ctx.translate(x, y); if (balik) ctx.rotate(Math.PI);
+  ctx.fillStyle = '#7dd3fc'; ctx.fillRect(-w / 2, -h / 2, w, h);
+  ctx.fillStyle = '#facc15'; ctx.beginPath(); ctx.arc(w * 0.25, -h * 0.22, Math.min(w, h) * 0.14, 0, 7); ctx.fill();
+  ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.moveTo(-w / 2, h / 2); ctx.lineTo(-w * 0.15, -h * 0.05); ctx.lineTo(w * 0.2, h * 0.2); ctx.lineTo(w / 2, h * 0.05); ctx.lineTo(w / 2, h / 2); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#b45309'; ctx.fillRect(-w * 0.35, h * 0.25, w * 0.22, h * 0.08);
+  ctx.restore();
+}
+
+function gambarOptik(ctx, W, H, v, h, p) {
+  ctx.fillStyle = '#0f172a'; ctx.fillRect(0, 0, W, H); // ruang kelas digelapkan
+  const K = h._K, s = +v.jarakBenda, D = +v.jarakLayar, f = h._f, sumbuY = H * 0.5;
+  const cermin = K.cermin;
+  // skala horizontal terpisah: sisi benda (cm kecil) & sisi layar (cm besar)
+  const xE = cermin ? W * 0.84 : W * 0.34;         // posisi lensa/cermin
+  const kiriBenda = cermin ? -1 : -1;              // benda selalu di kiri komponen
+  // skala menyesuaikan jarak yang dipakai agar HP, titik fokus, bayangan & dinding tetap terlihat
+  const sBenda = (W * 0.26) / Math.max(s * 1.15, Math.abs(f) * 2.2, 12);
+  const sLayar = (cermin ? W * 0.7 : W * 0.58) / Math.max(D * 1.05, h._sb > 0 && isFinite(h._sb) ? h._sb * 1.05 : 0, 50);
+  const xBenda = xE + kiriBenda * s * sBenda;
+  const xLayar = cermin ? xE - D * sLayar : xE + D * sLayar;
+  const xBay = !isFinite(h._sb) ? null : cermin ? xE - h._sb * (h._sb > 0 ? sLayar : sBenda) : xE + h._sb * (h._sb > 0 ? sLayar : sBenda);
+  // sumbu utama
+  ctx.strokeStyle = 'rgba(148,163,184,.4)'; ctx.lineWidth = 1; ctx.setLineDash([6, 6]);
+  ctx.beginPath(); ctx.moveTo(0, sumbuY); ctx.lineTo(W, sumbuY); ctx.stroke(); ctx.setLineDash([]);
+  // kotak kardus di sekitar HP & lensa (proyektor)
+  if (!cermin) { ctx.strokeStyle = '#a16207'; ctx.lineWidth = 3; ctx.strokeRect(Math.min(xBenda, xE) - 26, sumbuY - 62, Math.abs(xE - xBenda) + 40, 124); label(ctx, 'kotak kardus', Math.min(xBenda, xE) - 22, sumbuY + 74, { ukuran: 10, warna: '#fbbf24' }); }
+  // titik fokus
+  const xF = x => cermin ? xE - x : xE + x;
+  [f, -f].forEach(ff => { if (Math.abs(ff) * sBenda < W) { const x = cermin ? xE - Math.abs(f) * sBenda * Math.sign(ff) : xE + ff * sBenda; ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.arc(x, sumbuY, 3.5, 0, 7); ctx.fill(); label(ctx, 'F', x, sumbuY + 14, { rata: 'center', ukuran: 10, warna: '#fbbf24' }); } });
+  void xF;
+  // HP (benda)
+  const hpH = 46, hpW = 26;
+  ctx.fillStyle = '#1f2937'; kotakBulat(ctx, xBenda - 5, sumbuY - hpH, 10, hpH, 3); ctx.fill();
+  gambarFilm(ctx, xBenda, sumbuY - hpH / 2, 8, hpH - 8, v.hp === 'terbalik');
+  label(ctx, v.hp === 'terbalik' ? 'HP (diputar terbalik)' : 'HP', xBenda, sumbuY + 26, { rata: 'center', ukuran: 10, warna: '#cbd5e1' });
+  // komponen optik
+  const tinggiK = 30 + +v.diameter * 7;
+  ctx.strokeStyle = '#7dd3fc'; ctx.fillStyle = 'rgba(125,211,252,.25)'; ctx.lineWidth = 2.5;
+  if (!cermin) {
+    const tebal = K.tanda > 0 ? 9 : -6;
+    ctx.beginPath(); ctx.moveTo(xE, sumbuY - tinggiK); ctx.quadraticCurveTo(xE + tebal, sumbuY, xE, sumbuY + tinggiK); ctx.quadraticCurveTo(xE - tebal, sumbuY, xE, sumbuY - tinggiK);
+    if (K.tanda < 0) { ctx.moveTo(xE - 7, sumbuY - tinggiK); ctx.lineTo(xE + 7, sumbuY - tinggiK); ctx.moveTo(xE - 7, sumbuY + tinggiK); ctx.lineTo(xE + 7, sumbuY + tinggiK); }
+    ctx.fill(); ctx.stroke();
+  } else {
+    const lengkung = K.tanda > 0 ? 12 : -12;
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.moveTo(xE, sumbuY - tinggiK); ctx.quadraticCurveTo(xE + lengkung, sumbuY, xE, sumbuY + tinggiK); ctx.stroke();
+    ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; for (let k = -tinggiK; k < tinggiK; k += 7) { ctx.beginPath(); ctx.moveTo(xE + 5 + Math.abs(lengkung) * 0.5, sumbuY + k); ctx.lineTo(xE + 11 + Math.abs(lengkung) * 0.5, sumbuY + k + 5); ctx.stroke(); }
+  }
+  label(ctx, K.nama, xE, sumbuY - tinggiK - 14, { rata: 'center', ukuran: 11, tebal: true, warna: '#7dd3fc' });
+  // dinding/layar
+  ctx.fillStyle = '#e2e8f0'; ctx.fillRect(xLayar - 4, 18, 8, H - 36);
+  label(ctx, `dinding (${D} cm)`, xLayar, H - 10, { rata: 'center', ukuran: 10, warna: '#cbd5e1' });
+  // sinar-sinar istimewa dari ujung HP (tampil bertahap)
+  const tipY = sumbuY - hpH, qs = mulus(jepit(p / 0.55, 0, 1));
+  const arahKeluar = cermin ? -1 : 1;
+  // tinggi panah bayangan: sebanding perbesaran, dibatasi agar muat di kanvas
+  const bayY = isFinite(h._M) ? sumbuY + (tipY - sumbuY) * h._M * Math.min(1, 3 / Math.max(1, Math.abs(h._M))) : sumbuY;
+  const sinar = (titik, warna) => {
+    ctx.strokeStyle = warna; ctx.lineWidth = 1.6; ctx.beginPath();
+    const total = titik.length - 1, sampai = qs * total;
+    for (let i = 0; i <= Math.floor(sampai) && i < titik.length; i++) (i ? ctx.lineTo(titik[i][0], titik[i][1]) : ctx.moveTo(titik[i][0], titik[i][1]));
+    const i0 = Math.floor(sampai); if (i0 < total) { const a = titik[i0], b = titik[i0 + 1], k = sampai - i0; ctx.lineTo(lerp(a[0], b[0], k), lerp(a[1], b[1], k)); }
+    ctx.stroke();
+  };
+  const xUjung = arahKeluar > 0 ? W : 0;
+  if (xBay !== null) {
+    // 1) sejajar sumbu → melewati bayangan; 2) melalui pusat → melewati bayangan
+    const tuju = [xBay, bayY];
+    const lanjut = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1]; const k = (xUjung - a[0]) / (dx || 1e-6); return h._nyata ? [xUjung, a[1] + dy * Math.max(k, 1)] : [xUjung, a[1] - dy * Math.abs((xUjung - a[0]) / (dx || 1e-6))]; };
+    const titikLensa1 = [xE, tipY];
+    const p1 = h._nyata ? [xBenda, tipY] : [xBenda, tipY];
+    sinar([p1, titikLensa1, h._nyata ? tuju : lanjut(titikLensa1, tuju), h._nyata ? lanjut(titikLensa1, tuju) : lanjut(titikLensa1, tuju)], 'rgba(250,204,21,.85)');
+    const titikLensa2 = [xE, sumbuY];
+    sinar([[xBenda, tipY], titikLensa2, h._nyata ? tuju : lanjut([xBenda, tipY], titikLensa2), lanjut(titikLensa2, h._nyata ? tuju : [xE + (xE - xBenda), sumbuY + (sumbuY - tipY)])], 'rgba(244,114,182,.85)');
+    if (!h._nyata && p > 0.55) { // perpanjangan putus-putus ke bayangan maya
+      ctx.setLineDash([4, 4]); ctx.strokeStyle = 'rgba(250,204,21,.5)'; ctx.beginPath(); ctx.moveTo(xE, tipY); ctx.lineTo(xBay, bayY); ctx.moveTo(xE, sumbuY); ctx.lineTo(xBay, bayY); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // bayangan (panah)
+    if (p > 0.55) {
+      ctx.strokeStyle = h._nyata ? '#f472b6' : 'rgba(244,114,182,.6)'; ctx.lineWidth = 3; if (!h._nyata) ctx.setLineDash([5, 4]);
+      panah(ctx, xBay, sumbuY, xBay, bayY, h._nyata ? '#f472b6' : 'rgba(244,114,182,.6)', 3); ctx.setLineDash([]);
+      label(ctx, h._nyata ? 'bayangan nyata' : 'bayangan maya', xBay, bayY + (bayY < sumbuY ? -12 : 12), { rata: 'center', ukuran: 10, warna: '#f9a8d4' });
+    }
+  } else if (p > 0.55) label(ctx, 'Sinar keluar sejajar — bayangan tidak terbentuk', W / 2, 30, { rata: 'center', ukuran: 11, warna: '#fbbf24' });
+  // gambar di dinding
+  const muncul = mulus(jepit((p - 0.6) / 0.35, 0, 1));
+  if (h._nyata && muncul > 0) {
+    const tinggiGambar = jepit(h.lebar * 0.75 / 150, 0.2, 1) * (H - 80);
+    const lebarGambar = Math.min(60, tinggiGambar * 0.6);
+    const gx = xLayar - lebarGambar / 2; // gambar jatuh tepat di dinding
+    ctx.save(); ctx.globalAlpha = muncul * jepit(h.terang / 100, 0.08, 1);
+    if (h._tajam < 0.95) ctx.filter = `blur(${Math.round((1 - h._tajam) * 8)}px)`;
+    gambarFilm(ctx, gx + lebarGambar / 2, sumbuY, lebarGambar, tinggiGambar, !h._tegak);
+    ctx.restore();
+  } else if (!h._nyata && muncul > 0) {
+    const g2 = ctx.createRadialGradient(xLayar, sumbuY, 4, xLayar, sumbuY, 60);
+    g2.addColorStop(0, `rgba(255,255,255,${0.25 * muncul})`); g2.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g2; ctx.beginPath(); ctx.arc(xLayar, sumbuY, 60, 0, 7); ctx.fill();
+  }
+  label(ctx, `f = ${fx(Math.abs(f))} cm · s = ${s} cm · s' = ${h.bayangan === '∞' ? '∞' : fx(h.bayangan)} cm`, 12, 16, { ukuran: 11, tebal: true, warna: '#e2e8f0', latar: 'rgba(15,23,42,.8)' });
+  if (p >= 1) {
+    const ok = h._nyata && h.tajam >= 80 && h.lebar >= 60 && h.terang >= 40 && h._tegak;
+    const teks = !h._nyata ? 'Bayangan maya — tidak bisa ditangkap dinding' : `${h.sifat} · lebar ${h.lebar} cm · tajam ${h.tajam}% · terang ${h.terang}`;
+    label(ctx, teks, W / 2, H - 30, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: ok ? '#15803d' : '#b45309' });
+  }
+}
+
 const SIM = {
+  optik: { hitung: hitungOptik, kriteria: kriteriaOptik, gambar: gambarOptik, sumbuX: ['jarakBenda', 'fokus', 'jarakLayar', 'diameter'], sumbuY: ['lebar', 'tajam', 'terang', 'bayangan'] },
   pesawat: { hitung: hitungPesawat, kriteria: kriteriaPesawat, gambar: gambarPesawat, sumbuX: ['massa', 'panjangTuas', 'lenganBeban'], sumbuY: ['gaya', 'kmNyata', 'efisiensi', 'jarak', 'usahaKuasa'] },
   magnet: { hitung: hitungMagnet, kriteria: kriteriaMagnet, gambar: gambarMagnet, sumbuX: ['lilitan', 'baterai'], sumbuY: ['angkat', 'arus', 'panas', 'medan', 'tahan'] },
   listrik: { hitung: hitungListrik, kriteria: kriteriaListrik, gambar: gambarListrik, sumbuX: ['baterai', 'lampu', 'resistor'], sumbuY: ['cahaya', 'arus', 'tahan', 'arusLampu'] },
