@@ -631,11 +631,13 @@ function gambarGrafik(m, st) {
   ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
   ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.moveTo(kiri, atas); ctx.lineTo(kiri, bawah); ctx.lineTo(kanan, bawah); ctx.stroke();
-  label(ctx, `${vx.label} (${vx.satuan})`, (kiri + kanan) / 2, H - 10, { rata: 'center', ukuran: 11, warna: '#475569' });
+  label(ctx, `${vx.label}${vx.satuan ? ` (${vx.satuan})` : ''}`, (kiri + kanan) / 2, H - 10, { rata: 'center', ukuran: 11, warna: '#475569' });
   ctx.save(); ctx.translate(12, (atas + bawah) / 2); ctx.rotate(-Math.PI / 2);
   label(ctx, `${ky.label}${ky.satuan ? ` (${ky.satuan})` : ''}`, 0, 0, { rata: 'center', ukuran: 11, warna: '#475569' }); ctx.restore();
   if (!tt.length) { label(ctx, 'Belum ada data', (kiri + kanan) / 2, (atas + bawah) / 2, { rata: 'center', warna: '#94a3b8' }); return; }
-  const x0 = vx.min, x1 = vx.max;
+  // variabel pilihan berisi angka (mis. resistor 0/22/47 Ω) tidak punya min/maks → ambil dari daftar pilihannya
+  const angkaOpsi = vx.tipe === 'select' ? opsiVar(vx).map(o => +o[0]).filter(isFinite) : [];
+  const x0 = vx.min ?? Math.min(...angkaOpsi), x1 = vx.max ?? Math.max(...angkaOpsi);
   const langkahRapi = x => { const e = 10 ** Math.floor(Math.log10(x)); return [1, 2, 2.5, 5, 10].map(k => k * e).find(k => k >= x); };
   const y0 = Math.min(0, ...tt.map(t => t.y));
   const y1 = y0 + 4 * langkahRapi(Math.max((Math.max(...tt.map(t => t.y)) - y0) * 1.05, 1e-6) / 4);

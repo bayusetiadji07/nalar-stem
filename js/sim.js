@@ -1196,7 +1196,191 @@ function gambarAngin(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   9. RANGKAIAN LISTRIK SEDERHANA — Hukum Ohm, seri & paralel
+   Baterai AA 1,5 V (hambatan dalam 0,15 Ω, kapasitas 2000 mAh) disusun seri.
+   LED: tegangan kerja ± 2,9 V + hambatan dinamis 15 Ω, putus > 35 mA.
+   Bohlam pijar 2,5 V: hambatan 8,3 Ω, putus > 0,45 A.
+   --------------------------------------------------------- */
+const LAMPU_LISTRIK = {
+  led:   { nama: 'LED putih 5 mm', Vf: 2.9, rd: 15, batas: 0.035, harga: 1000 },
+  pijar: { nama: 'Bohlam pijar 2,5 V', Vf: 0, rd: 8.3, batas: 0.45, harga: 4000 }
+};
+
+function sirkuitListrik(v, lepasSatu) {
+  const n = +v.baterai, m = +v.lampu, R = +v.resistor, seri = v.susunan === 'seri';
+  const L = LAMPU_LISTRIK[v.jenisLampu];
+  const E = n * 1.5, r = n * 0.15 + 0.1; // + hambatan kabel
+  const lampu = Array.from({ length: m }, (_, i) => ({ I: 0, status: 'padam', dicabut: lepasSatu && i === 0 }));
+  if (seri) {
+    const utuh = !lampu.some(x => x.dicabut);
+    const I = utuh ? Math.max(0, (E - m * L.Vf) / (r + m * (L.rd + R))) : 0;
+    if (I > L.batas) { // satu lampu putus lebih dulu → rangkaian terbuka, semua padam
+      lampu.forEach((x, i) => { x.I = 0; x.status = i === m - 1 ? 'putus' : 'padam'; });
+    } else lampu.forEach(x => { x.I = I; });
+  } else {
+    // cabang yang putus menjadi terbuka; hitung ulang sampai stabil
+    for (let ulang = 0; ulang < m + 1; ulang++) {
+      const aktif = lampu.filter(x => !x.dicabut && x.status !== 'putus');
+      const Ib = aktif.length ? Math.max(0, (E - L.Vf) / (L.rd + R + aktif.length * r)) : 0;
+      aktif.forEach(x => { x.I = Ib; });
+      if (Ib > L.batas) { aktif[0].status = 'putus'; aktif[0].I = 0; continue; }
+      break;
+    }
+  }
+  lampu.forEach(x => {
+    if (x.dicabut) { x.status = 'dicabut'; x.I = 0; x.lm = 0; return; }
+    if (x.status === 'putus') { x.lm = 0; return; }
+    x.lm = v.jenisLampu === 'led' ? 0.3 * x.I * 1000 : 7.5 * Math.pow(x.I / 0.3, 3);
+    x.status = x.lm >= 4.5 ? 'terang' : x.lm >= 1 ? 'redup' : 'padam';
+  });
+  const Itot = lampu.reduce((a, x) => a + x.I, 0);
+  return { lampu, Itot, E, r, Vterminal: E - Itot * r };
+}
+
+function hitungListrik(v) {
+  const s = sirkuitListrik(v, v.cabut === 'ya');
+  const L = LAMPU_LISTRIK[v.jenisLampu];
+  const cahaya = s.lampu.reduce((a, x) => a + x.lm, 0);
+  const nyala = s.lampu.filter(x => x.status === 'terang' || x.status === 'redup').length;
+  const putus = s.lampu.filter(x => x.status === 'putus').length;
+  const mA = s.Itot * 1000;
+  let kondisi;
+  const butuh = (v.susunan === 'seri' ? +v.lampu : 1) * L.Vf;
+  if (putus) kondisi = `${putus} lampu PUTUS (arus terlalu besar)${v.susunan === 'seri' ? ' — rangkaian terbuka, semua padam' : ''}`;
+  else if (!nyala && v.cabut === 'ya' && v.susunan === 'seri') kondisi = 'Padam — rangkaian seri terputus saat satu lampu dicabut';
+  else if (!nyala && v.jenisLampu === 'led' && s.E <= butuh) kondisi = `Padam — baterai ${fx(s.E)} V, padahal ${v.susunan === 'seri' && +v.lampu > 1 ? `${v.lampu} LED seri` : 'LED'} butuh lebih dari ${fx(butuh)} V`;
+  else if (!nyala) kondisi = 'Padam — arus terlalu kecil';
+  else kondisi = `${nyala} lampu menyala${s.lampu.some(x => x.status === 'redup') ? ' (ada yang redup)' : ''}`;
+  const biaya = 5000 * +v.baterai + L.harga * +v.lampu + (+v.resistor > 0 ? 500 * +v.lampu : 0) + 8000;
+  return {
+    tegangan: bulat(s.E, 1), arus: Math.round(mA), arusLampu: Math.round(Math.max(0, ...s.lampu.map(x => x.I)) * 1000),
+    cahaya: bulat(cahaya, 1), nyala, kondisi,
+    tahan: mA > 0.5 ? bulat(2000 / mA, 1) : 0, daya: bulat(s.Itot * s.Vterminal, 2), biaya,
+    _s: s, _putus: putus
+  };
+}
+
+function kriteriaListrik(v, h) {
+  // kriteria selalu dinilai pada rangkaian utuh (tanpa lampu dicabut)
+  const utuh = v.cabut === 'ya' ? hitungListrik({ ...v, cabut: 'tidak' }) : h;
+  const lepas = sirkuitListrik(v, true).lampu.slice(1);
+  const tetap = +v.lampu > 1 && lepas.every(x => x.status === 'terang' || x.status === 'redup');
+  return [
+    { teks: 'Cahaya total ≥ 15 lumen', lulus: utuh.cahaya >= 15, nilai: `${utuh.cahaya} lm` },
+    { teks: 'Tidak ada lampu putus', lulus: !utuh._putus, nilai: utuh._putus ? `${utuh._putus} putus` : 'aman' },
+    { teks: 'Baterai tahan ≥ 8 jam', lulus: utuh.tahan >= 8, nilai: utuh.arus ? `${utuh.tahan} jam` : 'lampu padam' },
+    { teks: 'Satu lampu dicabut, lainnya tetap menyala', lulus: tetap, nilai: tetap ? 'ya' : 'tidak' },
+    { teks: 'Biaya ≤ Rp 40.000', lulus: utuh.biaya <= 40000, nilai: rp(utuh.biaya) }
+  ];
+}
+
+// titik-titik arus bergerak di sepanjang polyline (arah arus konvensional)
+function aliranArus(ctx, titik, mA, t) {
+  if (mA <= 0.5) return;
+  const jarak = 16, laju = 20 + Math.min(200, mA * 1.6);
+  let total = 0; const seg = [];
+  for (let i = 1; i < titik.length; i++) { const d = Math.hypot(titik[i][0] - titik[i - 1][0], titik[i][1] - titik[i - 1][1]); seg.push(d); total += d; }
+  ctx.fillStyle = '#facc15';
+  for (let s = (t * laju) % jarak; s < total; s += jarak) {
+    let sisa = s, i = 0;
+    while (i < seg.length && sisa > seg[i]) { sisa -= seg[i]; i++; }
+    if (i >= seg.length) break;
+    const a = titik[i], b = titik[i + 1], k = seg[i] ? sisa / seg[i] : 0;
+    ctx.beginPath(); ctx.arc(lerp(a[0], b[0], k), lerp(a[1], b[1], k), 2.6, 0, 7); ctx.fill();
+  }
+}
+
+function gambarListrik(ctx, W, H, v, h, p) {
+  // papan rangkaian
+  ctx.fillStyle = '#efe4cf'; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = 'rgba(120,90,50,.18)';
+  for (let y = 14; y < H; y += 18) for (let x = 14; x < W; x += 18) { ctx.beginPath(); ctx.arc(x, y, 1.3, 0, 7); ctx.fill(); }
+  const s = h._s, n = +v.baterai, m = +v.lampu, seri = v.susunan === 'seri', R = +v.resistor, led = v.jenisLampu === 'led';
+  const nyalaSaklar = p > 0.18, t = p * 3.2;
+  const yA = H * 0.2, yB = H * 0.84, bx = 44;
+  // baterai tersusun seri (tegak)
+  const tc = Math.min(40, (yB - yA - 40) / n), atasBat = (yA + yB) / 2 - n * tc / 2;
+  for (let i = 0; i < n; i++) {
+    const y = atasBat + i * tc;
+    ctx.fillStyle = '#1f2937'; kotakBulat(ctx, bx - 13, y + 3, 26, tc - 4, 4); ctx.fill();
+    ctx.fillStyle = '#d97706'; ctx.fillRect(bx - 13, y + 3, 26, (tc - 4) * 0.3);
+    ctx.fillStyle = '#9ca3af'; ctx.fillRect(bx - 4, y, 8, 3);
+    label(ctx, '+', bx + 18, y + 8, { ukuran: 11, warna: '#b91c1c', tebal: true });
+  }
+  label(ctx, `${n} × 1,5 V`, bx, atasBat + n * tc + 14, { rata: 'center', ukuran: 11, warna: '#334155', latar: 'rgba(255,255,255,.85)' });
+  const garis = (pts, warna = '#b91c1c') => { ctx.strokeStyle = warna; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.beginPath(); pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke(); };
+  const xAwal = 150, xAkhir = W - 30, ruang = xAkhir - xAwal;
+  const uk = Math.max(9, Math.min(18, ruang / (m * 3.4)));
+  const resistor = (x, y, vert) => {
+    if (R <= 0) return;
+    ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2.2; ctx.beginPath();
+    for (let k = 0; k <= 6; k++) { const d = (k - 3) * uk / 3, z = k % 2 ? 5 : -5; if (vert) ctx.lineTo(x + (k === 0 || k === 6 ? 0 : z), y + d); else ctx.lineTo(x + d, y + (k === 0 || k === 6 ? 0 : z)); }
+    ctx.stroke();
+    label(ctx, `${R} Ω`, vert ? x + 9 : x, vert ? y : y + 16, { rata: vert ? 'left' : 'center', ukuran: 10, warna: '#78350f' });
+  };
+  const lampu = (x, y, L) => {
+    if (L.status === 'dicabut') {
+      ctx.setLineDash([3, 3]); ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, uk * 0.75, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+      label(ctx, 'dicabut', x, y + uk + 8, { rata: 'center', ukuran: 10, warna: '#475569' }); return;
+    }
+    const hidup = nyalaSaklar && L.lm > 0;
+    if (hidup) {
+      const rad = uk * (1.4 + Math.min(3.2, Math.sqrt(L.lm) * 0.9)) * mulus(jepit((p - 0.18) / 0.15, 0, 1));
+      const g = ctx.createRadialGradient(x, y, 2, x, y, rad);
+      g.addColorStop(0, led ? 'rgba(255,255,240,.95)' : 'rgba(253,186,116,.95)'); g.addColorStop(1, led ? 'rgba(254,249,195,0)' : 'rgba(251,146,60,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rad, 0, 7); ctx.fill();
+    }
+    const putus = L.status === 'putus' && nyalaSaklar;
+    ctx.fillStyle = putus ? '#44403c' : hidup ? (led ? '#fefce8' : '#fed7aa') : (led ? '#e2e8f0' : '#f1f5f9');
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.5;
+    if (led) { ctx.beginPath(); ctx.arc(x, y - uk * 0.2, uk * 0.55, Math.PI, 0); ctx.lineTo(x + uk * 0.55, y + uk * 0.45); ctx.lineTo(x - uk * 0.55, y + uk * 0.45); ctx.closePath(); ctx.fill(); ctx.stroke(); }
+    else { ctx.beginPath(); ctx.arc(x, y, uk * 0.7, 0, 7); ctx.fill(); ctx.stroke(); ctx.strokeStyle = hidup ? '#ea580c' : '#94a3b8'; ctx.beginPath(); for (let k = 0; k <= 4; k++) ctx.lineTo(x - uk * 0.35 + k * uk * 0.175, y + (k % 2 ? -3 : 3)); ctx.stroke(); }
+    if (putus) {
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x - uk * 0.5, y - uk * 0.5); ctx.lineTo(x + uk * 0.5, y + uk * 0.5); ctx.moveTo(x + uk * 0.5, y - uk * 0.5); ctx.lineTo(x - uk * 0.5, y + uk * 0.5); ctx.stroke();
+      ctx.fillStyle = 'rgba(100,116,139,.35)'; for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.arc(x + Math.sin(t * 3 + k) * 4, y - uk - 6 - k * 7 - (t * 8 % 8), 4 + k, 0, 7); ctx.fill(); }
+      label(ctx, 'PUTUS', x, y + uk + 8, { rata: 'center', ukuran: 10, tebal: true, warna: '#b91c1c' });
+    }
+  };
+  // saklar di kabel atas
+  const sx = 96;
+  garis([[bx, atasBat], [bx, yA], [sx - 14, yA]]);
+  ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(sx - 14, yA, 3.5, 0, 7); ctx.arc(sx + 14, yA, 3.5, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx - 14, yA);
+  if (nyalaSaklar) ctx.lineTo(sx + 14, yA); else ctx.lineTo(sx + 10, yA - 14); ctx.stroke();
+  label(ctx, nyalaSaklar ? 'saklar ON' : 'saklar OFF', sx, yA - 20, { rata: 'center', ukuran: 10, warna: '#334155' });
+  garis([[bx, atasBat + n * tc], [bx, yB]], '#1e293b');
+  const I = nyalaSaklar ? s.Itot * 1000 : 0;
+  if (seri) {
+    const jarak = ruang / m;
+    garis([[sx + 14, yA], [xAkhir, yA], [xAkhir, yB], [bx, yB]], '#b91c1c');
+    for (let i = 0; i < m; i++) { const cx = xAwal + jarak * (i + 0.5); lampu(cx, yA, s.lampu[i]); resistor(cx, yB, false); }
+    aliranArus(ctx, [[bx, atasBat], [bx, yA], [xAkhir, yA], [xAkhir, yB], [bx, yB], [bx, atasBat + n * tc]], I, t);
+  } else {
+    const jarak = ruang / m, xs = Array.from({ length: m }, (_, i) => xAwal + jarak * (i + 0.5));
+    garis([[sx + 14, yA], [xs[m - 1], yA]]); garis([[bx, yB], [xs[m - 1], yB]], '#1e293b');
+    xs.forEach((x, i) => {
+      const L = s.lampu[i], yR = lerp(yA, yB, 0.3), yL = lerp(yA, yB, 0.64);
+      garis([[x, yA], [x, yB]], L.status === 'dicabut' ? 'rgba(185,28,28,.25)' : '#b91c1c');
+      ctx.fillStyle = '#b91c1c'; ctx.beginPath(); ctx.arc(x, yA, 3.5, 0, 7); ctx.arc(x, yB, 3.5, 0, 7); ctx.fill();
+      resistor(x, yR, true); lampu(x, yL, L);
+      if (nyalaSaklar && L.I > 0) aliranArus(ctx, [[x, yA], [x, yB]], L.I * 1000, t);
+    });
+    aliranArus(ctx, [[bx, atasBat], [bx, yA], [xs[0], yA]], I, t);
+    aliranArus(ctx, [[xs[0], yB], [bx, yB], [bx, atasBat + n * tc]], I, t);
+  }
+  // alat ukur
+  label(ctx, `A: ${Math.round(I)} mA`, 12, 16, { ukuran: 12, tebal: true, warna: '#fff', latar: '#0f766e' });
+  label(ctx, `V: ${fx(s.E)} V`, 104, 16, { ukuran: 12, tebal: true, warna: '#fff', latar: '#1d4ed8' });
+  label(ctx, seri ? 'Susunan SERI' : 'Susunan PARALEL', W - 12, 16, { rata: 'right', ukuran: 11, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.85)' });
+  if (p >= 1) {
+    const ok = h.cahaya >= 15 && !h._putus;
+    label(ctx, `${h.kondisi} · ${fx(h.cahaya)} lumen`, W / 2, H - 12, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: h._putus ? '#b91c1c' : ok ? '#15803d' : '#b45309' });
+  }
+}
+
 const SIM = {
+  listrik: { hitung: hitungListrik, kriteria: kriteriaListrik, gambar: gambarListrik, sumbuX: ['baterai', 'lampu', 'resistor'], sumbuY: ['cahaya', 'arus', 'tahan', 'arusLampu'] },
   angin: { hitung: hitungAngin, kriteria: kriteriaAngin, gambar: gambarAngin, sumbuX: ['angin', 'jari', 'bilah', 'sudutBilah'], sumbuY: ['daya', 'rpm', 'dayaAngin', 'mulai'] },
   jembatan: { hitung: hitungJembatan, kriteria: kriteriaJembatan, gambar: gambarJembatan, sumbuX: ['tinggi', 'lapis', 'beban'], sumbuY: ['bebanMaks', 'efisiensi', 'stik', 'gaya'] },
   roketair: { hitung: hitungRoketAir, kriteria: kriteriaRoketAir, gambar: gambarRoketAir, sumbuX: ['air', 'tekanan', 'sudut'], sumbuY: ['jarak', 'tinggi', 'kecepatan', 'dorong'] },

@@ -77,6 +77,11 @@ Illustration of a neat popsicle-stick truss bridge with triangular patterns span
 Illustration of a small homemade three-blade wind turbine made from cut PVC pipe mounted on a wooden pole on a sandy beach at sunset, facing the sea breeze. A thin wire runs from the turbine to a small LED lamp glowing warmly inside a traditional Indonesian bamboo night-watch post (pos ronda). Soft wind swirl lines, fishing boats on the horizon.
 ```
 
+### `misi-listrik.jpg` — Lampu Belajar Darurat (misi ke-9)
+```
+Illustration of a cozy wooden table in a simple Indonesian coastal home at night during a power outage: a junior high girl in a white hijab studies with a notebook under a small homemade lamp made of three glowing white LEDs on a cardboard board, wired with red and black cables, resistors and an AA battery holder. Warm soft light on her face, the rest of the room dim blue, a window showing a dark fishing village. Hopeful, focused mood.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)

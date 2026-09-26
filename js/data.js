@@ -523,6 +523,56 @@ const NYATA = {
       { gejala: 'Kincir bergetar keras', kunci: 'getar|goyang|oleng', petunjuk: ['Apakah semua bilah sama panjang dan sama massanya?', 'Apakah hub terpasang tepat di tengah poros?'] },
       { gejala: 'Daya jauh lebih kecil dari simulasi', kunci: 'kecil|beda|berbeda|lemah', petunjuk: ['Seberapa tepat kamu mengukur kecepatan angin di posisi kincir? Ingat daya bergantung pada v³.', 'Energi apa yang hilang di dunia nyata (gesekan, panas di kabel) yang tidak dihitung simulasi?'] }
     ]
+  },
+  listrik: {
+    waktu: '2 × 40 menit',
+    alat: [
+      'Baterai AA 1,5 V (sesuai rancangan) dan dudukan baterai 2–4 slot dengan kabel',
+      'LED putih 5 mm atau bohlam senter 2,5 V beserta fittingnya',
+      'Resistor 22 Ω, 47 Ω, 100 Ω, 220 Ω (warna gelang: merah-merah-hitam, kuning-ungu-hitam, cokelat-hitam-cokelat, merah-merah-cokelat)',
+      'Kabel jumper dan penjepit buaya, saklar kecil',
+      'Papan rangkaian (breadboard) atau karton tebal + selotip',
+      'Multimeter untuk mengukur tegangan (V) dan arus (mA)'
+    ],
+    keselamatan: [
+      'Hanya memakai baterai AA — JANGAN pernah bereksperimen dengan listrik PLN atau stopkontak.',
+      'Jangan menghubungkan kutub + dan − baterai langsung dengan kabel (hubung singkat): baterai dan kabel bisa panas hingga melukai.',
+      'Jangan memakai baterai yang bocor, menggembung, atau berkarat; jangan membuka atau membakar baterai.',
+      'Lepas baterai dari dudukannya setiap kali mengubah rangkaian.',
+      'Bohlam pijar bisa panas — jangan disentuh setelah menyala lama.',
+      'Buang baterai bekas di tempat sampah khusus (limbah B3), bukan ke tempat sampah biasa atau laut.'
+    ],
+    langkah: [
+      'Gambar diagram rangkaianmu lebih dulu (simbol baterai, saklar, resistor, lampu) sesuai susunan rancangan.',
+      'Pasang baterai ke dudukan — pastikan arah + dan − sesuai tanda di dudukan.',
+      'Rangkai lampu sesuai susunan (seri: berderet satu jalur; paralel: tiap lampu punya cabang sendiri).',
+      'Untuk LED: kaki PANJANG (+) menghadap ke arah kutub + baterai. Pasang satu resistor berderet dengan tiap LED.',
+      'Pasang saklar pada kabel dari kutub + baterai. Periksa ulang seluruh sambungan SEBELUM saklar dinyalakan.',
+      'Nyalakan saklar. Ukur tegangan baterai (multimeter di mode V, dipasang sejajar dengan baterai).',
+      'Ukur arus total (multimeter di mode mA, dipasang BERDERET di kabel utama).',
+      'Uji cadangan: cabut satu lampu, amati apakah lampu lain tetap menyala. Hitung perkiraan lama nyala = 2000 mAh ÷ arus total.'
+    ],
+    takaran: v => {
+      const h = hitungListrik({ ...v, cabut: 'tidak' });
+      const L = LAMPU_LISTRIK[v.jenisLampu];
+      return [
+        `${v.baterai} baterai AA disusun seri → ${fxd(+v.baterai * 1.5)} V.`,
+        `${v.lampu} × ${v.jenisLampu === 'led' ? L.nama : L.nama.toLowerCase()} disusun ${v.susunan === 'seri' ? 'SERI (berderet dalam satu jalur)' : 'PARALEL (setiap lampu punya cabang sendiri)'}${+v.resistor > 0 ? `, tiap lampu diberi resistor ${v.resistor} Ω` : ', tanpa resistor'}.`,
+        `Prediksi simulasi: arus total ± ${h.arus} mA, arus tiap lampu ± ${h.arusLampu} mA, cahaya ± ${fxd(h.cahaya)} lumen, baterai tahan ± ${fxd(h.tahan)} jam.`,
+        v.jenisLampu === 'led' ? 'Ingat: kaki LED yang lebih panjang adalah kutub + (anoda).' : 'Bohlam pijar tidak punya kutub, tetapi cepat panas dan boros baterai.'
+      ];
+    },
+    ukur: [
+      { id: 'arus', label: 'Arus total terukur', satuan: 'mA', sim: 'arus' },
+      { id: 'tegangan', label: 'Tegangan baterai terukur', satuan: 'V', sim: 'tegangan' },
+      { id: 'nyala', label: 'Jumlah lampu menyala', satuan: 'buah', sim: 'nyala' }
+    ],
+    masalah: [
+      { gejala: 'LED tidak menyala sama sekali', kunci: 'tidak menyala|mati|padam', petunjuk: ['Apakah kaki panjang LED sudah menghadap ke kutub + baterai?', 'Berapa tegangan baterai dibanding tegangan kerja LED (± 2,9 V per LED)? Bagaimana jika LED-nya disusun seri?'] },
+      { gejala: 'Lampu menyala sangat redup', kunci: 'redup|lemah|kurang terang', petunjuk: ['Berapa arus yang terbaca multimeter? Bandingkan dengan arus ideal LED ± 20 mA.', 'Resistor mana yang kamu pakai? Apa hubungan besar hambatan dengan arus menurut Hukum Ohm?'] },
+      { gejala: 'Baterai atau kabel terasa panas', kunci: 'panas|hangat|bau|asap', petunjuk: ['KESELAMATAN DULU: segera lepas baterai dari dudukannya dan jangan disentuh sampai dingin.', 'Setelah aman: periksa apakah ada kabel yang menghubungkan + dan − secara langsung (hubung singkat) tanpa melewati lampu.'] },
+      { gejala: 'Satu lampu mati, yang lain ikut mati', kunci: 'ikut mati|semua mati|ikut padam', petunjuk: ['Apakah semua lampumu berada dalam satu jalur saja?', 'Bagaimana susunan yang membuat setiap lampu punya jalur sendiri?'] }
+    ]
   }
 };
 
@@ -841,6 +891,49 @@ const MISI = [
       { id: 'kekuatan', label: 'Kekuatan bilah', satuan: '' },
       { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'listrik',
+    judul: 'Lampu Belajar Darurat',
+    ikon: '💡',
+    kelas: 'Kelas 8–9 · Listrik Dinamis (Hukum Ohm, Rangkaian Seri & Paralel)',
+    warna: '#d97706',
+    ringkas: 'Rangkai baterai, lampu, dan resistor menjadi lampu belajar darurat yang terang, awet, dan tetap menyala walau satu lampu rusak.',
+    kisah: 'Saat ada pemadaman listrik bergilir, Dina — anak nelayan di pesisir Besuki — tidak bisa belajar di malam hari. Kelompokmu diminta merancang <b>lampu belajar darurat</b> dari baterai AA. Lampu harus <b>cukup terang untuk membaca (≥ 15 lumen)</b>, <b>tahan semalam (≥ 8 jam)</b>, <b>tidak ada lampu yang putus</b>, dan <b>bila satu lampu rusak, lampu lainnya tetap menyala</b>. Semua itu dengan biaya paling banyak Rp 40.000.',
+    kriteria: [
+      'Cahaya total minimal 15 lumen',
+      'Tidak ada lampu yang putus',
+      'Baterai tahan minimal 8 jam',
+      'Jika satu lampu dicabut/rusak, lampu lain tetap menyala'
+    ],
+    kendala: ['Biaya paling banyak Rp 40.000', 'Hanya baterai AA 1,5 V (paling banyak 4 buah) — dilarang memakai listrik PLN'],
+    konsep: `
+      <p><b>Arus listrik (I)</b> adalah aliran muatan, diukur dalam ampere (A) atau miliampere (mA). <b>Tegangan (V)</b> adalah "dorongan" dari sumber listrik, diukur dalam volt. <b>Hambatan (R)</b> menghambat arus, diukur dalam ohm (Ω).</p>
+      <p class="rumus">Hukum Ohm: V = I × R &nbsp;·&nbsp; Daya: P = V × I</p>
+      <p><b>Rangkaian seri:</b> komponen tersusun berderet dalam satu jalur. Arus di semua komponen sama, tegangan sumber terbagi. Bila satu lampu putus atau dicabut, jalurnya terputus dan <b>semua lampu padam</b>.</p>
+      <p><b>Rangkaian paralel:</b> komponen tersusun bercabang. Setiap cabang mendapat tegangan yang sama, arus total terbagi ke cabang-cabang. Bila satu cabang putus, <b>cabang lain tetap menyala</b> — karena itu listrik di rumah dipasang paralel.</p>
+      <p><b>Baterai disusun seri</b> menjumlahkan tegangannya (4 × 1,5 V = 6 V). <b>LED</b> baru menyala bila tegangannya melebihi ± 2,9 V, dan akan <b>putus</b> bila arusnya lebih dari ± 30 mA — maka dipasang <b>resistor pembatas arus</b>.</p>
+      <p><b>Lama nyala baterai</b> ≈ kapasitas ÷ arus. Baterai AA ± 2000 mAh: dengan arus 100 mA → ± 20 jam. LED jauh lebih hemat energi daripada bohlam pijar untuk terang yang sama.</p>
+      <p class="peringatan">⚠️ Jangan pernah menghubungkan kutub + dan − baterai langsung dengan kabel (hubung singkat) — baterai dan kabel bisa sangat panas. Jangan bereksperimen dengan listrik PLN/stopkontak.</p>`,
+    kataKunci: ['arus', 'tegangan', 'hambatan', 'ohm', 'seri', 'paralel', 'resistor', 'led', 'baterai', 'volt', 'ampere', 'daya', 'cabang', 'hubung singkat', 'mah'],
+    variabel: [
+      { id: 'baterai', label: 'Jumlah baterai AA (seri)', tipe: 'range', min: 1, max: 4, step: 1, satuan: 'buah', awal: 2 },
+      { id: 'jenisLampu', label: 'Jenis lampu', tipe: 'select', awal: 'led', opsi: [['led', 'LED putih 5 mm'], ['pijar', 'Bohlam pijar 2,5 V']] },
+      { id: 'lampu', label: 'Jumlah lampu', tipe: 'range', min: 1, max: 5, step: 1, satuan: 'buah', awal: 3 },
+      { id: 'susunan', label: 'Susunan lampu', tipe: 'select', awal: 'seri', opsi: [['seri', 'Seri (berderet)'], ['paralel', 'Paralel (bercabang)']] },
+      { id: 'resistor', label: 'Resistor pembatas tiap lampu', tipe: 'select', awal: '0', opsi: [['0', 'Tanpa resistor'], ['22', '22 Ω'], ['47', '47 Ω'], ['100', '100 Ω'], ['220', '220 Ω']] },
+      { id: 'cabut', label: 'Uji: cabut satu lampu', tipe: 'select', awal: 'tidak', opsi: [['tidak', 'Tidak (semua terpasang)'], ['ya', 'Ya, cabut lampu pertama']] }
+    ],
+    keluaran: [
+      { id: 'tegangan', label: 'Tegangan baterai', satuan: 'V' },
+      { id: 'arus', label: 'Arus total', satuan: 'mA' },
+      { id: 'arusLampu', label: 'Arus tiap lampu', satuan: 'mA' },
+      { id: 'cahaya', label: 'Cahaya total', satuan: 'lumen' },
+      { id: 'kondisi', label: 'Kondisi lampu', satuan: '' },
+      { id: 'tahan', label: 'Baterai tahan', satuan: 'jam' },
+      { id: 'daya', label: 'Daya', satuan: 'W' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -1024,5 +1117,16 @@ const UJI_NALAR = [
       'Tetap, karena ukuran kincirnya tidak berubah.'
     ],
     bahas: 'Membaca rumus dengan cermat adalah bagian dari interpretasi. Pangkat tiga pada v berarti perubahan kecil kecepatan angin berdampak besar pada daya — itulah sebabnya lokasi kincir (tempat berangin kencang) sangat penting.'
+  },
+  {
+    ind: 'inferensi',
+    soal: 'Pada lampu hias warna-warni, satu bohlam kecil putus dan seluruh untaian lampu ikut padam. Sementara itu, di rumah, saat lampu kamar putus, lampu ruang tamu tetap menyala. Kesimpulan yang paling didukung bukti ini adalah …',
+    opsi: [
+      'Lampu hias itu kemungkinan dirangkai seri (satu jalur), sedangkan lampu rumah dirangkai paralel (bercabang), sehingga cabang lain tetap mendapat arus.',
+      'Lampu hias memakai listrik yang lebih lemah daripada lampu rumah.',
+      'Bohlam lampu hias lebih mudah putus karena harganya murah.',
+      'Lampu rumah tidak pernah bisa padam bersamaan.'
+    ],
+    bahas: 'Pola "satu putus, semua padam" adalah bukti jalur tunggal (seri). Pola "satu putus, yang lain tetap" adalah bukti jalur bercabang (paralel). Kesimpulan harus berdasar pola bukti, bukan dugaan tentang harga atau kekuatan listrik.'
   }
 ];
