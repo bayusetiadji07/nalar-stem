@@ -87,6 +87,11 @@ Illustration of a cozy wooden table in a simple Indonesian coastal home at night
 Illustration of a school recycling station (bank sampah) in an Indonesian junior high school: two students operate a small homemade crane made of wood and popsicle sticks, with a copper-wire coil wrapped around a big iron nail hanging from the arm, connected to an AA battery holder and a switch. The electromagnet lifts a cluster of iron nails and a steel can from a mixed pile, while aluminum drink cans stay on the table; soft blue magnetic field lines around the coil. Sorting baskets labeled only with colors, no text.
 ```
 
+### `misi-pesawat.jpg` — Pengangkat Karung Garam (misi ke-11)
+```
+Illustration of bright white salt ponds (tambak garam) in coastal East Java at midday: a salt farmer and two junior high students lift a burlap sack of salt onto a wooden cart using a homemade wooden frame with a block-and-tackle pulley system; nearby, another student demonstrates a long wooden lever resting on a log fulcrum lifting a second sack. Small arrows suggest force direction. Piles of white salt, a thatched salt storage hut, and the sea in the background.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)

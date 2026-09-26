@@ -623,6 +623,58 @@ const NYATA = {
       { gejala: 'Paku tetap menempel saat dimatikan', kunci: 'menempel|tidak lepas|nempel terus', petunjuk: ['Inti apa yang kamu pakai — besi lunak atau baja?', 'Apa bedanya magnet sementara dan magnet tetap menurut kartu konsep?'] },
       { gejala: 'Daya angkat lemah', kunci: 'lemah|sedikit|kurang', petunjuk: ['Faktor apa saja yang memperkuat elektromagnet? Mana yang paling mudah kamu ubah?', 'Apakah lilitanmu searah semua? Apa yang terjadi jika sebagian lilitan berlawanan arah?'] }
     ]
+  },
+  pesawat: {
+    waktu: '2 × 40 menit (model skala kecil di kelas)',
+    alat: [
+      'Model beban: botol air 1,5 L (± 1,5 kg) atau kantong pasir 2 kg — JANGAN memakai orang atau karung 60 kg sungguhan',
+      'Neraca pegas (dinamometer) 0–20 N atau timbangan gantung digital',
+      'Untuk tuas: papan/penggaris kayu 1 m, balok segitiga atau spidol besar sebagai titik tumpu',
+      'Untuk katrol: 2–4 katrol plastik kecil (katrol tirai/jemuran), tali nilon, kait S, statif atau palang kayu yang kokoh',
+      'Pelumas (minyak goreng/oli) dan kain lap',
+      'Meteran/penggaris untuk mengukur jarak tarik dan tinggi angkat'
+    ],
+    keselamatan: [
+      'Uji hanya dengan beban model (± 2 kg). Jangan menggantung atau mengangkat orang.',
+      'Jangan berdiri atau meletakkan kaki di bawah beban yang tergantung.',
+      'Pastikan palang, kait, dan tali kuat (mampu menahan paling tidak 3× berat beban) dan terikat erat.',
+      'Jauhkan jari dari titik tumpu tuas dan roda katrol agar tidak terjepit.',
+      'Turunkan beban perlahan — jangan melepas tali tiba-tiba.',
+      'Pakai sarung tangan bila menarik tali berkali-kali agar tangan tidak lecet.'
+    ],
+    langkah: [
+      'Timbang beban model dengan neraca pegas; catat beratnya (N). Itulah gaya bila diangkat langsung.',
+      'Rakit alat sesuai rancangan: tuas (letakkan beban di lengan beban dan tarik neraca pegas di ujung lengan kuasa) atau katrol/takal (kaitkan neraca pegas di ujung tali yang ditarik).',
+      'Angkat beban perlahan dengan kecepatan tetap sambil membaca gaya pada neraca pegas.',
+      'Ukur tinggi naik beban dan panjang tali yang ditarik (atau jarak turun ujung tuas).',
+      'Hitung keuntungan mekanis nyata = berat beban ÷ gaya terukur.',
+      'Hitung efisiensi = (berat × tinggi naik) ÷ (gaya × jarak tarik) × 100%.',
+      'Untuk katrol: ulangi setelah katrol dibersihkan dan dilumasi. Bandingkan hasilnya.'
+    ],
+    takaran: v => {
+      const h = hitungPesawat(v);
+      const skala = 30; // karung 60 kg ↔ model 2 kg
+      const alat = v.alat === 'tuas'
+        ? `Tuas: panjang ${fxd(v.panjangTuas, 2)} m, lengan beban ${fxd(Math.min(+v.lenganBeban, +v.panjangTuas - 0.1), 2)} m. Model di kelas: pakai perbandingan lengan yang SAMA (mis. penggaris 1 m dengan titik tumpu di ${Math.round(Math.min(+v.lenganBeban, +v.panjangTuas - 0.1) / +v.panjangTuas * 100)} cm dari ujung beban).`
+        : `${ALAT_PESAWAT[v.alat].nama}, katrol ${v.kondisi === 'dilumasi' ? 'dibersihkan & dilumasi' : 'apa adanya (berkarat/seret)'}; arah tarikan: ${ALAT_PESAWAT[v.alat].arah}.`;
+      return [
+        alat,
+        `Prediksi simulasi: keuntungan mekanis nyata ± ${fxd(h.kmNyata, 2)}, efisiensi ± ${h.efisiensi}%.`,
+        `Keuntungan mekanis & efisiensi tidak bergantung ukuran beban, jadi hasil model ${Math.round(+v.massa / skala * 10) / 10} kg bisa dibandingkan langsung dengan simulasi ${v.massa} kg.`,
+        `Perkiraan gaya pada model beban 2 kg (19,6 N): ± ${fxd(19.6 / h.kmNyata)} N di neraca pegas.`
+      ];
+    },
+    ukur: [
+      { id: 'km', label: 'Keuntungan mekanis nyata (berat ÷ gaya)', satuan: '', sim: 'kmNyata' },
+      { id: 'efisiensi', label: 'Efisiensi', satuan: '%', sim: 'efisiensi' },
+      { id: 'gaya', label: 'Gaya terukur pada model', satuan: 'N' }
+    ],
+    masalah: [
+      { gejala: 'Gaya jauh lebih besar dari perkiraan', kunci: 'berat|besar|susah|lebih besar', petunjuk: ['Apakah roda katrol berputar lancar? Apa pengaruh gesekan terhadap gaya?', 'Apakah berat katrol bebas dan talinya ikut kamu perhitungkan?'] },
+      { gejala: 'Tali selip atau keluar dari alur katrol', kunci: 'selip|keluar|lepas', petunjuk: ['Apakah tali ditarik lurus sejajar dengan alur roda?', 'Apakah tali terlalu besar untuk alur katrol?'] },
+      { gejala: 'Tuas melengkung atau patah', kunci: 'melengkung|patah|bengkok', petunjuk: ['Di bagian mana tuas paling tertekuk? Bagaimana momen di titik tumpu dipengaruhi lengan beban?', 'Bagaimana memilih bahan atau ukuran lengan agar momennya lebih kecil?'] },
+      { gejala: 'Beban berputar atau berayun', kunci: 'berputar|berayun|goyang', petunjuk: ['Apakah beban digantung tepat di tengah?', 'Apakah tali-tali takal saling melilit? Bagaimana mencegahnya?'] }
+    ]
   }
 };
 
@@ -1026,6 +1078,48 @@ const MISI = [
       { id: 'tahan', label: 'Baterai tahan', satuan: 'menit' },
       { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'pesawat',
+    judul: 'Pengangkat Karung Garam',
+    ikon: '⚙️',
+    kelas: 'Kelas 8 · Usaha & Pesawat Sederhana (Tuas dan Katrol)',
+    warna: '#475569',
+    ringkas: 'Pilih dan rancang tuas atau katrol agar petani garam bisa menaikkan karung 60 kg ke gerobak dengan gaya kecil.',
+    kisah: 'Saat panen, petani garam di tambak Besuki harus menaikkan <b>karung garam 60 kg</b> ke atas <b>bak gerobak setinggi 0,5 m</b>. Mengangkat langsung butuh gaya ± 588 N dan sering membuat punggung cedera. Rancang <b>pesawat sederhana</b> — tuas atau katrol — agar gaya yang dikeluarkan <b>paling besar 200 N</b> (seperti mengangkat 20 kg), jarak tarik/dorongnya tidak terlalu jauh, alatnya tidak patah, dan biayanya terjangkau.',
+    kriteria: [
+      'Gaya kuasa paling besar 200 N',
+      'Karung naik minimal 0,5 m (setinggi bak gerobak)',
+      'Jarak tarik/dorong paling jauh 3 m',
+      'Alat tidak patah'
+    ],
+    kendala: ['Biaya paling banyak Rp 150.000', 'Panjang tuas paling panjang 3 m (agar muat di pematang tambak)'],
+    konsep: `
+      <p><b>Pesawat sederhana</b> adalah alat yang memudahkan kerja dengan <b>memperkecil gaya</b> atau <b>mengubah arah gaya</b>. Keuntungan mekanis (KM) menunjukkan berapa kali gaya diperkecil: <b>KM = beban ÷ kuasa</b>.</p>
+      <p><b>Tuas (pengungkit)</b> memiliki titik tumpu, lengan beban, dan lengan kuasa. Pada tuas jenis 1, titik tumpu berada di antara beban dan kuasa.</p>
+      <p class="rumus">Tuas: beban × lengan beban = kuasa × lengan kuasa &nbsp;·&nbsp; KM = lengan kuasa ÷ lengan beban</p>
+      <p><b>Katrol tetap</b> hanya mengubah arah gaya (KM = 1). <b>Katrol bebas</b> ikut bergerak bersama beban (KM = 2). <b>Takal</b> (gabungan katrol) memiliki KM sebanyak jumlah tali yang menopang beban.</p>
+      <p class="rumus">Usaha: W = F × s &nbsp;·&nbsp; Efisiensi = usaha untuk beban ÷ usaha yang dikeluarkan × 100%</p>
+      <p><b>Tidak ada makan siang gratis!</b> Pesawat sederhana <b>tidak mengurangi usaha</b>. Gaya yang lebih kecil dibayar dengan <b>jarak tarik atau dorong yang lebih jauh</b>. Gesekan (misalnya katrol berkarat) dan berat katrol bebas bahkan membuat usaha yang dikeluarkan lebih besar.</p>`,
+    kataKunci: ['tuas', 'katrol', 'takal', 'titik tumpu', 'lengan', 'keuntungan mekanis', 'km', 'usaha', 'gaya', 'jarak', 'efisiensi', 'gesekan', 'momen', 'pesawat sederhana'],
+    variabel: [
+      { id: 'alat', label: 'Jenis pesawat sederhana', tipe: 'select', awal: 'tetap', opsi: [['tetap', 'Katrol tetap'], ['bebas', 'Katrol bebas'], ['takal2', 'Takal 2 katrol'], ['takal4', 'Takal 4 katrol'], ['tuas', 'Tuas jenis 1 (pengungkit)']] },
+      { id: 'kondisi', label: 'Kondisi katrol', tipe: 'select', awal: 'berkarat', opsi: [['berkarat', 'Berkarat (seret)'], ['dilumasi', 'Dibersihkan & dilumasi']] },
+      { id: 'panjangTuas', label: 'Panjang tuas', tipe: 'range', min: 1, max: 3, step: 0.25, satuan: 'm', awal: 2 },
+      { id: 'lenganBeban', label: 'Lengan beban tuas', tipe: 'range', min: 0.2, max: 1, step: 0.1, satuan: 'm', awal: 0.5 },
+      { id: 'massa', label: 'Massa karung', tipe: 'range', min: 20, max: 80, step: 5, satuan: 'kg', awal: 60 }
+    ],
+    keluaran: [
+      { id: 'kmIdeal', label: 'Keuntungan mekanis ideal', satuan: '' },
+      { id: 'kmNyata', label: 'Keuntungan mekanis nyata', satuan: '' },
+      { id: 'gaya', label: 'Gaya kuasa', satuan: 'N' },
+      { id: 'naik', label: 'Karung naik', satuan: 'm' },
+      { id: 'jarak', label: 'Jarak tarik/dorong', satuan: 'm' },
+      { id: 'usahaKuasa', label: 'Usaha dikeluarkan', satuan: 'J' },
+      { id: 'efisiensi', label: 'Efisiensi', satuan: '%' },
+      { id: 'status', label: 'Hasil', satuan: '' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -1231,5 +1325,16 @@ const UJI_NALAR = [
       'Kurang tepat, karena magnetnya pasti rusak.'
     ],
     bahas: 'Kesimpulan Andi melompat terlalu jauh dari buktinya. Bukti "tidak ditarik magnet" hanya berarti bukan bahan magnetik. Banyak logam — aluminium, tembaga, emas — tidak ditarik magnet. Pemikir kritis membedakan "bukan magnetik" dengan "bukan logam".'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Sebuah iklan alat takal berbunyi: "Dengan takal kami, usaha Anda mengangkat beban berkurang 4 kali lipat!" Penilaian yang paling tepat terhadap klaim itu adalah …',
+    opsi: [
+      'Keliru: takal memperkecil GAYA sekitar 4 kali, tetapi tali harus ditarik ± 4 kali lebih jauh, sehingga usahanya tetap sama — bahkan sedikit lebih besar karena gesekan.',
+      'Benar, karena keuntungan mekanis takal itu 4.',
+      'Benar, karena beban terasa lebih ringan saat diangkat.',
+      'Keliru, karena takal justru memperbesar gaya.'
+    ],
+    bahas: 'Usaha = gaya × jarak. Pesawat sederhana menukar gaya kecil dengan jarak yang lebih jauh; usahanya tidak berkurang. Klaim iklan mencampuradukkan "gaya" dan "usaha" — pemikir kritis memeriksa istilah yang dipakai.'
   }
 ];

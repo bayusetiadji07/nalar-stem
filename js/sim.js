@@ -1522,7 +1522,166 @@ function gambarMagnet(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   11. PESAWAT SEDERHANA — tuas & katrol
+   Karung garam m kg dinaikkan ke bak gerobak 0,5 m.
+   Tuas jenis 1: KM = lengan kuasa / lengan beban; ayunan ±30° → beban naik = lengan beban × 1.
+   Katrol: KM ideal = jumlah tali penopang; efisiensi tiap katrol 0,95 (dilumasi) / 0,8 (berkarat);
+   katrol bebas menambah beban 1 kg per buah.
+   --------------------------------------------------------- */
+const ALAT_PESAWAT = {
+  tuas:   { nama: 'Tuas jenis 1 (pengungkit)', km: 0, katrol: 0, bebas: 0, arah: 'dorong ke bawah' },
+  tetap:  { nama: 'Katrol tetap', km: 1, katrol: 1, bebas: 0, arah: 'tarik ke bawah' },
+  bebas:  { nama: 'Katrol bebas', km: 2, katrol: 1, bebas: 1, arah: 'tarik ke atas' },
+  takal2: { nama: 'Takal 2 katrol (1 tetap + 1 bebas)', km: 2, katrol: 2, bebas: 1, arah: 'tarik ke bawah' },
+  takal4: { nama: 'Takal 4 katrol (2 tetap + 2 bebas)', km: 4, katrol: 4, bebas: 2, arah: 'tarik ke bawah' }
+};
+const TINGGI_GEROBAK = 0.5;
+
+function hitungPesawat(v) {
+  const g = 9.8, m = +v.massa, W = m * g, A = ALAT_PESAWAT[v.alat];
+  let kmIdeal, F, naik, jarak, patah = false, momen = 0, biaya;
+  if (v.alat === 'tuas') {
+    const P = +v.panjangTuas, Lb = Math.min(+v.lenganBeban, P - 0.1), Lk = P - Lb;
+    kmIdeal = Lk / Lb;
+    F = W / kmIdeal / 0.95;                 // sedikit gesekan di titik tumpu
+    naik = Lb * 1.0; jarak = Lk * 1.0;      // ayunan ±30°
+    momen = W * Lb;                         // momen lentur di titik tumpu
+    patah = momen > 400;
+    biaya = Math.round(P * 20000 + 15000);
+  } else {
+    const eta = Math.pow(v.kondisi === 'dilumasi' ? 0.95 : 0.8, A.katrol);
+    kmIdeal = A.km;
+    F = (W + A.bebas * 1 * g) / (A.km * eta);
+    naik = TINGGI_GEROBAK; jarak = TINGGI_GEROBAK * A.km;
+    const tali = jarak + 2 * A.km + 2;
+    biaya = A.katrol * 20000 + 30000 + Math.ceil(tali) * 2000 + (v.kondisi === 'dilumasi' ? 5000 : 0);
+  }
+  const usahaBeban = W * Math.min(naik, TINGGI_GEROBAK);
+  const usahaKuasa = F * jarak * Math.min(1, TINGGI_GEROBAK / Math.max(naik, 1e-6));
+  return {
+    kmIdeal: bulat(kmIdeal, 2), kmNyata: bulat(W / F, 2), gaya: Math.round(F), setara: bulat(F / g, 1),
+    naik: bulat(naik, 2), jarak: bulat(jarak * Math.min(1, TINGGI_GEROBAK / Math.max(naik, 1e-6)), 2),
+    usahaBeban: Math.round(usahaBeban), usahaKuasa: Math.round(usahaKuasa),
+    efisiensi: Math.round(usahaBeban / usahaKuasa * 100), biaya,
+    status: patah ? 'Tuas PATAH' : F > 200 ? 'Terlalu berat' : naik < TINGGI_GEROBAK ? 'Belum sampai bak' : 'Berhasil',
+    _W: W, _patah: patah, _momen: momen, _A: A
+  };
+}
+
+function kriteriaPesawat(v, h) {
+  return [
+    { teks: 'Gaya kuasa ≤ 200 N (± 20 kg)', lulus: h.gaya <= 200, nilai: `${h.gaya} N` },
+    { teks: 'Karung naik ≥ 0,5 m (setinggi bak gerobak)', lulus: h.naik >= TINGGI_GEROBAK - 1e-9, nilai: `${h.naik} m` },
+    { teks: 'Jarak tarik/dorong ≤ 3 m', lulus: h.jarak <= 3, nilai: `${h.jarak} m` },
+    { teks: 'Alat tidak patah', lulus: !h._patah, nilai: v.alat === 'tuas' ? `momen ${Math.round(h._momen)} N·m (maks 400)` : 'aman' },
+    { teks: 'Biaya ≤ Rp 150.000', lulus: h.biaya <= 150000, nilai: rp(h.biaya) }
+  ];
+}
+
+function orangKecil(ctx, x, y, s, warna = '#0f766e') { // y = telapak kaki
+  ctx.strokeStyle = warna; ctx.lineWidth = 3; ctx.lineCap = 'round';
+  ctx.beginPath(); ctx.arc(x, y - s * 1.7, s * 0.22, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x, y - s * 1.48); ctx.lineTo(x, y - s * 0.8); ctx.lineTo(x - s * 0.3, y); ctx.moveTo(x, y - s * 0.8); ctx.lineTo(x + s * 0.3, y); ctx.stroke();
+}
+
+function gambarPesawat(ctx, W, H, v, h, p) {
+  // langit & tambak garam
+  const tanah = H - 40;
+  const gr = ctx.createLinearGradient(0, 0, 0, tanah);
+  gr.addColorStop(0, '#bae6fd'); gr.addColorStop(1, '#f0f9ff');
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, W, tanah);
+  ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, tanah, W, H - tanah);
+  ctx.fillStyle = '#fafaf9'; for (let x = 10; x < W; x += 70) ctx.fillRect(x, tanah + 10, 50, 8); // petak garam
+  const s = (tanah - 60) / 2.6;                 // piksel per meter
+  const q = mulus(jepit((p - 0.1) / 0.75, 0, 1)); // kemajuan mengangkat
+  const gagal = h.status !== 'Berhasil';
+  const qEfektif = h._patah ? Math.min(q, 0.35) : q;
+  // gerobak
+  const gx = W * 0.68, bakY = tanah - TINGGI_GEROBAK * s;
+  ctx.fillStyle = '#92400e'; ctx.fillRect(gx, bakY, 110, 10); ctx.fillRect(gx, bakY - 26, 8, 26); ctx.fillRect(gx + 102, bakY - 26, 8, 26);
+  ctx.fillStyle = '#334155'; ctx.beginPath(); ctx.arc(gx + 30, tanah - 14, 14, 0, 7); ctx.arc(gx + 80, tanah - 14, 14, 0, 7); ctx.fill();
+  ctx.strokeStyle = '#92400e'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(gx + 55, bakY + 10); ctx.lineTo(gx + 55, tanah - 14); ctx.stroke();
+  ctx.setLineDash([4, 4]); ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(W * 0.08, bakY); ctx.lineTo(gx, bakY); ctx.stroke(); ctx.setLineDash([]);
+  label(ctx, 'tinggi bak 0,5 m', gx - 6, bakY - 8, { rata: 'right', ukuran: 10, warna: '#15803d', latar: 'rgba(255,255,255,.85)' });
+  const lebarKarung = 0.45 * s;
+  const karung = (x, yBawah, rot = 0) => {
+    if (!benda(ctx, 'karung', x, yBawah, lebarKarung, { ay: 1, rot })) {
+      ctx.save(); ctx.translate(x, yBawah); ctx.rotate(rot); ctx.fillStyle = '#d6b27c'; kotakBulat(ctx, -lebarKarung / 2, -lebarKarung * 0.9, lebarKarung, lebarKarung * 0.9, 8); ctx.fill(); ctx.restore();
+    }
+    label(ctx, `${v.massa} kg`, x, yBawah - lebarKarung * 0.4, { rata: 'center', ukuran: 11, tebal: true, warna: '#fff', latar: 'rgba(120,53,15,.8)' });
+  };
+  const panahGaya = (x, y, arahY) => {
+    const pj = jepit(h.gaya / 6, 18, 90);
+    panah(ctx, x, y, x, y + arahY * pj, h.gaya > 200 ? '#dc2626' : '#16a34a', 3.5);
+    label(ctx, `F = ${h.gaya} N`, x + 10, y + arahY * pj / 2, { ukuran: 12, tebal: true, warna: '#fff', latar: h.gaya > 200 ? '#dc2626' : '#15803d' });
+  };
+  if (v.alat === 'tuas') {
+    const P = +v.panjangTuas, Lb = Math.min(+v.lenganBeban, P - 0.1), Lk = P - Lb;
+    const tx = W * 0.3, ty = tanah - 0.5 * s;       // titik tumpu setinggi 0,5 m
+    ctx.fillStyle = '#57534e'; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx - 18, tanah); ctx.lineTo(tx + 18, tanah); ctx.closePath(); ctx.fill();
+    // sudut: awal ujung beban di tanah; diayun sampai beban naik Lb (ayunan 60°)
+    const sudutAwal = Math.asin(jepit(0.5 / Lb, -1, 1)) || Math.PI / 6;
+    const sud0 = Math.min(sudutAwal, Math.PI / 3), sud = lerp(sud0, sud0 - Math.PI / 3, qEfektif);
+    const bxT = tx - Math.cos(sud) * Lb * s, byT = ty + Math.sin(sud) * Lb * s;
+    const kx = tx + Math.cos(sud) * Lk * s, ky = ty - Math.sin(sud) * Lk * s;
+    ctx.strokeStyle = h._patah && q > 0.35 ? '#b91c1c' : '#a16207'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+    if (h._patah && q > 0.35) {
+      ctx.beginPath(); ctx.moveTo(bxT, byT); ctx.lineTo(tx - 4, ty + 6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(tx + 4, ty + 10); ctx.lineTo(kx, ky + 30); ctx.stroke();
+      label(ctx, 'PATAH!', tx, ty - 24, { rata: 'center', tebal: true, warna: '#fff', latar: '#b91c1c' });
+    } else { ctx.beginPath(); ctx.moveTo(bxT, byT); ctx.lineTo(kx, ky); ctx.stroke(); }
+    karung(bxT, byT - 2);
+    orangKecil(ctx, kx + 22, Math.min(tanah, ky + 1.1 * s * 0.55), 0.55 * s);
+    panahGaya(kx, ky - 50, 1);
+    label(ctx, `lengan beban ${fx(Lb, 2)} m`, (tx + bxT) / 2, Math.max(byT, ty) + 26, { rata: 'center', ukuran: 10, warna: '#78350f', latar: 'rgba(255,255,255,.85)' });
+    label(ctx, `lengan kuasa ${fx(Lk, 2)} m`, (tx + kx) / 2, Math.min(ky, ty) - 16, { rata: 'center', ukuran: 10, warna: '#78350f', latar: 'rgba(255,255,255,.85)' });
+  } else {
+    const A = h._A, cx = W * 0.4, atas = 30, r = 13;
+    // rangka
+    ctx.fillStyle = '#78716c'; ctx.fillRect(cx - 90, atas - 10, 200, 10); ctx.fillRect(cx + 104, atas - 10, 8, tanah - atas + 10);
+    ctx.fillRect(cx - 94, atas - 10, 8, tanah - atas + 10);
+    const naikPx = TINGGI_GEROBAK * s * qEfektif * (gagal && h.gaya > 200 ? 0.15 : 1);
+    const karungBawah = tanah - naikPx, karungAtas = karungBawah - lebarKarung * 0.95;
+    const blokY = karungAtas - 18;
+    const tali = (x1, y1, x2, y2) => { ctx.strokeStyle = '#a16207'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+    const roda = (x, y) => { ctx.fillStyle = v.kondisi === 'dilumasi' ? '#94a3b8' : '#b45309'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.fillStyle = '#1f2937'; ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill(); };
+    const tarik = TINGGI_GEROBAK * A.km * s * qEfektif * (gagal && h.gaya > 200 ? 0.15 : 1);
+    let tanganX, tanganY, arah = 1;
+    if (v.alat === 'tetap') {
+      roda(cx, atas + r); tali(cx - r, atas + r, cx - r, karungAtas); tali(cx + r, atas + r, cx + r, tanah - 1.3 * s + tarik);
+      tanganX = cx + r; tanganY = tanah - 1.3 * s + tarik;
+    } else if (v.alat === 'bebas') {
+      roda(cx, blokY); tali(cx - r, atas, cx - r, blokY); tali(cx + r, blokY, cx + r, atas + 40 - tarik * 0.3);
+      tanganX = cx + r; tanganY = atas + 40 - tarik * 0.3; arah = -1;
+      label(ctx, 'penarik di atas panggung', cx + r + 10, atas + 30, { ukuran: 10, warna: '#334155', latar: 'rgba(255,255,255,.85)' });
+    } else if (v.alat === 'takal2') {
+      roda(cx + r, atas + r); roda(cx, blokY);
+      tali(cx - r, atas, cx - r, blokY); tali(cx + r, blokY, cx + r, atas + r); tali(cx + 2 * r, atas + r, cx + 2 * r, tanah - 1.3 * s + tarik);
+      tanganX = cx + 2 * r; tanganY = tanah - 1.3 * s + tarik;
+    } else {
+      roda(cx - r, atas + r); roda(cx + r + 4, atas + r); roda(cx - r, blokY); roda(cx + r + 4, blokY);
+      [cx - 2 * r, cx, cx + 4, cx + 2 * r + 4].forEach(x => tali(x, atas + r, x, blokY));
+      tali(cx + 2 * r + 8, atas + r, cx + 2 * r + 8, tanah - 1.3 * s + tarik);
+      tanganX = cx + 2 * r + 8; tanganY = tanah - 1.3 * s + tarik;
+    }
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, blokY + (A.bebas ? r : 0)); ctx.lineTo(cx, karungAtas + 4); ctx.stroke();
+    if (v.alat === 'tetap') { ctx.beginPath(); ctx.moveTo(cx - r, karungAtas); ctx.lineTo(cx, karungAtas + 4); ctx.stroke(); }
+    karung(cx, karungBawah);
+    if (arah === 1) orangKecil(ctx, tanganX + 26, tanah, 0.55 * s);
+    panahGaya(tanganX, tanganY, arah);
+    label(ctx, `tali ditarik ${fx(h.jarak, 2)} m`, tanganX + 12, tanah - 8, { ukuran: 10, warna: '#334155', latar: 'rgba(255,255,255,.85)' });
+    if (v.kondisi !== 'dilumasi') label(ctx, 'katrol berkarat', cx - 90, atas + 22, { ukuran: 10, warna: '#b45309', latar: 'rgba(255,255,255,.85)' });
+  }
+  label(ctx, `${h._A.nama} · KM ideal ${fx(h.kmIdeal, 2)}`, 12, 16, { ukuran: 11, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
+  if (p >= 1) {
+    const teks = h._patah ? `Tuas patah — momen ${Math.round(h._momen)} N·m melebihi 400 N·m` : h.gaya > 200 ? `Terlalu berat: butuh ${h.gaya} N (± ${fx(h.setara)} kg)` : h.naik < TINGGI_GEROBAK ? `Karung hanya naik ${fx(h.naik, 2)} m — belum sampai bak` : `Berhasil! Gaya ${h.gaya} N · usaha ${h.usahaKuasa} J untuk ${h.usahaBeban} J`;
+    label(ctx, teks, W / 2, H - 14, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: gagal ? '#b45309' : '#15803d' });
+  }
+}
+
 const SIM = {
+  pesawat: { hitung: hitungPesawat, kriteria: kriteriaPesawat, gambar: gambarPesawat, sumbuX: ['massa', 'panjangTuas', 'lenganBeban'], sumbuY: ['gaya', 'kmNyata', 'efisiensi', 'jarak', 'usahaKuasa'] },
   magnet: { hitung: hitungMagnet, kriteria: kriteriaMagnet, gambar: gambarMagnet, sumbuX: ['lilitan', 'baterai'], sumbuY: ['angkat', 'arus', 'panas', 'medan', 'tahan'] },
   listrik: { hitung: hitungListrik, kriteria: kriteriaListrik, gambar: gambarListrik, sumbuX: ['baterai', 'lampu', 'resistor'], sumbuY: ['cahaya', 'arus', 'tahan', 'arusLampu'] },
   angin: { hitung: hitungAngin, kriteria: kriteriaAngin, gambar: gambarAngin, sumbuX: ['angin', 'jari', 'bilah', 'sudutBilah'], sumbuY: ['daya', 'rpm', 'dayaAngin', 'mulai'] },
