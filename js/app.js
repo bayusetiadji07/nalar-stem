@@ -19,6 +19,7 @@ function ms(id) {
   const m = MISI.find(x => x.id === id);
   if (!S.misi[id].v) S.misi[id].v = Object.fromEntries(m.variabel.map(v => [v.id, v.awal]));
   if (!S.misi[id].nyata) S.misi[id].nyata = { cek: {}, uji: [] };
+  if (!S.misi[id].nyata.rencana) S.misi[id].nyata.rencana = [];
   return S.misi[id];
 }
 
@@ -341,14 +342,20 @@ function htmlNyata(m, st) {
     <p class="redup kecil">Baca bersama kelompok dan guru, lalu centang semuanya. Langkah kerja baru terbuka setelah semua poin dicentang.</p>
     ${N.keselamatan.map((k, i) => `<label class="cek-aman"><input type="checkbox" data-aman="${i}" ${ny.cek[i] ? 'checked' : ''}><span>${esc(k)}</span></label>`).join('')}
   </div>
-  <div id="isiNyata">${aman ? htmlIsiNyata(m, st) : '<div class="kartu terkunci">🔒 Centang semua poin keselamatan untuk membuka langkah kerja, rencana takaran, dan tabel uji nyata.</div>'}</div>`;
+  <div id="isiNyata">${aman ? htmlIsiNyata(m, st) : '<div class="kartu terkunci">🔒 Centang semua poin keselamatan untuk membuka langkah kerja, rencana takaran, dan tabel uji nyata.</div>'}</div>
+  <div class="kartu kartu-presentasi" style="--aksen:${m.warna}">
+    <div class="lab-kepala"><h3>🎤 Presentasikan proyekmu</h3><span class="pil">salindia otomatis</span></div>
+    <p class="redup kecil">Salindia disusun otomatis dari lembar kerja, data uji maya, rencana kerja, dan hasil uji nyatamu — makin lengkap langkahmu, makin utuh presentasinya. Bisa ditayangkan layar penuh atau dicetak/disimpan sebagai PDF.</p>
+    <label class="ctl"><span>Nama kelompok &amp; anggota</span><input id="nTim" maxlength="160" value="${esc(ny.tim || '')}" placeholder="Contoh: Kelompok 3 — Ani, Budi, Citra"></label>
+    <button type="button" class="tombol utama" data-presentasi>▶ Mulai presentasi</button>
+  </div>`;
 }
 
 function htmlIsiNyata(m, st) {
   const N = NYATA[m.id], ny = st.nyata;
   const acuan = ujiTerbaik(st);
   return `
-  <div class="kartu"><h3>🛠️ Langkah kerja</h3><ol class="langkah-kerja">${N.langkah.map(l => `<li>${esc(l)}</li>`).join('')}</ol></div>
+  <div class="kartu" id="kartuRencana">${htmlRencana(m, st)}</div>
   <div class="kartu rencana-nyata"><h3>📐 Rencana takaran dari simulasi</h3>
     ${acuan ? `<p class="redup kecil">Dihitung dari uji terbaikmu di laboratorium maya: <b>uji ke-${acuan.no}</b> (memenuhi ${acuan.lulus}/${acuan.total} kriteria). Sesuaikan dengan bahan yang benar-benar ada, lalu tulis penyesuaianmu di lembar kerja.</p>
       <ul>${N.takaran(acuan.v).map(t => `<li>${esc(t)}</li>`).join('')}</ul>
@@ -373,6 +380,121 @@ function htmlIsiNyata(m, st) {
     <p class="redup kecil">Pilih masalahnya — Kak Nala akan membantumu mencari penyebab lewat pertanyaan. Untuk urusan keselamatan, ikuti arahan guru.</p>
     <div class="daftar-masalah">${N.masalah.map((q, i) => `<button type="button" class="tombol" data-masalah="${i}">${esc(q.gejala)}</button>`).join('')}</div>
   </div>`;
+}
+
+/* Rencana langkah kerja yang disusun murid bersama Kak Nala.
+   ny.rencana = [{ id, teks, oleh: 'murid' | 'panduan' | 'nala' }]
+   ny.tinjau  = { pujian, pertanyaan[], saran[{ jenis, no, ref, teks, alasan, status }], sumber } */
+const idAcak = () => Math.random().toString(36).slice(2, 9);
+function htmlRencana(m, st) {
+  const N = NYATA[m.id], ny = st.nyata, R = ny.rencana;
+  const dariNala = R.filter(r => r.oleh === 'nala').length;
+  return `<div class="lab-kepala"><h3>🛠️ Langkah kerja — susun bersama Kak Nala</h3><span class="pil">${R.length} langkah${dariNala ? ` · ✨ ${dariNala}` : ''}</span></div>
+    <p class="redup kecil">Tulis urutan kerja kelompokmu dengan kata-katamu sendiri. Kak Nala akan meninjau keselamatan, takaran, pengukuran, dan keadilan ujinya. Kamu yang memutuskan saran mana yang diterima.</p>
+    <details class="panduan-langkah"><summary>📘 Lihat panduan langkah dari NalarSTEM</summary>
+      <ol class="langkah-kerja">${N.langkah.map(l => `<li>${esc(l)}</li>`).join('')}</ol>
+      ${R.length ? '' : '<button type="button" class="tombol kecil" data-rencana="panduan">Pakai panduan sebagai titik awal</button>'}
+    </details>
+    ${R.length ? `<ol class="rencana-daftar">${R.map((r, i) => `<li class="rencana-baris ${r.oleh}" data-rid="${r.id}">
+        <span class="rb-no">${i + 1}</span>
+        <textarea rows="1" data-teks-rencana aria-label="Langkah ${i + 1}" placeholder="Tulis langkah ${i + 1}…">${esc(r.teks)}</textarea>
+        ${r.oleh === 'nala' ? '<span class="rb-tanda" title="Saran Kak Nala yang kamu terima">✨</span>' : ''}
+        <span class="rb-aksi"><button type="button" data-rencana="naik" aria-label="Naikkan" ${i ? '' : 'disabled'}>↑</button><button type="button" data-rencana="turun" aria-label="Turunkan" ${i < R.length - 1 ? '' : 'disabled'}>↓</button><button type="button" data-rencana="hapus" aria-label="Hapus langkah">✕</button></span>
+      </li>`).join('')}</ol>`
+    : '<p class="rencana-kosong">Belum ada langkah. Tulis langkah pertamamu, atau buka panduan di atas sebagai titik awal.</p>'}
+    <div class="aksi-rencana">
+      <button type="button" class="tombol" data-rencana="tambah">＋ Tambah langkah</button>
+      <button type="button" class="tombol utama" data-rencana="tinjau">🤖 Tinjau bersama Kak Nala</button>
+      <button type="button" class="tombol" data-rencana="diskusi">💬 Diskusikan di chat</button>
+    </div>
+    <div id="hasilTinjau">${htmlTinjau(ny.tinjau, R)}</div>`;
+}
+function htmlTinjau(t, R) {
+  if (!t) return '';
+  // nomor langkah dihitung dari posisi SEKARANG (bisa bergeser setelah saran lain diterima)
+  const posisi = s => { const k = R.findIndex(x => x.id === s.ref); return k >= 0 ? k + 1 : null; };
+  const nama = {
+    tambah: s => s.ref ? `➕ Tambah setelah langkah ${posisi(s) || s.no}` : '➕ Tambah di awal',
+    ubah: s => `✏️ Ubah langkah ${posisi(s) || s.no}`,
+    hapus: s => `🗑️ Hapus langkah ${posisi(s) || s.no}`
+  };
+  return `<div class="kartu-nilai tinjau-rencana">
+    <div class="kn-kepala"><b class="kn-judul">${gambar('kak-nala-wajah.jpg', '', 'avatar-kecil')}Tinjauan Kak Nala</b><span class="sumber ${t.sumber}">${t.sumber === 'ai' ? '✨ AI Gemini' : '⚙️ Tutor lokal'}</span></div>
+    ${t.pujian ? `<p><b>👍 Sudah baik:</b> ${esc(t.pujian)}</p>` : ''}
+    ${t.saran.length ? `<div class="daftar-saran">${t.saran.map((s, i) => `<div class="saran ${s.status}">
+        <span class="saran-jenis">${nama[s.jenis](s)}</span>
+        ${s.teks ? `<p class="saran-teks">${esc(s.teks)}</p>` : ''}
+        <p class="saran-alasan">💡 ${esc(s.alasan)}</p>
+        ${s.status === 'baru' ? `<div class="saran-aksi"><button type="button" class="tombol kecil utama" data-saran="terima" data-i="${i}">✔ Terima</button><button type="button" class="tombol kecil" data-saran="abaikan" data-i="${i}">Abaikan</button></div>`
+          : `<span class="saran-status">${s.status === 'diterima' ? '✔ Diterima' : s.status === 'basi' ? 'Langkahnya sudah berubah' : 'Diabaikan'}</span>`}
+      </div>`).join('')}</div>` : '<p>Kak Nala tidak punya saran perubahan untuk rencana ini. 🎉</p>'}
+    ${t.pertanyaan.length ? `<div class="pemantik"><b>🤔 Pikirkan bersama kelompokmu:</b><ul>${t.pertanyaan.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>` : ''}
+    ${t.galat ? `<p class="redup kecil">AI tidak tersambung (${esc(t.galat)}), jadi ditinjau tutor lokal.</p>` : ''}
+  </div>`;
+}
+
+function pasangRencana(m, st) {
+  const kartu = $('#kartuRencana'); if (!kartu) return;
+  const ny = st.nyata, R = ny.rencana;
+  const gambarUlang = (fokusId) => {
+    kartu.innerHTML = htmlRencana(m, st);
+    $$('[data-teks-rencana]', kartu).forEach(tinggiOtomatis);
+    if (fokusId) { const t = $(`[data-rid="${fokusId}"] textarea`, kartu); if (t) { t.focus(); t.setSelectionRange(t.value.length, t.value.length); } }
+  };
+  const tinggiOtomatis = t => { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; };
+  $$('[data-teks-rencana]', kartu).forEach(tinggiOtomatis);
+  let tunda;
+  kartu.oninput = e => {
+    const t = e.target.closest('[data-teks-rencana]'); if (!t) return;
+    const r = R.find(x => x.id === t.closest('[data-rid]').dataset.rid); if (!r) return;
+    r.teks = t.value; if (r.oleh === 'panduan') r.oleh = 'murid';
+    tinggiOtomatis(t);
+    clearTimeout(tunda); tunda = setTimeout(simpan, 400);
+  };
+  kartu.onkeydown = e => { // Enter di akhir baris = langkah baru di bawahnya
+    const t = e.target.closest('[data-teks-rencana]');
+    if (!t || e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    const i = R.findIndex(x => x.id === t.closest('[data-rid]').dataset.rid);
+    const baru = { id: idAcak(), teks: '', oleh: 'murid' };
+    R.splice(i + 1, 0, baru); simpan(); gambarUlang(baru.id);
+  };
+  kartu.onclick = async e => {
+    const b = e.target.closest('[data-rencana], [data-saran]'); if (!b) return;
+    const baris = b.closest('[data-rid]'), i = baris ? R.findIndex(x => x.id === baris.dataset.rid) : -1;
+    const aksi = b.dataset.rencana;
+    if (aksi === 'panduan') { NYATA[m.id].langkah.forEach(l => R.push({ id: idAcak(), teks: l, oleh: 'panduan' })); simpan(); gambarUlang(); toast('Panduan disalin — ubah sesuai bahan dan alat kelompokmu'); return; }
+    if (aksi === 'tambah') { const baru = { id: idAcak(), teks: '', oleh: 'murid' }; R.push(baru); simpan(); gambarUlang(baru.id); return; }
+    if (aksi === 'naik' && i > 0) { [R[i - 1], R[i]] = [R[i], R[i - 1]]; simpan(); gambarUlang(); return; }
+    if (aksi === 'turun' && i < R.length - 1) { [R[i + 1], R[i]] = [R[i], R[i + 1]]; simpan(); gambarUlang(); return; }
+    if (aksi === 'hapus' && i >= 0) { if (R[i].teks.trim() && !confirm('Hapus langkah ini?')) return; R.splice(i, 1); simpan(); gambarUlang(); return; }
+    if (aksi === 'diskusi') { bukaTutor('Ini rencana langkah kerja kelompokku untuk prototipe nyata. Bantu aku menemukan bagian yang masih kurang aman atau kurang jelas.', 2); return; }
+    if (aksi === 'tinjau') {
+      for (let k = R.length - 1; k >= 0; k--) if (!R[k].teks.trim()) R.splice(k, 1); // buang langkah kosong
+      b.disabled = true; b.textContent = '⏳ Kak Nala sedang membaca rencanamu…';
+      const hasil = await tinjauRencana(konteksMisi(m, st, LANGKAH.find(L => L.id === 'nyata')), R, m);
+      hasil.saran.forEach(s => { s.status = 'baru'; s.ref = s.no >= 1 && R[s.no - 1] ? R[s.no - 1].id : null; });
+      hasil.waktu = Date.now();
+      ny.tinjau = hasil; ny.jumlahTinjau = (ny.jumlahTinjau || 0) + 1; simpan(); gambarUlang();
+      if (hasil.galat) toast('AI tidak tersambung — rencana ditinjau tutor lokal', 'peringatan');
+      return;
+    }
+    if (b.dataset.saran && ny.tinjau) {
+      const s = ny.tinjau.saran[+b.dataset.i]; if (!s || s.status !== 'baru') return;
+      if (b.dataset.saran === 'abaikan') { s.status = 'diabaikan'; simpan(); gambarUlang(); return; }
+      const k = s.ref ? R.findIndex(x => x.id === s.ref) : -1;
+      if (s.jenis === 'tambah') {
+        // sisipkan setelah langkah acuan, dan setelah saran lain yang sudah diterima untuk acuan yang sama (urutan terjaga)
+        let pos = s.ref ? (k >= 0 ? k + 1 : R.length) : 0;
+        while (pos < R.length && R[pos].setelah === (s.ref || 'awal')) pos++;
+        R.splice(pos, 0, { id: idAcak(), teks: s.teks, oleh: 'nala', setelah: s.ref || 'awal' });
+      }
+      else if (k < 0) { s.status = 'basi'; simpan(); gambarUlang(); toast('Langkah yang dimaksud sudah dihapus. Tinjau ulang rencanamu.', 'peringatan'); return; }
+      else if (s.jenis === 'ubah') { R[k].teks = s.teks; R[k].oleh = 'nala'; }
+      else R.splice(k, 1);
+      s.status = 'diterima'; simpan(); gambarUlang();
+    }
+  };
 }
 
 function htmlTabelNyata(m, st) {
@@ -417,6 +539,9 @@ function kecilkanFoto(berkas) {
 
 function pasangNyata(m, st) {
   const N = NYATA[m.id], ny = st.nyata;
+  const tim = $('#nTim');
+  if (tim) tim.oninput = () => { ny.tim = tim.value; simpan(); };
+  $('[data-presentasi]').onclick = () => bukaPresentasi(m, st);
   $$('[data-aman]').forEach(c => c.onchange = () => {
     ny.cek[c.dataset.aman] = c.checked; simpan();
     const aman = N.keselamatan.every((_, i) => ny.cek[i]);
@@ -431,6 +556,7 @@ function pasangNyata(m, st) {
 
 function pasangIsiNyata(m, st) {
   const N = NYATA[m.id], ny = st.nyata;
+  pasangRencana(m, st);
   const pasangTabel = () => {
     $$('[data-hapus-nyata]').forEach(b => b.onclick = () => {
       if (!confirm('Hapus hasil uji nyata ini?')) return;
@@ -684,7 +810,9 @@ function konteksMisi(m, st, L) {
     baris.push('MURID SEDANG MEMBUAT & MENGUJI PROTOTIPE NYATA (bukan simulasi).');
     baris.push(`Aturan keselamatan wajib misi ini: ${N.keselamatan.join(' | ')}`);
     baris.push(`Alat & bahan yang disarankan: ${N.alat.join('; ')}`);
-    baris.push(`Langkah kerja: ${N.langkah.map((l, i) => `${i + 1}) ${l}`).join(' ')}`);
+    baris.push(`Panduan langkah kerja dari aplikasi (acuan tutor): ${N.langkah.map((l, i) => `${i + 1}) ${l}`).join(' ')}`);
+    const R = (ny.rencana || []).filter(x => x.teks.trim());
+    baris.push(R.length ? `RENCANA LANGKAH KERJA YANG DISUSUN MURID (milik murid, tinjau yang ini): ${R.map((x, i) => `${i + 1}) ${x.teks}`).join(' ')}` : 'Murid belum menyusun rencana langkah kerja sendiri.');
     if (acuan) baris.push(`Takaran praktis dari uji simulasi terbaik (uji ${acuan.no}): ${N.takaran(acuan.v).join(' ')}`);
     baris.push(`Masalah umum & arah petunjuk (untuk tutor): ${N.masalah.map(q => `${q.gejala}: ${q.petunjuk.join(' ')}`).join(' || ')}`);
     if (ny.uji.length) {
@@ -851,7 +979,7 @@ function halPortofolio() {
     if (!st) return '';
     const t = ujiTerbaik(st);
     return `<div class="kartu porto-misi" style="--aksen:${m.warna}">
-      <h3>${m.ikon} ${esc(m.judul)} <span class="redup kecil">· ${kemajuan(m)}/${LANGKAH.length} langkah</span></h3>
+      <h3>${m.ikon} ${esc(m.judul)} <span class="redup kecil">· ${kemajuan(m)}/${LANGKAH.length} langkah</span>${st.uji.length ? `<button type="button" class="tombol kecil no-print tombol-presentasi" data-presentasi="${m.id}">🎤 Presentasi</button>` : ''}</h3>
       ${t ? `<p><b>Rancangan terbaik:</b> uji ke-${t.no}, memenuhi ${t.lulus}/${t.total} kriteria (${m.variabel.map(v => `${v.label.toLowerCase()} ${tampilVar(v, t.v[v.id])}`).join(', ')}).</p>` : ''}
       ${st.nyata && st.nyata.uji.length ? `<div class="porto-nyata"><p><b>🔧 Prototipe nyata:</b> ${st.nyata.uji.length} kali uji.</p>${htmlTabelNyata(m, st).replace(/<td><button[^>]*data-hapus-nyata[^>]*>.*?<\/button><\/td>/g, '<td></td>')}</div>` : ''}
       ${LANGKAH.map(L => {
@@ -866,6 +994,7 @@ function halPortofolio() {
   <p class="kredit-cetak">NalarSTEM · Dikembangkan oleh PakBay07 — spentribes</p>
   <div class="no-print zona-bahaya"><button class="tombol bahaya" id="bReset">Hapus semua data belajarku</button></div>`;
   gambarRadar($('#radar'), rata);
+  $$('[data-presentasi]').forEach(b => b.onclick = () => bukaPresentasi(MISI.find(m => m.id === b.dataset.presentasi), ms(b.dataset.presentasi)));
   $('#bSalin').onclick = () => {
     const teks = [`Portofolio NalarSTEM — ${S.profil.nama || '(tanpa nama)'} ${S.profil.kelas || ''}`,
       ...INDIKATOR.map(i => `${i.nama}: ${rata[i.id] ? bulat(rata[i.id], 1) : '-'}`),

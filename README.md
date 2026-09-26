@@ -18,12 +18,13 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
   11. Pengangkat Karung Garam — pesawat sederhana: tuas jenis 1 & katrol/takal, keuntungan mekanis, usaha & efisiensi (kelas 8)
   12. Proyektor HP dari Kardus — cermin & lensa: 1/f = 1/s + 1/s', bayangan nyata/maya, perbesaran, ketajaman, kecerahan, diagram sinar (kelas 8)
   13. Sasando Mini dari Kardus — getaran, gelombang & bunyi: hukum Mersenne, frekuensi vs amplitudo, resonansi, nada dibunyikan via Web Audio (kelas 8)
-- **Langkah 7 "Wujudkan di Dunia Nyata"** di setiap misi: alat & bahan, cek keselamatan wajib (langkah kerja terkunci sampai semua dicentang), langkah kerja, takaran praktis dihitung dari uji terbaik di simulasi, tabel data uji nyata + foto (dikompres, localStorage), selisih otomatis terhadap prediksi simulasi, tombol "Ada masalah?" ke Kak Nala (keselamatan didahulukan). Data di `NYATA` (js/data.js).
+- **Langkah 7 "Wujudkan di Dunia Nyata"** di setiap misi: alat & bahan, cek keselamatan wajib (langkah kerja terkunci sampai semua dicentang), **rencana langkah kerja yang disusun murid bersama Kak Nala** (murid menulis/mengurutkan langkahnya sendiri; Kak Nala meninjau keselamatan, takaran, pengukuran & keadilan uji lalu memberi maks. 4 saran tambah/ubah/hapus beralasan yang bisa diterima/diabaikan satu per satu; ada peninjau lokal bila AI mati), takaran praktis dihitung dari uji terbaik di simulasi, tabel data uji nyata + foto (dikompres, localStorage), selisih otomatis terhadap prediksi simulasi, tombol "Ada masalah?" ke Kak Nala (keselamatan didahulukan). Data di `NYATA` (js/data.js).
 - **Laboratorium maya** (Canvas 2D) + tabel data + grafik pilih-sumbu + **detektor uji adil**
   (menandai uji yang mengubah >1 variabel) + kolom **prediksi sebelum menguji**.
 - **Lembar kerja** tiap langkah, dinilai AI dengan rubrik 1–4 pada 6 indikator Facione
   (Interpretasi, Analisis, Inferensi, Evaluasi, Eksplanasi, Regulasi Diri).
 - **Uji Nalar** — 21 soal literasi sains/berpikir kritis + pembahasan + diskusi dengan Kak Nala.
+- **Mode presentasi** (js/presentasi.js) — salindia 16:9 otomatis dari data murid (judul & kelompok, masalah, hipotesis, rancangan terbaik + gambar simulasi, data uji, rencana kerja ✨, hasil uji nyata vs simulasi, evaluasi, kesimpulan CER, penutup) dengan tips bicara per salindia, navigasi keyboard/geser, layar penuh, dan cetak/PDF satu salindia per halaman. Dibuka dari Langkah 7 atau Portofolio.
 - **Portofolio** — grafik radar indikator, ringkasan, jawaban lengkap, cetak/PDF.
 - **Panduan Guru** — sintaks, rubrik, catatan model.
 

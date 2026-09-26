@@ -201,6 +201,79 @@ async function penilaiMemori(langkah, isian, misi) {
   };
 }
 
+/* ---------------- Rencana kerja prototipe: ditinjau Kak Nala ---------------- */
+function promptSistemRencana(konteks) {
+  return `Kamu "Kak Nala", rekan perancang yang meninjau RENCANA LANGKAH KERJA murid SMP untuk membuat dan menguji prototipe nyata. Rencana itu milik murid — jangan menulis ulang seluruhnya.
+
+Tinjau apakah rencana: (1) AMAN — keselamatan selalu prioritas utama; (2) bisa dikerjakan dengan alat & bahan yang tersedia; (3) memakai takaran/ukuran yang jelas (angka); (4) mengukur hal yang dituntut kriteria keberhasilan; (5) menjaga uji adil (hanya satu variabel yang diubah) dan mengulang pengukuran; (6) membandingkan hasil nyata dengan prediksi simulasi.
+
+ATURAN:
+- Beri paling banyak 4 saran perubahan KECIL dan konkret, urutkan dari yang paling penting (keselamatan dulu).
+- Teks langkah yang disarankan berupa kalimat perintah singkat (maksimal 25 kata), Bahasa Indonesia sederhana.
+- Tiap saran wajib punya alasan singkat (konsep IPA, keselamatan, atau keadilan uji) yang ditulis kepada murid dengan kata "kamu".
+- Jika rencana masih kosong atau kurang dari 3 langkah, JANGAN menyusunkan semua langkah: beri 1–2 saran langkah awal saja dan pertanyaan yang memancing murid melanjutkan sendiri.
+- Jika rencana sudah baik, boleh memberi saran kosong dan cukup pujian + pertanyaan.
+- Jangan memakai LaTeX atau tanda dolar.
+
+KONTEKS:
+${konteks}
+
+Keluarkan HANYA JSON valid:
+{"pujian":"<1 kalimat hal baik dari rencana>","pertanyaan":["<pertanyaan pemantik 1>","<pertanyaan pemantik 2>"],"saran":[{"jenis":"tambah|ubah|hapus","no":<nomor langkah; untuk "tambah" = disisipkan SETELAH nomor ini, 0 = di paling awal>,"teks":"<teks langkah baru/hasil ubahan; kosong bila hapus>","alasan":"<alasan singkat>"}]}`;
+}
+
+async function tinjauRencana(konteks, rencana, misi) {
+  const daftar = rencana.length ? rencana.map((r, i) => `${i + 1}. ${r.teks}`).join('\n') : '(rencana masih kosong)';
+  try {
+    const teks = await panggilAI({ sistem: promptSistemRencana(konteks), riwayat: [{ peran: 'user', teks: `Rencana langkah kerja kami:\n${daftar}` }], json: true });
+    const j = JSON.parse(teks.replace(/^```(json)?|```$/g, '').trim());
+    const saran = (Array.isArray(j.saran) ? j.saran : []).filter(s => s && ['tambah', 'ubah', 'hapus'].includes(s.jenis))
+      .map(s => ({ jenis: s.jenis, no: jepit(Math.round(+s.no || 0), 0, rencana.length), teks: rapikanSaran(s.teks), alasan: rapikanSaran(s.alasan) }))
+      .filter(s => (s.jenis === 'hapus' ? s.no >= 1 : s.teks) && (s.jenis === 'tambah' || s.no >= 1)).slice(0, 4);
+    return { pujian: rapikanSaran(j.pujian), pertanyaan: (j.pertanyaan || []).map(rapikanSaran).filter(Boolean).slice(0, 3), saran, sumber: 'ai' };
+  } catch (e) {
+    const hasil = tinjauLokal(rencana, misi);
+    hasil.galat = e.message === 'LOKAL' ? '' : e.message;
+    return hasil;
+  }
+}
+function rapikanSaran(t) { return String(t || '').replace(/\$+/g, '').trim().slice(0, 300); }
+
+// Peninjau tanpa AI: memeriksa unsur penting rencana, lalu menyarankan langkah dari panduan misi.
+function tinjauLokal(rencana, misi) {
+  const N = NYATA[misi.id];
+  const semua = rencana.map(r => r.teks.toLowerCase()).join(' \n ');
+  const ada = re => re.test(semua);
+  const dariPanduan = (re, cadangan) => N.langkah.find(l => re.test(l.toLowerCase()) && !semua.includes(l.toLowerCase().slice(0, 25))) || cadangan;
+  const saran = [], pertanyaan = [];
+  if (!ada(/aman|guru|kacamata|pelindung|hati-hati|jauhkan|keselamatan|sarung tangan/)) {
+    saran.push({ jenis: 'tambah', no: 0, teks: `Periksa keselamatan bersama guru sebelum mulai: ${N.keselamatan[0]}`, alasan: 'Keselamatan selalu diperiksa paling awal, sebelum bahan mulai dirakit atau diuji.' });
+  }
+  if (rencana.length < 3) { // rencana baru dimulai: cukup satu contoh langkah, sisanya murid lanjutkan sendiri
+    saran.push({ jenis: 'tambah', no: rencana.length, teks: N.langkah[Math.min(rencana.length, N.langkah.length - 1)], alasan: 'Ini contoh langkah dari panduan. Coba lanjutkan langkah-langkah berikutnya dengan kata-katamu sendiri.' });
+    return {
+      pujian: rencana.length ? 'Kamu sudah mulai merencanakan. Rencana yang jelas membuat prototipe lebih aman dan hemat bahan.' : 'Ayo mulai! Rencana yang jelas membuat prototipe lebih aman dan hemat bahan.',
+      pertanyaan: ['Setelah alat siap, apa yang pertama kali kamu rakit, dan dengan ukuran berapa?', 'Bagaimana kamu akan mengukur apakah kriteria keberhasilan tercapai?'],
+      saran, sumber: 'lokal'
+    };
+  }
+  if (!ada(/ukur|catat|timbang|stopwatch|meteran|penggaris|tuner|termometer|hitung|amati/)) {
+    saran.push({ jenis: 'tambah', no: rencana.length, teks: dariPanduan(/\bukur\b/, null) || dariPanduan(/catat|hitung|amati/, `Ukur dan catat ${N.ukur.map(u => u.label.toLowerCase()).join(', ')}.`), alasan: 'Tanpa pengukuran, kamu tidak punya bukti apakah kriteria keberhasilan tercapai.' });
+  }
+  if (!ada(/ulang|kali|rata-rata/)) {
+    saran.push({ jenis: 'tambah', no: rencana.length, teks: 'Ulangi pengujian minimal 3 kali dengan cara yang sama, lalu hitung rata-ratanya.', alasan: 'Satu kali uji bisa kebetulan. Pengulangan membuat datamu lebih bisa dipercaya.' });
+  }
+  if (!ada(/banding|prediksi|simulasi/)) {
+    saran.push({ jenis: 'tambah', no: rencana.length, teks: 'Bandingkan hasil ukur dengan prediksi simulasi, lalu catat selisihnya.', alasan: 'Selisih hasil nyata dan simulasi menunjukkan faktor yang belum dihitung model.' });
+  }
+  if (rencana.length && !/\d/.test(semua)) pertanyaan.push('Berapa takaran atau ukuran yang kamu pakai? Lihat rencana takaran dari simulasi, lalu tuliskan angkanya di langkahmu.');
+  pertanyaan.push('Pada saat menguji, variabel apa yang kamu jaga tetap sama agar ujimu adil?');
+  return {
+    pujian: rencana.length >= 3 ? `Kamu sudah menyusun ${rencana.length} langkah dengan urutan sendiri — itu awal yang baik.` : 'Kamu sudah mulai merencanakan. Rencana yang jelas membuat prototipe lebih aman dan hemat bahan.',
+    pertanyaan: pertanyaan.slice(0, 3), saran: saran.slice(0, 4), sumber: 'lokal'
+  };
+}
+
 /* ---------------- Tutor & penilai lokal (tanpa AI) ---------------- */
 let konteksLokal = { langkah: null, misi: null, uji: [] };
 let giliranLokal = 0;
