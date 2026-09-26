@@ -97,6 +97,11 @@ Illustration of bright white salt ponds (tambak garam) in coastal East Java at m
 Illustration of a darkened Indonesian junior high classroom: students gather around a homemade projector made from a shoebox with a magnifying glass lens fixed on one end and a smartphone placed upside down inside; a bright cone of light travels from the lens to the wall, where a large sharp picture of a science video (a simple drawing of the solar system, no text) appears. One student holds a concave makeup mirror, another measures the distance with a tape measure. Warm, curious atmosphere.
 ```
 
+### `misi-bunyi.jpg` — Sasando Mini dari Kardus (misi ke-13)
+```
+Illustration of an Indonesian junior high classroom workshop: students build a simple string instrument inspired by the traditional sasando — a single fishing-line string stretched over a cardboard box with a round sound hole, two pencils as bridges, and the string running over the table edge to a hanging water bottle as a weight. One student plucks the string while visible sound wave rings spread from the box; another holds a smartphone showing a tuner needle centered (no text); a third measures string length with a ruler. A real sasando rests in the background. Warm, cheerful, musical atmosphere.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)

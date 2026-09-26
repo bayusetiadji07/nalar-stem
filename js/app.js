@@ -184,7 +184,7 @@ function halBeranda() {
 
 function halDaftarMisi() {
   APP.innerHTML = `<h1 class="judul-hal">Misi STEM</h1>
-  <p class="redup">Pilih satu misi. Setiap misi memuat 6 langkah dan laboratorium maya. Kerjakan berurutan — jawabanmu tersimpan otomatis.</p>
+  <p class="redup">Pilih satu misi. Setiap misi memuat ${LANGKAH.length} langkah dan laboratorium maya. Kerjakan berurutan — jawabanmu tersimpan otomatis.</p>
   <div class="grid-misi">${MISI.map(kartuMisi).join('')}</div>`;
 }
 
@@ -483,6 +483,7 @@ function htmlLab(m, st) {
           : `<label class="ctl"><span>${esc(v.label)}</span><select data-v="${v.id}">${opsiVar(v).map(o => `<option value="${o[0]}" ${o[0] === st.v[v.id] ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label>`).join('')}
         <label class="ctl"><span>Prediksimu sebelum menguji (opsional)</span><input id="prediksi" placeholder="Aku menduga hasilnya ..." maxlength="200"></label>
         <button class="tombol utama lebar" id="bUji">▶ Uji Rancangan</button>
+        ${SIM[m.id].suara ? '<button class="tombol lebar" id="bDengar" type="button">🔊 Dengarkan nada</button>' : ''}
         <p id="adilInfo" class="adil-info" hidden></p>
       </div>
       <div class="panggung-wrap">
@@ -565,6 +566,7 @@ function pasangLab(m, st) {
     const info = $('#adilInfo');
     if (sebelum && ubah.length === 0) { info.hidden = false; info.className = 'adil-info kuning'; info.textContent = 'Rancangan sama persis dengan uji sebelumnya. Ubah satu variabel dulu.'; return; }
     st.uji.push(uji); simpan();
+    if (sim.suara) { try { sim.suara(st.v, h); } catch (e) { /* audio tidak tersedia */ } }
     info.hidden = false;
     if (!sebelum) { info.className = 'adil-info'; info.textContent = 'Uji pertama tercatat sebagai data awal (pembanding).'; }
     else if (uji.adil) { info.className = 'adil-info hijau'; info.textContent = `✔ Uji adil: kamu hanya mengubah ${ubah[0]}.`; }
@@ -591,6 +593,8 @@ function pasangLab(m, st) {
     };
     anim = requestAnimationFrame(langkahAnim);
   };
+  const bDengar = $('#bDengar');
+  if (bDengar) bDengar.onclick = () => { try { sim.suara(st.v, sim.hitung(st.v)); } catch (e) { toast('Suara tidak dapat diputar di perangkat ini', 'peringatan'); } };
   pasangHapusUji(m, st);
   pasangGrafik(m, st);
   const ukur = () => { cancelAnimationFrame(anim); gambar(samaDenganTerakhir() ? 1 : 0); gambarGrafik(m, st); };

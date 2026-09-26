@@ -1840,7 +1840,146 @@ function gambarOptik(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   13. GETARAN & GELOMBANG BUNYI — senar alat musik petik
+   Hukum Mersenne: f = (1 / 2L) · √(T / μ). Tegangan T dari botol air yang digantung.
+   Kenyaringan dipengaruhi amplitudo petikan & kotak resonansi — BUKAN tinggi nada.
+   --------------------------------------------------------- */
+const SENAR_BUNYI = {
+  karet: { nama: 'Karet gelang', mu: 0.0012, putus: 15, db: -8, harga: 1000, warna: '#b45309' },
+  nilon: { nama: 'Senar pancing nilon 0,5 mm', mu: 2.24e-4, putus: 60, db: 0, harga: 5000, warna: '#e2e8f0' },
+  baja:  { nama: 'Senar baja 0,3 mm', mu: 5.55e-4, putus: 100, db: 3, harga: 8000, warna: '#94a3b8' }
+};
+const RESONATOR = { tanpa: { nama: 'Papan tanpa kotak', db: 0, harga: 2000 }, kaleng: { nama: 'Kaleng bekas', db: 6, harga: 3000 }, kardus: { nama: 'Kotak kardus', db: 10, harga: 2000 } };
+const NAMA_NADA = [['C', 'do'], ['C#', 'di'], ['D', 're'], ['D#', 'ri'], ['E', 'mi'], ['F', 'fa'], ['F#', 'fi'], ['G', 'sol'], ['G#', 'sel'], ['A', 'la'], ['A#', 'li'], ['B', 'si']];
+const FREK_TARGET = 440;
+
+function namaNada(f) {
+  if (!(f > 0)) return '—';
+  const n = Math.round(12 * Math.log2(f / 440)) + 57; // 57 = A4
+  const [nm, sol] = NAMA_NADA[((n % 12) + 12) % 12];
+  return `${nm}${Math.floor(n / 12)} (${sol})`;
+}
+
+function hitungBunyi(v) {
+  const S = SENAR_BUNYI[v.senar], R = RESONATOR[v.resonator];
+  const L = +v.panjang / 100, T = +v.beban * 9.8;
+  const putus = T > S.putus;
+  const vGel = Math.sqrt(T / S.mu);               // cepat rambat gelombang di senar (m/s)
+  const f = putus ? 0 : vGel / (2 * L);
+  const db = putus ? 0 : (v.petikan === 'kuat' ? 62 : 50) + R.db + S.db + 5 * Math.log10(Math.max(T, 0.5) / 20);
+  const selisih = f - FREK_TARGET;
+  const sen = f > 0 ? 1200 * Math.log2(f / FREK_TARGET) : 0;
+  return {
+    frekuensi: bulat(f, 1), nada: namaNada(f), selisih: bulat(selisih, 1),
+    periode: f > 0 ? bulat(1000 / f, 2) : 0, cepatRambat: Math.round(vGel), lambdaSenar: bulat(2 * L, 2),
+    lambdaUdara: f > 0 ? bulat(340 / f, 2) : 0, nyaring: Math.round(db), tegangan: bulat(T, 1),
+    status: putus ? 'Senar PUTUS' : Math.abs(selisih) <= 5 ? 'Nada pas' : selisih > 0 ? 'Terlalu tinggi' : 'Terlalu rendah',
+    biaya: S.harga + R.harga + 3000,
+    _putus: putus, _sen: sen, _S: S, _R: R
+  };
+}
+
+function kriteriaBunyi(v, h) {
+  return [
+    { teks: 'Nada A (440 Hz), selisih ≤ 5 Hz', lulus: !h._putus && Math.abs(h.selisih) <= 5, nilai: h._putus ? 'senar putus' : `${h.frekuensi} Hz (${h.nada})` },
+    { teks: 'Cukup nyaring (≥ 65 dB pada jarak 1 m)', lulus: h.nyaring >= 65, nilai: `${h.nyaring} dB` },
+    { teks: 'Senar tidak putus', lulus: !h._putus, nilai: `tegangan ${h.tegangan} N (batas ${h._S.putus} N)` },
+    { teks: 'Biaya ≤ Rp 15.000', lulus: h.biaya <= 15000, nilai: rp(h.biaya) }
+  ];
+}
+
+// Membunyikan nada petikan (dipanggil setelah murid menekan tombol Uji)
+let konteksAudio = null;
+function suaraBunyi(v, h) {
+  if (h._putus || !(h.frekuensi > 0) || typeof window === 'undefined') return;
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  konteksAudio = konteksAudio || new AC();
+  const ac = konteksAudio, t0 = ac.currentTime + 0.05;
+  const keras = jepit((h.nyaring - 40) / 40, 0.05, 0.6);
+  const g = ac.createGain(); g.connect(ac.destination);
+  g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(keras, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + (v.senar === 'karet' ? 0.6 : 1.8));
+  [[1, 1], [2, 0.35], [3, 0.15]].forEach(([k, a]) => { // nada dasar + harmonik
+    const o = ac.createOscillator(), ga = ac.createGain(); o.type = 'sine'; o.frequency.value = Math.min(h.frekuensi * k, 8000); ga.gain.value = a;
+    o.connect(ga); ga.connect(g); o.start(t0); o.stop(t0 + 2);
+  });
+}
+
+function gambarBunyi(ctx, W, H, v, h, p) {
+  ctx.fillStyle = '#fef3c7'; ctx.fillRect(0, 0, W, H);
+  const S = h._S, meja = H * 0.72;
+  ctx.fillStyle = '#a16207'; ctx.fillRect(0, meja, W, H - meja);
+  // kotak resonansi
+  const kiri = W * 0.06, lebarMaks = W * 0.56, Lpx = lebarMaks * (+v.panjang / 60);
+  const kx = kiri, ky = meja - 70, kw = lebarMaks + 30;
+  if (v.resonator === 'kardus') { ctx.fillStyle = '#c8a26b'; ctx.fillRect(kx, ky, kw, 70); ctx.fillStyle = '#3f2a14'; ctx.beginPath(); ctx.arc(kx + kw * 0.55, ky + 38, 16, 0, 7); ctx.fill(); }
+  else if (v.resonator === 'kaleng') { ctx.fillStyle = '#cbd5e1'; ctx.fillRect(kx, ky + 20, kw, 50); ctx.strokeStyle = '#94a3b8'; for (let y = ky + 26; y < ky + 70; y += 8) { ctx.beginPath(); ctx.moveTo(kx, y); ctx.lineTo(kx + kw, y); ctx.stroke(); } }
+  else { ctx.fillStyle = '#92400e'; ctx.fillRect(kx, ky + 56, kw, 14); }
+  // jembatan senar & katrol
+  const yS = v.resonator === 'tanpa' ? ky + 44 : ky - 6, x1 = kx + 14, x2 = x1 + Lpx;
+  ctx.fillStyle = '#1f2937'; [x1, x2].forEach(x => { ctx.beginPath(); ctx.moveTo(x - 6, yS + 10); ctx.lineTo(x, yS); ctx.lineTo(x + 6, yS + 10); ctx.fill(); });
+  const katrolX = kx + kw + 22; ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.arc(katrolX, yS + 8, 9, 0, 7); ctx.fill();
+  // botol beban
+  const botH = 20 + Math.min(60, +v.beban * 10), botY = meja + 8;
+  ctx.strokeStyle = S.warna === '#e2e8f0' ? '#cbd5e1' : S.warna; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(katrolX + 9, yS + 8); ctx.lineTo(katrolX + 9, botY); ctx.stroke();
+  ctx.fillStyle = 'rgba(56,189,248,.7)'; kotakBulat(ctx, katrolX - 2, botY, 22, botH, 5); ctx.fill(); ctx.strokeStyle = '#0369a1'; ctx.stroke();
+  label(ctx, `${fx(+v.beban, 2)} kg`, katrolX + 9, botY + botH + 12, { rata: 'center', ukuran: 10, warna: '#fff', latar: 'rgba(3,105,161,.8)' });
+  // senar bergetar (gelombang berdiri, amplitudo meluruh)
+  const petik = p > 0.12, luruh = petik ? Math.exp(-(p - 0.12) * (v.senar === 'karet' ? 6 : 2.2)) : 0;
+  const amp = (v.petikan === 'kuat' ? 12 : 6) * luruh;
+  const fase = p * 60 * Math.max(0.3, Math.min(3, h.frekuensi / 300));
+  if (h._putus && petik) {
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(x1, yS); ctx.quadraticCurveTo(x1 + Lpx * 0.25, yS - 30, x1 + Lpx * 0.35, yS + 20); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(katrolX, yS); ctx.quadraticCurveTo(x2 + 10, yS - 20, x2 - Lpx * 0.3, yS + 26); ctx.stroke();
+    label(ctx, 'SENAR PUTUS!', (x1 + x2) / 2, yS - 34, { rata: 'center', tebal: true, warna: '#fff', latar: '#dc2626' });
+  } else {
+    ctx.strokeStyle = S.warna === '#e2e8f0' ? '#64748b' : S.warna; ctx.lineWidth = v.senar === 'karet' ? 3 : 1.6;
+    ctx.beginPath();
+    for (let k = 0; k <= 60; k++) { const u = k / 60; ctx.lineTo(x1 + u * Lpx, yS - amp * Math.sin(Math.PI * u) * Math.cos(fase)); }
+    ctx.lineTo(katrolX, yS); ctx.stroke();
+    if (petik && amp > 0.5) label(ctx, 'perut', (x1 + x2) / 2, yS - 22, { rata: 'center', ukuran: 9, warna: '#92400e' });
+  }
+  label(ctx, `L = ${v.panjang} cm`, (x1 + x2) / 2, yS + 22, { rata: 'center', ukuran: 10, warna: '#78350f', latar: 'rgba(255,255,255,.8)' });
+  // gelombang bunyi memancar dari kotak
+  if (petik && !h._putus) {
+    const kuat = jepit((h.nyaring - 45) / 30, 0.1, 1) * luruh;
+    const sela = jepit(h.lambdaUdara * 30, 10, 40);
+    for (let k = 0; k < 6; k++) {
+      const r = ((p * 200) % sela) + k * sela;
+      ctx.strokeStyle = `rgba(234,88,12,${kuat * (1 - k / 6)})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(kx + kw * 0.55, ky + 30, 20 + r, -Math.PI * 0.95, -Math.PI * 0.05); ctx.stroke();
+    }
+  }
+  // osiloskop: gelombang senar vs nada acuan 440 Hz
+  const ox = W * 0.68, oy = 14, ow = W * 0.3, oh = H * 0.36;
+  ctx.fillStyle = '#0f172a'; kotakBulat(ctx, ox, oy, ow, oh, 8); ctx.fill();
+  ctx.strokeStyle = 'rgba(148,163,184,.25)'; ctx.lineWidth = 1; for (let k = 1; k < 5; k++) { ctx.beginPath(); ctx.moveTo(ox + ow * k / 5, oy); ctx.lineTo(ox + ow * k / 5, oy + oh); ctx.stroke(); }
+  const jendela = 0.01; // 10 ms
+  const gelombang = (f, warna, a, garis) => { ctx.strokeStyle = warna; ctx.lineWidth = 1.8; if (garis) ctx.setLineDash([4, 3]); ctx.beginPath(); for (let k = 0; k <= 120; k++) { const t = k / 120 * jendela; ctx.lineTo(ox + ow * k / 120, oy + oh / 2 - a * Math.sin(2 * Math.PI * f * t)); } ctx.stroke(); ctx.setLineDash([]); };
+  gelombang(FREK_TARGET, 'rgba(148,163,184,.6)', oh * 0.3, true);
+  if (petik && !h._putus) gelombang(h.frekuensi, '#4ade80', oh * 0.38 * Math.max(0.15, luruh) * (v.petikan === 'kuat' ? 1 : 0.55), false);
+  label(ctx, 'osiloskop · 10 ms', ox + 6, oy + 10, { ukuran: 9, warna: '#94a3b8' });
+  label(ctx, '- - acuan 440 Hz', ox + ow - 6, oy + oh - 9, { rata: 'right', ukuran: 9, warna: '#94a3b8' });
+  // penala (tuner)
+  const tx = ox + ow / 2, ty = oy + oh + 64, tr = 44;
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 6; ctx.beginPath(); ctx.arc(tx, ty, tr, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke();
+  ctx.strokeStyle = '#16a34a'; ctx.beginPath(); ctx.arc(tx, ty, tr, Math.PI * 1.47, Math.PI * 1.53); ctx.stroke();
+  if (petik && !h._putus) {
+    const a = -Math.PI / 2 + jepit(h._sen / 100, -1, 1) * 0.35 * Math.PI;
+    ctx.strokeStyle = Math.abs(h.selisih) <= 5 ? '#16a34a' : '#dc2626'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(tx + Math.cos(a) * (tr - 6), ty + Math.sin(a) * (tr - 6)); ctx.stroke();
+  }
+  label(ctx, petik && !h._putus ? `${h.nada} · ${fx(h.frekuensi)} Hz` : 'penala', tx, ty + 14, { rata: 'center', ukuran: 11, tebal: true, warna: '#0f172a' });
+  if (p >= 1) {
+    const ok = !h._putus && Math.abs(h.selisih) <= 5 && h.nyaring >= 65;
+    const teks = h._putus ? `Senar putus — tegangan ${h.tegangan} N melebihi batas ${S.putus} N` : `${h.status} · ${fx(h.frekuensi)} Hz (${h.nada}) · ${h.nyaring} dB`;
+    label(ctx, teks, W / 2, H - 14, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: ok ? '#15803d' : h._putus ? '#b91c1c' : '#b45309' });
+  }
+}
+
 const SIM = {
+  bunyi: { hitung: hitungBunyi, kriteria: kriteriaBunyi, gambar: gambarBunyi, suara: suaraBunyi, sumbuX: ['panjang', 'beban'], sumbuY: ['frekuensi', 'nyaring', 'periode', 'cepatRambat'] },
   optik: { hitung: hitungOptik, kriteria: kriteriaOptik, gambar: gambarOptik, sumbuX: ['jarakBenda', 'fokus', 'jarakLayar', 'diameter'], sumbuY: ['lebar', 'tajam', 'terang', 'bayangan'] },
   pesawat: { hitung: hitungPesawat, kriteria: kriteriaPesawat, gambar: gambarPesawat, sumbuX: ['massa', 'panjangTuas', 'lenganBeban'], sumbuY: ['gaya', 'kmNyata', 'efisiensi', 'jarak', 'usahaKuasa'] },
   magnet: { hitung: hitungMagnet, kriteria: kriteriaMagnet, gambar: gambarMagnet, sumbuX: ['lilitan', 'baterai'], sumbuY: ['angkat', 'arus', 'panas', 'medan', 'tahan'] },

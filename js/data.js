@@ -724,6 +724,54 @@ const NYATA = {
       { gejala: 'Gambar terbalik atau tulisan terbalik', kunci: 'terbalik|kebalik', petunjuk: ['Bagaimana sifat bayangan nyata dari lensa cembung — tegak atau terbalik?', 'Apa yang terjadi jika HP diputar 180° sebelum diproyeksikan?'] },
       { gejala: 'Gambar terlalu redup', kunci: 'redup|gelap|tidak terang', petunjuk: ['Apakah ruangan sudah cukup gelap dan kecerahan HP maksimum?', 'Menurut simulasi, bagaimana ukuran gambar dan diameter lensa memengaruhi kecerahan?'] }
     ]
+  },
+  bunyi: {
+    waktu: '2 × 40 menit',
+    alat: [
+      'Kotak kardus (lubangi bagian atasnya ± 5 cm) atau kaleng bekas sebagai kotak resonansi',
+      'Senar: senar pancing nilon 0,5 mm, senar gitar baja, atau karet gelang',
+      'Dua pensil sebagai jembatan (bridge) penentu panjang senar yang bergetar',
+      'Botol air mineral + air sebagai beban penegang (1 liter air ≈ 1 kg), tali pengait',
+      'Tepi meja yang licin atau katrol kecil tempat senar melintas ke bawah',
+      'Penggaris/meteran, timbangan',
+      'HP dengan aplikasi penyetel nada (tuner) dan pengukur desibel (sound meter)'
+    ],
+    keselamatan: [
+      'Senar yang tegang bisa putus dan terlempar: jauhkan wajah dari senar dan pakai kacamata pelindung bila ada.',
+      'Gantung botol beban di tempat yang aman — jangan di atas kaki atau kepala, dan pastikan ikatannya kuat.',
+      'Jangan menambah beban melebihi rancangan; senar nilon dan karet bisa putus tiba-tiba.',
+      'Jangan membunyikan terlalu keras atau terlalu dekat dengan telinga orang lain.',
+      'Ujung senar baja tajam — lipat atau tutup dengan selotip.'
+    ],
+    langkah: [
+      'Ikat salah satu ujung senar ke ujung kotak. Bentangkan senar di atas kotak, lewatkan ke tepi meja/katrol, lalu ikat ke botol beban.',
+      'Isi botol dengan air sesuai massa beban rancangan (timbang agar tepat).',
+      'Letakkan dua pensil di bawah senar sebagai jembatan. Atur jaraknya sesuai panjang senar rancangan.',
+      'Petik senar di tengah-tengah jembatan. Ukur frekuensinya dengan aplikasi tuner di HP (dekatkan HP ± 20 cm).',
+      'Setel halus: geser salah satu pensil sedikit demi sedikit sampai tuner menunjukkan 440 Hz (A4).',
+      'Ukur kenyaringan dengan aplikasi desibel pada jarak 1 m. Bandingkan petikan pelan dan kuat — apakah frekuensinya berubah?',
+      'Ulangi dengan kotak resonansi berbeda (tanpa kotak, kaleng, kardus) dan catat perbedaannya.'
+    ],
+    takaran: v => {
+      const h = hitungBunyi(v);
+      return [
+        `${SENAR_BUNYI[v.senar].nama}, panjang bergetar ${v.panjang} cm (jarak antara dua pensil).`,
+        `Beban penegang: botol berisi ± ${fxd(+v.beban, 2)} liter air (${fxd(+v.beban, 2)} kg → tegangan ± ${fxd(h.tegangan, 1)} N).`,
+        `${RESONATOR[v.resonator].nama}; dipetik ${v.petikan}.`,
+        h._putus ? 'Prediksi: senar PUTUS — kurangi beban dulu di simulasi!' : `Prediksi simulasi: ${fxd(h.frekuensi)} Hz (${h.nada}), ± ${h.nyaring} dB. Bila tuner menunjukkan nada terlalu tinggi, geser pensil sedikit agar senar lebih panjang.`
+      ];
+    },
+    ukur: [
+      { id: 'frekuensi', label: 'Frekuensi terukur (tuner)', satuan: 'Hz', sim: 'frekuensi' },
+      { id: 'nyaring', label: 'Kenyaringan pada 1 m', satuan: 'dB', sim: 'nyaring' },
+      { id: 'panjang', label: 'Panjang senar saat tepat 440 Hz', satuan: 'cm' }
+    ],
+    masalah: [
+      { gejala: 'Nada berubah-ubah / tidak stabil', kunci: 'berubah|tidak stabil|naik turun|goyang', petunjuk: ['Apakah botol beban berayun? Bagaimana ayunan memengaruhi tegangan senar?', 'Apakah senar karet memanjang sendiri saat ditarik lama?'] },
+      { gejala: 'Bunyi terlalu pelan', kunci: 'pelan|lemah|kecil|tidak terdengar', petunjuk: ['Apakah senar menempel pada kotak resonansi? Adakah lubang pada kotak?', 'Faktor mana yang memengaruhi kenyaringan tetapi tidak mengubah nada?'] },
+      { gejala: 'Senar putus', kunci: 'putus|lepas|patah', petunjuk: ['KESELAMATAN DULU: jauhkan wajah dan periksa apakah ada yang terkena pantulan senar.', 'Setelah aman: berapa tegangan yang kamu berikan dibanding batas kekuatan senar? Bagaimana mencapai nada yang sama dengan tegangan lebih kecil?'] },
+      { gejala: 'Tuner di HP tidak membaca nada', kunci: 'tuner|tidak terbaca|tidak membaca|hp', petunjuk: ['Apakah ruangan cukup sepi? Coba dekatkan HP ke kotak.', 'Petik sekali dengan kuat lalu biarkan berbunyi — apakah tuner membaca saat bunyi paling jelas?'] }
+    ]
   }
 };
 
@@ -1213,6 +1261,47 @@ const MISI = [
       { id: 'arah', label: 'Arah gambar di dinding', satuan: '' },
       { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'bunyi',
+    judul: 'Sasando Mini dari Kardus',
+    ikon: '🎸',
+    kelas: 'Kelas 8 · Getaran, Gelombang & Bunyi',
+    warna: '#c2410c',
+    ringkas: 'Setel senar alat musik petik buatanmu agar berbunyi tepat pada nada A (440 Hz) dan cukup nyaring untuk pentas.',
+    kisah: 'Untuk pentas seni sekolah, kelompokmu membuat <b>alat musik petik sederhana</b> terinspirasi <b>sasando</b>: senar dibentangkan di atas kotak, lalu ditegangkan dengan <b>botol air yang digantung</b>. Agar bisa dimainkan bersama alat musik lain, senar harus berbunyi tepat pada nada <b>A = 440 Hz</b> (selisih paling banyak 5 Hz), <b>cukup nyaring</b> (≥ 65 dB), dan <b>senarnya tidak putus</b>.',
+    kriteria: [
+      'Nada A (440 Hz), selisih paling banyak 5 Hz',
+      'Cukup nyaring: minimal 65 dB pada jarak 1 m',
+      'Senar tidak putus'
+    ],
+    kendala: ['Biaya paling banyak Rp 15.000', 'Panjang senar paling panjang 60 cm (muat di kotak)'],
+    konsep: `
+      <p><b>Bunyi</b> berasal dari benda yang <b>bergetar</b>. Getaran merambat melalui udara sebagai <b>gelombang longitudinal</b> sampai ke telinga.</p>
+      <p><b>Frekuensi (f)</b> adalah banyaknya getaran tiap sekon (hertz). Frekuensi menentukan <b>tinggi rendahnya nada</b>. <b>Amplitudo</b> (simpangan terjauh) menentukan <b>kuat lemahnya (kenyaringan) bunyi</b>. Periode T = 1/f.</p>
+      <p class="rumus">Hukum Mersenne: f = (1 / 2L) × √(T / μ) &nbsp;·&nbsp; cepat rambat v = λ × f</p>
+      <p>Nada senar makin <b>tinggi</b> bila senar makin <b>pendek</b> (L kecil), makin <b>tegang</b> (T besar), atau makin <b>ringan/tipis</b> (μ kecil, massa per meter).</p>
+      <p>Senar yang dipetik membentuk <b>gelombang berdiri</b>: ujungnya diam (simpul), tengahnya bergetar paling besar (perut). Panjang gelombang nada dasarnya λ = 2L.</p>
+      <p><b>Resonansi:</b> kotak kardus ikut bergetar bersama senar dan udara di dalamnya, sehingga bunyinya lebih nyaring — tetapi tidak mengubah tinggi nada.</p>
+      <p class="peringatan">⚠️ Senar yang sangat tegang bisa putus dan terlempar. Jauhkan wajah dari senar dan jangan membunyikan terlalu keras di dekat telinga.</p>`,
+    kataKunci: ['getaran', 'gelombang', 'frekuensi', 'amplitudo', 'nada', 'hertz', 'periode', 'resonansi', 'mersenne', 'tegangan', 'panjang senar', 'kenyaringan', 'desibel', 'bunyi', 'cepat rambat'],
+    variabel: [
+      { id: 'senar', label: 'Jenis senar', tipe: 'select', awal: 'karet', opsi: [['karet', 'Karet gelang'], ['nilon', 'Senar pancing nilon 0,5 mm'], ['baja', 'Senar baja 0,3 mm']] },
+      { id: 'panjang', label: 'Panjang senar bergetar', tipe: 'range', min: 20, max: 60, step: 1, satuan: 'cm', awal: 40 },
+      { id: 'beban', label: 'Massa botol air (penegang)', tipe: 'range', min: 0.5, max: 10, step: 0.25, satuan: 'kg', awal: 1 },
+      { id: 'resonator', label: 'Kotak resonansi', tipe: 'select', awal: 'tanpa', opsi: [['tanpa', 'Papan tanpa kotak'], ['kaleng', 'Kaleng bekas'], ['kardus', 'Kotak kardus berlubang']] },
+      { id: 'petikan', label: 'Cara memetik', tipe: 'select', awal: 'pelan', opsi: [['pelan', 'Dipetik pelan'], ['kuat', 'Dipetik kuat']] }
+    ],
+    keluaran: [
+      { id: 'frekuensi', label: 'Frekuensi', satuan: 'Hz' },
+      { id: 'nada', label: 'Nada terdekat', satuan: '' },
+      { id: 'selisih', label: 'Selisih dari 440 Hz', satuan: 'Hz' },
+      { id: 'nyaring', label: 'Kenyaringan (1 m)', satuan: 'dB' },
+      { id: 'periode', label: 'Periode', satuan: 'ms' },
+      { id: 'cepatRambat', label: 'Cepat rambat gelombang di senar', satuan: 'm/s' },
+      { id: 'lambdaUdara', label: 'Panjang gelombang bunyi di udara', satuan: 'm' },
+      { id: 'status', label: 'Hasil', satuan: '' }
+    ]
   }
 ];
 
@@ -1440,5 +1529,16 @@ const UJI_NALAR = [
       'Benar, asalkan lensanya bersih.'
     ],
     bahas: 'Kata "selalu" dalam sebuah klaim perlu diuji. Sifat bayangan lensa cembung berubah-ubah menurut posisi benda: di dalam fokus → maya, tegak, diperbesar (lup); antara f dan 2f → nyata, terbalik, diperbesar (proyektor); lebih dari 2f → nyata, terbalik, diperkecil (kamera).'
+  },
+  {
+    ind: 'analisis',
+    soal: 'Raka memetik senar gitar lebih keras, lalu berkata, "Nadanya jadi lebih tinggi." Penyetel nada (tuner) di HP menunjukkan frekuensinya tetap 440 Hz. Penjelasan yang paling tepat adalah …',
+    opsi: [
+      'Memetik lebih keras memperbesar amplitudo sehingga bunyi lebih nyaring, tetapi frekuensi (tinggi nada) ditentukan panjang, tegangan, dan jenis senar — yang tidak berubah.',
+      'Tuner-nya rusak, karena petikan keras pasti menaikkan nada.',
+      'Memetik lebih keras menambah panjang senar sehingga nadanya naik.',
+      'Nada naik tetapi frekuensinya tetap, karena nada tidak berhubungan dengan frekuensi.'
+    ],
+    bahas: 'Analisis membedakan dua besaran yang sering tertukar: amplitudo (kenyaringan) dan frekuensi (tinggi nada). Bukti alat ukur (tuner) lebih kuat daripada kesan pendengaran — telinga kadang mengira bunyi yang lebih keras terdengar lebih tinggi.'
   }
 ];
