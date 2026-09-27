@@ -2004,7 +2004,175 @@ function gambarBunyi(ctx, W, H, v, h, p) {
   }
 }
 
+/* ---------------------------------------------------------
+   14. RUMAH ANTI GEMPA — miniatur kardus di atas meja getar
+   Rumah = sistem pegas–massa (1 derajat kebebasan): k = kekakuan lantai / jumlah lantai,
+   m = (kardus + beban uji 250 g) × lantai + atap.  Frekuensi alami fn = (1/2π)·√(k/m).
+   Meja getar 3 Hz, amplitudo A.  Penguatan dinamis DAF = 1/√((1−r²)² + (2ζr)²), r = 3/fn
+   → resonansi bila fn ≈ 3 Hz.  Fondasi isolasi meredam percepatan yang masuk (transmisibilitas T).
+   Simpangan atap x = A·r²·DAF·T ; gaya geser V = m·(2πfn)²·x dibanding kekuatan sambungan.
+   --------------------------------------------------------- */
+const PENGAKU_GEMPA = {
+  tanpa:   { nama: 'Tanpa pengaku', k: 150, kuat: 0.5, harga: 0 },
+  silang:  { nama: 'Bresing silang (tusuk sate)', k: 900, kuat: 1.4, harga: 1500 },
+  dinding: { nama: 'Dinding geser (kardus dobel)', k: 2200, kuat: 2, harga: 3000 }
+};
+const SAMBUNGAN_GEMPA = {
+  selotip: { nama: 'Selotip', k: 0.7, kuat: 4, harga: 2000 },
+  lem:     { nama: 'Lem kertas', k: 1, kuat: 7, harga: 3000 },
+  pasak:   { nama: 'Lem + pasak tusuk sate', k: 1.25, kuat: 11, harga: 5000 }
+};
+const FONDASI_GEMPA = {
+  tempel:   { nama: 'Ditempel langsung ke meja', f: 0, z: 0, geser: 0, harga: 0 },
+  karet:    { nama: 'Bantalan karet sandal', f: 1.3, z: 0.15, geser: 0.1, harga: 6000 },
+  kelereng: { nama: 'Kelereng di tutup botol', f: 0.6, z: 0.05, geser: 0.6, harga: 8000 }
+};
+const ATAP_GEMPA = { ringan: { nama: 'Ringan (seng/kertas)', m: 0.05, harga: 4000 }, berat: { nama: 'Berat (genteng tiruan)', m: 0.45, harga: 2000 } };
+const FREK_MEJA = 3, AMPLITUDO_UJI = 2, TINGGI_LANTAI = 0.15;
+
+function hitungGempa(v) {
+  const n = +v.lantai, P = PENGAKU_GEMPA[v.pengaku], Sb = SAMBUNGAN_GEMPA[v.sambungan], F = FONDASI_GEMPA[v.fondasi], At = ATAP_GEMPA[v.atap];
+  const A = +v.amplitudo / 100, wg = 2 * Math.PI * FREK_MEJA, pga = A * wg * wg;
+  const m = n * 0.25 + At.m, k = P.k * Sb.k / n;
+  const wn = Math.sqrt(k / m), fn = wn / (2 * Math.PI);
+  let T = 1;
+  if (F.f) { const r = FREK_MEJA / F.f; T = Math.sqrt(1 + (2 * F.z * r) ** 2) / Math.sqrt((1 - r * r) ** 2 + (2 * F.z * r) ** 2); }
+  const rs = FREK_MEJA / fn, zeta = 0.06;
+  const daf = 1 / Math.sqrt((1 - rs * rs) ** 2 + (2 * zeta * rs) ** 2);
+  const x = A * rs * rs * daf * T;                  // m, simpangan atap relatif terhadap dasar rumah
+  const drift = x / (n * TINGGI_LANTAI) * 100;      // % simpangan antar-lantai rata-rata
+  const V = m * wn * wn * x, C = Sb.kuat * P.kuat;  // N
+  const runtuh = drift > 4 || V > C, retak = !runtuh && (drift > 1.5 || V > 0.7 * C);
+  const geser = F.geser * +v.amplitudo;             // cm, pergeseran permanen (kelereng tak kembali ke tengah)
+  const biaya = n * 2000 + P.harga * n + Sb.harga + F.harga + At.harga + 2000;
+  return {
+    frekuensiAlami: bulat(fn, 2), penguatan: bulat(daf * T, 2), simpangan: bulat(x * 100, 2), drift: bulat(drift, 2),
+    gaya: bulat(V, 1), kekuatan: bulat(C, 1), geser: bulat(geser, 1), massa: bulat(m, 2), biaya,
+    status: runtuh ? 'RUNTUH' : retak ? 'Retak' : 'Aman',
+    _runtuh: runtuh, _retak: retak, _daf: daf, _T: T, _P: P, _Sb: Sb, _F: F, _At: At
+  };
+}
+
+function kriteriaGempa(v, h) {
+  const u = +v.amplitudo === AMPLITUDO_UJI ? h : hitungGempa({ ...v, amplitudo: AMPLITUDO_UJI }); // dinilai pada guncangan uji
+  return [
+    { teks: `Tidak runtuh pada guncangan uji ${AMPLITUDO_UJI} cm`, lulus: !u._runtuh, nilai: u._runtuh ? `runtuh (gaya ${u.gaya} N vs kuat ${u.kekuatan} N)` : 'berdiri' },
+    { teks: 'Tidak retak: simpangan antar-lantai ≤ 1,5%', lulus: !u._runtuh && !u._retak, nilai: `${u.drift}%` },
+    { teks: 'Tetap di atas fondasi: geser permanen ≤ 1 cm', lulus: u.geser <= 1, nilai: `${u.geser} cm` },
+    { teks: 'Rumah 2 lantai (sesuai kebutuhan warga)', lulus: +v.lantai === 2, nilai: `${v.lantai} lantai` },
+    { teks: 'Biaya ≤ Rp 25.000', lulus: u.biaya <= 25000, nilai: rp(u.biaya) }
+  ];
+}
+
+function gambarGempa(ctx, W, H, v, h, p) {
+  const n = +v.lantai, lantaiY = H - 34;
+  // ruang uji
+  const gr = ctx.createLinearGradient(0, 0, 0, lantaiY);
+  gr.addColorStop(0, '#e0f2fe'); gr.addColorStop(1, '#f8fafc');
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, W, lantaiY);
+  ctx.fillStyle = '#cbd5e1'; ctx.fillRect(0, lantaiY, W, H - lantaiY);
+  // gerak meja getar: bergetar setelah p > 0.08; visual diperlambat agar terlihat
+  const aktif = p > 0.08 && p < 0.97, t = (p - 0.08) * 9;
+  const skala = 7;                                        // px per cm
+  const gx = aktif ? Math.sin(2 * Math.PI * t) * +v.amplitudo * skala : 0;
+  const mejaY = lantaiY - 26, mejaX = W * 0.36;
+  ctx.fillStyle = '#475569'; ctx.fillRect(mejaX - 150, mejaY + 14, 20, 12); ctx.fillRect(mejaX + 130, mejaY + 14, 20, 12);
+  ctx.fillStyle = '#92400e'; kotakBulat(ctx, mejaX - 160 + gx, mejaY, 320, 14, 3); ctx.fill();
+  label(ctx, `meja getar ${FREK_MEJA} Hz · ${fx(+v.amplitudo, 2)} cm`, 12, 40, { ukuran: 10, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
+  if (aktif) { panah(ctx, mejaX + 170, mejaY + 7, mejaX + 170 + (gx > 0 ? 16 : -16), mejaY + 7, '#b45309', 2); }
+  // fondasi (isolasi) — rumah di atasnya ikut bergerak lebih kecil
+  const F = h._F, lebar = 110, bx = mejaX + gx;
+  let dasarX = bx, dasarY = mejaY;
+  const geserVisual = h.geser * skala * mulus(jepit((p - 0.2) / 0.7, 0, 1));
+  if (v.fondasi === 'karet') {
+    dasarX = mejaX + gx * h._T + geserVisual * (1 - p);
+    ctx.fillStyle = '#1f2937'; [-40, 0, 40].forEach(d => { ctx.beginPath(); ctx.moveTo(bx + d - 12, mejaY); ctx.lineTo(dasarX + d - 12, mejaY - 10); ctx.lineTo(dasarX + d + 12, mejaY - 10); ctx.lineTo(bx + d + 12, mejaY); ctx.fill(); });
+    dasarY = mejaY - 10;
+  } else if (v.fondasi === 'kelereng') {
+    dasarX = mejaX + gx * h._T + geserVisual;
+    ctx.fillStyle = '#e2e8f0'; ctx.strokeStyle = '#94a3b8';
+    [-40, 0, 40].forEach(d => { ctx.fillRect(bx + d - 12, mejaY - 4, 24, 4); ctx.fillStyle = '#38bdf8'; ctx.beginPath(); ctx.arc(dasarX + d, mejaY - 9, 5, 0, 7); ctx.fill(); ctx.fillStyle = '#e2e8f0'; });
+    dasarY = mejaY - 14;
+  }
+  ctx.fillStyle = '#78716c'; ctx.fillRect(dasarX - lebar / 2 - 8, dasarY - 6, lebar + 16, 6); // pelat dasar
+  // rumah: goyangan tiap lantai sebanding ketinggian (bentuk ragam geser)
+  const tinggiL = Math.min(62, (dasarY - 6 - 40) / (n + 0.8));
+  const fase = h._daf > 1 && FREK_MEJA / h.frekuensiAlami > 1 ? Math.PI : 0;
+  const ayun = aktif ? Math.sin(2 * Math.PI * t - fase) * Math.min(h.simpangan * skala * 1.2, 70) * jepit(t / 1.5, 0, 1) : 0;
+  const q = (h._runtuh ? mulus(jepit((p - 0.45) / 0.35, 0, 1)) : 0); // kemajuan runtuh
+  const titik = k => ({ x: dasarX + ayun * (k / n), y: dasarY - 6 - k * tinggiL });
+  const P = h._P;
+  for (let k = 0; k < n; k++) {
+    const a = titik(k), b = titik(k + 1);
+    // runtuh: lantai atas "ambruk" menumpuk, dinding miring
+    const miring = q * (k % 2 ? -0.35 : 0.45);
+    ctx.save();
+    ctx.translate(a.x, a.y + q * k * tinggiL * 0.75); ctx.rotate(miring * (k + 1) / n);
+    const dx = b.x - a.x, tL = tinggiL * (1 - q * 0.6);
+    const kiri = [-lebar / 2, 0], kanan = [lebar / 2, 0], kiriA = [-lebar / 2 + dx, -tL], kananA = [lebar / 2 + dx, -tL];
+    if (v.pengaku === 'dinding') { ctx.fillStyle = 'rgba(200,162,107,.9)'; ctx.beginPath(); ctx.moveTo(...kiri); ctx.lineTo(...kanan); ctx.lineTo(...kananA); ctx.lineTo(...kiriA); ctx.closePath(); ctx.fill(); }
+    else { ctx.fillStyle = 'rgba(214,190,150,.35)'; ctx.beginPath(); ctx.moveTo(...kiri); ctx.lineTo(...kanan); ctx.lineTo(...kananA); ctx.lineTo(...kiriA); ctx.closePath(); ctx.fill(); }
+    ctx.strokeStyle = '#a16207'; ctx.lineWidth = 5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(...kiri); ctx.lineTo(...kiriA); ctx.moveTo(...kanan); ctx.lineTo(...kananA); ctx.stroke(); // kolom
+    ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(...kiriA); ctx.lineTo(...kananA); ctx.stroke();                         // balok lantai
+    if (v.pengaku === 'silang') { ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(...kiri); ctx.lineTo(...kananA); ctx.moveTo(...kanan); ctx.lineTo(...kiriA); ctx.stroke(); }
+    // jendela
+    ctx.fillStyle = 'rgba(56,189,248,.55)'; ctx.fillRect(-lebar / 4 + dx / 2 - 10, -tL * 0.7, 20, tL * 0.36); ctx.fillRect(lebar / 4 + dx / 2 - 10, -tL * 0.7, 20, tL * 0.36);
+    // retak
+    if ((h._retak || h._runtuh) && p > 0.35) {
+      ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 1.5; ctx.beginPath();
+      ctx.moveTo(-lebar / 2 + 6 + dx * 0.9, -tL + 4); ctx.lineTo(-lebar / 2 + 16, -tL * 0.6); ctx.lineTo(-lebar / 2 + 10, -tL * 0.4); ctx.lineTo(-lebar / 2 + 22, -tL * 0.15);
+      ctx.moveTo(lebar / 2 - 6 + dx * 0.2, -4); ctx.lineTo(lebar / 2 - 18, -tL * 0.3); ctx.lineTo(lebar / 2 - 12, -tL * 0.5);
+      ctx.stroke();
+    }
+    // beban uji (kantong pasir) di tiap lantai
+    ctx.fillStyle = '#d6b27c'; kotakBulat(ctx, -8 + dx * 0.5, -tL * 0.25 - 4, 16, 10, 3); ctx.fill();
+    ctx.restore();
+  }
+  // atap
+  const puncak = titik(n), atapQ = q;
+  ctx.save(); ctx.translate(puncak.x, puncak.y + atapQ * n * tinggiL * 0.72); ctx.rotate(atapQ * 0.5);
+  const berat = v.atap === 'berat';
+  ctx.fillStyle = berat ? '#b91c1c' : '#94a3b8'; ctx.beginPath(); ctx.moveTo(-lebar / 2 - 14, 0); ctx.lineTo(lebar / 2 + 14, 0); ctx.lineTo(0, berat ? -40 : -30); ctx.closePath(); ctx.fill();
+  if (berat) { ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 1; for (let k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(-lebar / 2 - 14 + k * 10, -k * 10); ctx.lineTo(lebar / 2 + 14 - k * 10, -k * 10); ctx.stroke(); } }
+  ctx.restore();
+  if (q > 0.6) label(ctx, 'RUNTUH!', dasarX, dasarY - n * tinggiL * 0.4 - 20, { rata: 'center', tebal: true, warna: '#fff', latar: '#b91c1c' });
+  // panah simpangan atap
+  if (aktif && !h._runtuh && Math.abs(ayun) > 3) panah(ctx, dasarX, puncak.y - 50, dasarX + ayun * 1.3, puncak.y - 50, '#dc2626', 2);
+  // seismograf: gerak meja (abu) vs atap (merah)
+  const sx = W * 0.66, sy = 12, sw = W * 0.32, sh = H * 0.34;
+  ctx.fillStyle = '#0f172a'; kotakBulat(ctx, sx, sy, sw, sh, 8); ctx.fill();
+  const jejak = (amp, warna, geserFase, tebal) => {
+    ctx.strokeStyle = warna; ctx.lineWidth = tebal; ctx.beginPath();
+    for (let k = 0; k <= 100; k++) { const u = k / 100 * 3; const naik = h._runtuh ? jepit(u / 1.2, 0, 1) : jepit(u / 0.8, 0, 1); ctx.lineTo(sx + 8 + (sw - 16) * k / 100, sy + sh / 2 - amp * naik * Math.sin(2 * Math.PI * u - geserFase)); }
+    ctx.stroke();
+  };
+  const ampMeja = sh * 0.12;
+  jejak(ampMeja, 'rgba(148,163,184,.8)', 0, 1.5);
+  const lentur = h.simpangan / +v.amplitudo;   // goyangan atap relatif terhadap dasar rumah (penentu kerusakan)
+  jejak(Math.min(sh * 0.42, ampMeja * Math.max(0.05, lentur)), '#f87171', fase, 2);
+  label(ctx, 'seismograf', sx + 6, sy + 10, { ukuran: 9, warna: '#94a3b8' });
+  label(ctx, `lenturan atap ×${fx(lentur, 2)}`, sx + sw - 6, sy + 10, { rata: 'right', ukuran: 10, tebal: true, warna: '#fca5a5' });
+  label(ctx, '— meja', sx + sw - 6, sy + sh - 9, { rata: 'right', ukuran: 9, warna: '#94a3b8' });
+  // meter resonansi: frekuensi alami vs 3 Hz
+  const mx = sx, my = sy + sh + 16, mw = sw;
+  ctx.fillStyle = '#e2e8f0'; kotakBulat(ctx, mx, my, mw, 10, 5); ctx.fill();
+  const posisi = f => mx + mw * jepit(f / 9, 0, 1);
+  ctx.fillStyle = 'rgba(220,38,38,.35)'; ctx.fillRect(posisi(2.3), my, posisi(3.9) - posisi(2.3), 10);
+  ctx.fillStyle = '#dc2626'; ctx.fillRect(posisi(FREK_MEJA) - 1, my - 3, 2, 16);
+  ctx.fillStyle = '#0f766e'; ctx.beginPath(); ctx.arc(posisi(h.frekuensiAlami), my + 5, 6, 0, 7); ctx.fill();
+  label(ctx, `frekuensi alami ${fx(h.frekuensiAlami, 2)} Hz`, mx, my + 26, { ukuran: 10, tebal: true, warna: '#0f766e' });
+  label(ctx, 'zona resonansi', posisi(3.1), my - 10, { rata: 'center', ukuran: 9, warna: '#b91c1c' });
+  label(ctx, `${n} lantai · ${h._P.nama}`, 12, 16, { ukuran: 11, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
+  if (p >= 1) {
+    const teks = h._runtuh ? `Runtuh — ${h.drift > 4 ? `simpangan antar-lantai ${fx(h.drift)}%` : `gaya ${fx(h.gaya)} N melebihi kekuatan ${fx(h.kekuatan)} N`}`
+      : `${h.status} · simpangan atap ${fx(h.simpangan, 2)} cm (${fx(h.drift)}%)${h.geser > 1 ? ` · bergeser ${fx(h.geser)} cm` : ''}`;
+    label(ctx, teks, W / 2, H - 12, { rata: 'center', tebal: true, ukuran: 12, warna: '#fff', latar: h._runtuh ? '#b91c1c' : h._retak || h.geser > 1 ? '#b45309' : '#15803d' });
+  }
+}
+
 const SIM = {
+  gempa: { hitung: hitungGempa, kriteria: kriteriaGempa, gambar: gambarGempa, sumbuX: ['lantai', 'amplitudo'], sumbuY: ['simpangan', 'drift', 'penguatan', 'frekuensiAlami', 'gaya'] },
   bunyi: { hitung: hitungBunyi, kriteria: kriteriaBunyi, gambar: gambarBunyi, suara: suaraBunyi, sumbuX: ['panjang', 'beban'], sumbuY: ['frekuensi', 'nyaring', 'periode', 'cepatRambat'] },
   optik: { hitung: hitungOptik, kriteria: kriteriaOptik, gambar: gambarOptik, sumbuX: ['jarakBenda', 'fokus', 'jarakLayar', 'diameter'], sumbuY: ['lebar', 'tajam', 'terang', 'bayangan'] },
   pesawat: { hitung: hitungPesawat, kriteria: kriteriaPesawat, gambar: gambarPesawat, sumbuX: ['massa', 'panjangTuas', 'lenganBeban'], sumbuY: ['gaya', 'kmNyata', 'efisiensi', 'jarak', 'usahaKuasa'] },

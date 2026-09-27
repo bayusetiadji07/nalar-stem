@@ -102,6 +102,11 @@ Illustration of a darkened Indonesian junior high classroom: students gather aro
 Illustration of an Indonesian junior high classroom workshop: students build a simple string instrument inspired by the traditional sasando — a single fishing-line string stretched over a cardboard box with a round sound hole, two pencils as bridges, and the string running over the table edge to a hanging water bottle as a weight. One student plucks the string while visible sound wave rings spread from the box; another holds a smartphone showing a tuner needle centered (no text); a third measures string length with a ruler. A real sasando rests in the background. Warm, cheerful, musical atmosphere.
 ```
 
+### `misi-gempa.jpg` — Rumah Tahan Gempa dari Kardus (misi ke-14)
+```
+Illustration of an Indonesian junior high classroom: students test a two-storey miniature house made of cardboard with crossed bamboo skewer bracing and a light roof, standing on small rubber pads on top of a homemade shake table (a plywood board resting on round pens between two wooden stoppers). One student slides the board back and forth, another films in slow motion with a smartphone, a third holds a ruler behind the house to measure the sway. Motion lines show the shaking; a second cardboard house without bracing has collapsed beside it. A simple poster of tectonic plates on the wall (no text). Warm, curious, energetic atmosphere.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)

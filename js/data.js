@@ -772,6 +772,57 @@ const NYATA = {
       { gejala: 'Senar putus', kunci: 'putus|lepas|patah', petunjuk: ['KESELAMATAN DULU: jauhkan wajah dan periksa apakah ada yang terkena pantulan senar.', 'Setelah aman: berapa tegangan yang kamu berikan dibanding batas kekuatan senar? Bagaimana mencapai nada yang sama dengan tegangan lebih kecil?'] },
       { gejala: 'Tuner di HP tidak membaca nada', kunci: 'tuner|tidak terbaca|tidak membaca|hp', petunjuk: ['Apakah ruangan cukup sepi? Coba dekatkan HP ke kotak.', 'Petik sekali dengan kuat lalu biarkan berbunyi — apakah tuner membaca saat bunyi paling jelas?'] }
     ]
+  },
+  gempa: {
+    waktu: '3 × 40 menit',
+    alat: [
+      'Kardus bekas (dinding & lantai), penggaris, pensil',
+      'Tusuk sate (kolom, pasak, dan bresing silang)',
+      'Lem kertas/lem PVA dan selotip',
+      'Gunting (cutter hanya oleh guru)',
+      'Kantong plastik berisi pasir 250 g per lantai (beban uji)',
+      'Untuk fondasi isolasi: potongan karet sandal bekas atau kelereng + tutup botol',
+      'Meja getar sederhana: papan triplek di atas 4 pipa/spidol bulat, dengan balok penahan berjarak 2 cm di kiri–kanan',
+      'HP: aplikasi metronom (180 ketukan/menit = 3 Hz) dan kamera gerak lambat (slow motion)'
+    ],
+    keselamatan: [
+      'Cutter dan pisau hanya dipakai oleh guru; murid memakai gunting ujung tumpul.',
+      'Ujung tusuk sate tajam — potong atau tumpulkan ujungnya dan jangan diarahkan ke wajah.',
+      'Meja getar diguncang dengan tangan secara terkendali; jaga jari agar tidak terjepit papan.',
+      'Kantong pasir diikat rapat agar tidak tumpah saat rumah runtuh; uji di atas lantai, bukan di meja tinggi.',
+      'Bila memakai lem tembak, hanya dengan pengawasan guru karena ujungnya panas.'
+    ],
+    langkah: [
+      'Potong kardus untuk lantai 15 × 15 cm dan dinding setinggi 15 cm per lantai.',
+      'Pasang tusuk sate sebagai kolom di keempat sudut, lalu rekatkan lantai dan dinding sesuai jenis sambungan rancanganmu.',
+      'Pasang pengaku sesuai rancangan: bresing silang dari tusuk sate atau dinding geser dari kardus dobel.',
+      'Pasang atap sesuai rancangan, lalu letakkan kantong pasir 250 g di tiap lantai sebagai beban uji.',
+      'Pasang fondasi: tempel ke pelat dasar, atau beri bantalan karet/kelereng di bawah pelat dasar.',
+      'Uji frekuensi alami: dorong atap sedikit lalu lepas, rekam gerak lambat, dan hitung berapa ayunan dalam 1 detik.',
+      'Letakkan rumah di meja getar. Guncang papan dari penahan kiri ke kanan (2 cm) mengikuti metronom 180 ketukan/menit selama 20 detik.',
+      'Rekam dengan penggaris di belakang rumah. Ukur simpangan atap terbesar, periksa retak/lepas, dan ukur geseran rumah dari posisi awal. Ulangi 3 kali.'
+    ],
+    takaran: v => {
+      const h = hitungGempa({ ...v, amplitudo: AMPLITUDO_UJI });
+      return [
+        `${v.lantai} lantai × 15 cm (tinggi total ${v.lantai * 15} cm), denah 15 × 15 cm, beban uji ${v.lantai} × 250 g pasir.`,
+        `Pengaku: ${PENGAKU_GEMPA[v.pengaku].nama}${v.pengaku === 'silang' ? ' — 2 tusuk sate menyilang di tiap sisi tiap lantai' : v.pengaku === 'dinding' ? ' — dinding kardus dilapis dua di keempat sisi' : ''}.`,
+        `Sambungan: ${SAMBUNGAN_GEMPA[v.sambungan].nama}. Fondasi: ${FONDASI_GEMPA[v.fondasi].nama}. Atap: ${ATAP_GEMPA[v.atap].nama}.`,
+        `Prediksi simulasi (guncangan 2 cm, 3 Hz): frekuensi alami ± ${fx(h.frekuensiAlami, 1)} Hz, simpangan atap ± ${fx(h.simpangan, 1)} cm — ${h.status.toLowerCase()}.`
+      ];
+    },
+    ukur: [
+      { id: 'simpangan', label: 'Simpangan atap terbesar', satuan: 'cm', sim: 'simpangan' },
+      { id: 'frekuensiAlami', label: 'Frekuensi alami (ayunan per detik)', satuan: 'Hz', sim: 'frekuensiAlami' },
+      { id: 'geser', label: 'Geseran rumah dari posisi awal', satuan: 'cm', sim: 'geser' },
+      { id: 'bertahan', label: 'Lama bertahan tanpa rusak', satuan: 'detik' }
+    ],
+    masalah: [
+      { gejala: 'Rumah bergoyang sangat besar', kunci: 'goyang|ayun|miring|besar', petunjuk: ['Berapa frekuensi alami rumahmu dibanding 3 Hz? Apakah mendekati zona resonansi?', 'Apa yang terjadi pada frekuensi alami bila kamu menambah kekakuan atau mengurangi massa atap?'] },
+      { gejala: 'Sambungan lepas / rumah runtuh', kunci: 'lepas|runtuh|roboh|ambruk|copot', petunjuk: ['KESELAMATAN DULU: jauhkan tangan dari papan dan tusuk sate yang patah.', 'Bagian mana yang lepas pertama kali? Apakah gaya terbesar ada di lantai paling bawah atau paling atas? Mengapa?'] },
+      { gejala: 'Rumah bergeser dari fondasi', kunci: 'geser|pindah|jatuh dari|tergelincir', petunjuk: ['Apakah fondasimu punya gaya yang mengembalikan rumah ke tengah?', 'Bagaimana perbedaan bantalan karet dan kelereng saat guncangan berhenti?'] },
+      { gejala: 'Hasil uji berbeda-beda setiap kali', kunci: 'beda|berubah|tidak sama|konsisten', petunjuk: ['Apakah guncangan tanganmu selalu sama jauh dan sama cepat? Bagaimana metronom dan penahan 2 cm membantu?', 'Variabel apa lagi yang harus dijaga tetap sama agar ujimu adil?'] }
+    ]
   }
 };
 
@@ -1302,6 +1353,49 @@ const MISI = [
       { id: 'lambdaUdara', label: 'Panjang gelombang bunyi di udara', satuan: 'm' },
       { id: 'status', label: 'Hasil', satuan: '' }
     ]
+  },
+  {
+    id: 'gempa',
+    judul: 'Rumah Tahan Gempa dari Kardus',
+    ikon: '🏠',
+    kelas: 'Kelas 8 · Struktur Bumi, Gempa & Getaran',
+    warna: '#b45309',
+    ringkas: 'Rancang miniatur rumah 2 lantai dari kardus yang tetap berdiri dan tidak retak saat diguncang meja getar.',
+    kisah: 'Indonesia berada di pertemuan <b>lempeng-lempeng tektonik</b>, sehingga gempa bumi sering terjadi. Banyak korban justru tertimpa <b>bangunan yang runtuh</b>. Desa di dekat sekolahmu ingin membangun ulang rumah warga agar lebih tahan gempa. Sebelum membangun rumah sungguhan, kelompokmu diminta menguji <b>miniatur rumah 2 lantai dari kardus</b> di atas <b>meja getar</b> yang berguncang <b>3 kali per detik (3 Hz)</b> sejauh <b>2 cm</b>. Rumah harus <b>tidak runtuh</b>, <b>tidak retak</b>, dan <b>tetap di atas fondasinya</b>.',
+    kriteria: [
+      'Tidak runtuh pada guncangan uji 2 cm, 3 Hz',
+      'Tidak retak: simpangan antar-lantai paling banyak 1,5% dari tingginya',
+      'Rumah tetap di atas fondasi (geser permanen paling banyak 1 cm)',
+      'Rumah 2 lantai sesuai kebutuhan warga'
+    ],
+    kendala: ['Biaya paling banyak Rp 25.000', 'Tiap lantai tinggi 15 cm, denah 15 × 15 cm, diberi beban uji 250 g (kantong pasir)'],
+    konsep: `
+      <p><b>Gempa bumi</b> terjadi ketika energi yang tersimpan di batuan kerak bumi dilepaskan secara tiba-tiba, misalnya saat <b>lempeng tektonik</b> bergeser. Energi itu merambat sebagai <b>gelombang seismik</b> yang mengguncang tanah bolak-balik.</p>
+      <p>Setiap bangunan punya <b>frekuensi alami</b>, yaitu berapa kali ia berayun tiap detik bila didorong lalu dilepas. Bangunan yang <b>kaku dan ringan</b> berayun cepat (frekuensi tinggi). Bangunan yang <b>lentur dan berat</b> berayun lambat.</p>
+      <p class="rumus">frekuensi alami f = (1/2π) × √(k / m) &nbsp;·&nbsp; k = kekakuan, m = massa</p>
+      <p><b>Resonansi:</b> bila frekuensi alami bangunan <b>mendekati frekuensi guncangan tanah</b>, ayunannya diperkuat berkali-kali lipat — seperti ayunan yang didorong tepat pada iramanya. Jadi, membuat rumah "sedikit lebih kaku" belum tentu lebih aman!</p>
+      <p><b>Cara membuat bangunan tahan gempa:</b> (1) <b>pengaku</b> (bresing silang atau dinding geser) menambah kekakuan dan kekuatan; (2) <b>sambungan yang kuat</b> agar gaya tersalur tanpa lepas; (3) <b>atap ringan</b> karena gaya gempa sebanding massa (F = m × a); (4) <b>isolasi dasar</b> — bantalan lentur di bawah bangunan yang meredam guncangan sebelum masuk ke bangunan.</p>
+      <p class="peringatan">⚠️ Gunakan cutter hanya dengan pengawasan guru. Saat gempa sungguhan: <b>merunduk, berlindung di bawah meja kokoh, dan berpegangan</b> — jauhi kaca dan lemari tinggi.</p>`,
+    kataKunci: ['gempa', 'lempeng', 'tektonik', 'seismik', 'getaran', 'frekuensi', 'resonansi', 'kekakuan', 'massa', 'pengaku', 'bresing', 'dinding geser', 'isolasi', 'fondasi', 'simpangan', 'gaya', 'sambungan', 'atap'],
+    variabel: [
+      { id: 'lantai', label: 'Jumlah lantai', tipe: 'range', min: 1, max: 4, step: 1, satuan: 'lantai', awal: 2 },
+      { id: 'pengaku', label: 'Pengaku dinding', tipe: 'select', awal: 'tanpa', opsi: [['tanpa', 'Tanpa pengaku'], ['silang', 'Bresing silang (tusuk sate)'], ['dinding', 'Dinding geser (kardus dobel)']] },
+      { id: 'sambungan', label: 'Sambungan', tipe: 'select', awal: 'lem', opsi: [['selotip', 'Selotip'], ['lem', 'Lem kertas'], ['pasak', 'Lem + pasak tusuk sate']] },
+      { id: 'fondasi', label: 'Fondasi', tipe: 'select', awal: 'tempel', opsi: [['tempel', 'Ditempel langsung ke meja'], ['karet', 'Bantalan karet sandal (isolasi)'], ['kelereng', 'Kelereng di tutup botol (isolasi)']] },
+      { id: 'atap', label: 'Atap', tipe: 'select', awal: 'berat', opsi: [['berat', 'Berat (genteng tiruan)'], ['ringan', 'Ringan (seng/kertas)']] },
+      { id: 'amplitudo', label: 'Kekuatan guncangan meja getar', tipe: 'range', min: 0.5, max: 2.5, step: 0.25, satuan: 'cm', awal: 2 }
+    ],
+    keluaran: [
+      { id: 'frekuensiAlami', label: 'Frekuensi alami rumah', satuan: 'Hz' },
+      { id: 'penguatan', label: 'Penguatan getaran di atap', satuan: '×' },
+      { id: 'simpangan', label: 'Simpangan atap', satuan: 'cm' },
+      { id: 'drift', label: 'Simpangan antar-lantai', satuan: '%' },
+      { id: 'gaya', label: 'Gaya geser di dasar', satuan: 'N' },
+      { id: 'kekuatan', label: 'Kekuatan sambungan', satuan: 'N' },
+      { id: 'geser', label: 'Geser permanen di fondasi', satuan: 'cm' },
+      { id: 'status', label: 'Hasil', satuan: '' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 ];
 
@@ -1540,5 +1634,16 @@ const UJI_NALAR = [
       'Nada naik tetapi frekuensinya tetap, karena nada tidak berhubungan dengan frekuensi.'
     ],
     bahas: 'Analisis membedakan dua besaran yang sering tertukar: amplitudo (kenyaringan) dan frekuensi (tinggi nada). Bukti alat ukur (tuner) lebih kuat daripada kesan pendengaran — telinga kadang mengira bunyi yang lebih keras terdengar lebih tinggi.'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Setelah sebuah gempa, gedung 10 lantai di satu kota rusak berat, sedangkan rumah 1 lantai di sebelahnya utuh. Seorang warganet menulis: "Terbukti, bangunan tinggi SELALU lebih lemah saat gempa." Evaluasi klaim tersebut.',
+    opsi: [
+      'Klaim terlalu luas: kerusakan juga bergantung pada kecocokan frekuensi alami bangunan dengan frekuensi guncangan tanah (resonansi), rancangan, dan bahan. Pada gempa lain, bisa saja rumah rendah yang rusak. Perlu data dari banyak gempa dan bangunan.',
+      'Klaim benar, karena satu kejadian nyata sudah cukup membuktikannya.',
+      'Klaim benar, karena bangunan tinggi pasti lebih berat sehingga selalu roboh.',
+      'Klaim salah, karena bangunan tinggi selalu lebih kuat dari rumah.'
+    ],
+    bahas: 'Satu kejadian tidak cukup untuk kata "selalu". Bangunan tinggi biasanya berfrekuensi alami rendah, rumah rendah berfrekuensi tinggi. Gempa yang getarannya lambat membahayakan gedung tinggi; gempa yang getarannya cepat bisa lebih membahayakan rumah rendah. Karena itu insinyur memeriksa resonansi, bukan hanya tinggi bangunan.'
   }
 ];
