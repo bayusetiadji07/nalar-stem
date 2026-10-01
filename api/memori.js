@@ -25,7 +25,9 @@ async function rpc(fungsi, param) {
   const d = await r.json().catch(() => null);
   if (!r.ok) {
     const pesan = (d && (d.message || d.hint)) || `Supabase membalas ${r.status}`;
-    const e = new Error(pesan); e.status = /sandi/i.test(pesan) ? 401 : 502; throw e;
+    const e = new Error(pesan);
+    e.status = /sandi/i.test(pesan) ? 401 : /tidak ditemukan|tidak valid|belum diisi|terlalu/i.test(pesan) ? 400 : 502;
+    throw e;
   }
   return d;
 }
@@ -82,6 +84,29 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ ok: true });
       case 'guru_sandi':
         await rpc('nalar_guru_sandi', { p_sandi_lama: String(b.sandi || ''), p_sandi_baru: String(b.sandiBaru || '') });
+        return res.status(200).json({ ok: true });
+      // ---- Peta jejak berpikir ----
+      case 'kelas_cek':
+        return res.status(200).json({ nama: await rpc('nalar_kelas_cek', { p_kode: String(b.kode || '').slice(0, 12) }) });
+      case 'jejak_kirim': {
+        if (!b.data || typeof b.data !== 'object') return res.status(400).json({ error: 'Data jejak tidak valid.' });
+        await rpc('nalar_jejak_kirim', {
+          p_kode: String(b.kode || '').slice(0, 12), p_perangkat: String(b.perangkat || ''),
+          p_nama: String(b.nama || '').slice(0, 60), p_kelas: String(b.kelas || '').slice(0, 12), p_misi: misi, p_data: b.data
+        });
+        return res.status(200).json({ ok: true });
+      }
+      case 'guru_kelas_buat':
+        return res.status(200).json({ kode: await rpc('nalar_guru_kelas_buat', { p_sandi: String(b.sandi || ''), p_nama: String(b.nama || '').slice(0, 60) }) });
+      case 'guru_kelas_daftar':
+        return res.status(200).json({ hasil: await rpc('nalar_guru_kelas_daftar', { p_sandi: String(b.sandi || '') }) });
+      case 'guru_jejak':
+        return res.status(200).json({ hasil: await rpc('nalar_guru_jejak', { p_sandi: String(b.sandi || ''), p_kode: String(b.kode || '').slice(0, 12) }) });
+      case 'guru_kelas_hapus':
+        await rpc('nalar_guru_kelas_hapus', { p_sandi: String(b.sandi || ''), p_kode: String(b.kode || '').slice(0, 12) });
+        return res.status(200).json({ ok: true });
+      case 'guru_jejak_hapus':
+        await rpc('nalar_guru_jejak_hapus', { p_sandi: String(b.sandi || ''), p_kode: String(b.kode || '').slice(0, 12), p_perangkat: String(b.perangkat || '') });
         return res.status(200).json({ ok: true });
       default:
         return res.status(400).json({ error: 'Aksi tidak dikenal.' });

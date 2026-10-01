@@ -509,3 +509,36 @@ body.pr-buka .fab-tutor { display: none; }
 body.pr-cetak { margin: 0; background: #fff; }
 .pr-cetak .pr-slide { display: flex; width: 100vw; border-radius: 0; box-shadow: none; break-after: page; page-break-after: always; -webkit-print-color-adjust: exact; print-color-adjust: exact; cursor: default; }
 .pr-cetak .pr-slide:last-child { break-after: auto; page-break-after: auto; }
+
+/* ---------- Peta jejak berpikir ---------- */
+.status-kelas { display: inline-block; margin-top: 2px; color: var(--utama-tua); font-weight: 600; }
+#pKode { text-transform: uppercase; letter-spacing: .08em; }
+.daftar-kelas { display: flex; flex-wrap: wrap; gap: 8px; }
+.kelas-chip { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 14px; border: 1px solid var(--garis); border-radius: 12px; background: #fff; cursor: pointer; font: inherit; text-align: left; min-width: 170px; }
+.kelas-chip:hover { border-color: var(--utama); }
+.kelas-chip.aktif { border-color: var(--utama); background: var(--utama-muda); box-shadow: 0 0 0 2px var(--utama-muda); }
+.kelas-chip small { color: var(--redup); font-size: .78rem; }
+.kode-kelas { font: 700 .8rem ui-monospace, Consolas, monospace; letter-spacing: .12em; color: var(--utama-tua); }
+.kartu-kode { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 24px; border-left: 5px solid var(--utama); }
+.kartu-kode p { flex: 1 1 260px; margin: 0; }
+.kode-besar { font: 800 2.2rem ui-monospace, Consolas, monospace; letter-spacing: .18em; color: var(--utama-tua); line-height: 1.1; }
+.ctl.ctl-sebaris { display: flex; flex-direction: row; align-items: center; gap: 8px; margin: 0; }
+.ctl-sebaris select { max-width: 320px; }
+.sebaran-pola { display: flex; height: 30px; border-radius: 9px; overflow: hidden; margin-bottom: 10px; }
+.sebaran-pola span { display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: .82rem; min-width: 38px; white-space: nowrap; }
+.legenda-pola { display: grid; gap: 4px; font-size: .84rem; }
+.legenda-pola i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+.lgd { display: inline-block; width: 9px; height: 9px; vertical-align: middle; margin: 0 2px; }
+.lgd.bulat { border-radius: 50%; } .lgd.teal { background: #0d9488; } .lgd.emas { background: #f59e0b; } .lgd.kotak { background: #ef4444; }
+.tabel-jejak tbody tr { cursor: pointer; }
+.tabel-jejak tbody tr:hover td { background: #f8fafc; }
+.tabel-jejak tbody tr.dipilih td { background: #f0fdfa; }
+.tabel-jejak tbody tr:focus-visible { outline: 2px solid var(--utama); outline-offset: -2px; }
+.pola-tag { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: .78rem; font-weight: 700; white-space: nowrap; color: var(--c); background: color-mix(in srgb, var(--c) 12%, white); border: 1px solid color-mix(in srgb, var(--c) 30%, white); }
+.jejak-mini { display: block; }
+.detail-jejak { border-top: 4px solid var(--c); scroll-margin-top: 80px; }
+.peta-gulir { overflow-x: auto; margin: 6px 0 8px; border: 1px solid var(--garis); border-radius: 11px; background: #fcfdfd; }
+.peta-gulir canvas { display: block; }
+.saran-guru { padding: 10px 14px; border-radius: 11px; background: #fffbeb; border: 1px solid #fde68a; margin-bottom: 10px; font-size: .92rem; }
+.zona-kelas summary { cursor: pointer; }
+.zona-kelas .tombol { margin-top: 8px; }

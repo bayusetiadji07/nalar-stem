@@ -86,6 +86,7 @@ function rute() {
   if (hal === 'guru') return halGuru();
   if (hal === 'pengaturan') return halPengaturan();
   if (hal === 'kurasi') return halKurasi();
+  if (hal === 'jejak') return halJejak();
   halBeranda();
 }
 window.addEventListener('hashchange', rute);
@@ -146,11 +147,12 @@ function halBeranda() {
   <section class="profil-kartu kartu">
     <div>
       <h2>👋 ${S.profil.nama ? `Halo, ${esc(S.profil.nama)}!` : 'Kenalan dulu, yuk!'}</h2>
-      <p class="redup">Namamu dipakai Kak Nala untuk menyapamu dan dicetak di portofolio. Data tersimpan di perangkat ini saja.</p>
+      <p class="redup">Namamu dipakai Kak Nala untuk menyapamu dan dicetak di portofolio. ${S.profil.kodeKelas ? `<span class="status-kelas">🧭 Tergabung di kelas <b>${esc(S.profil.namaKelas || S.profil.kodeKelas)}</b> — jejak ujimu terkirim ke gurumu${S.jejakTerkirim ? ` (terakhir ${new Date(S.jejakTerkirim).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })})` : ''}.</span>` : 'Data tersimpan di perangkat ini saja.'}</p>
     </div>
     <form id="fProfil" class="baris-form">
       <input id="pNama" placeholder="Nama lengkap" value="${esc(S.profil.nama)}" maxlength="60" required>
       <input id="pKelas" placeholder="Kelas (mis. 8B)" value="${esc(S.profil.kelas)}" maxlength="12">
+      <input id="pKode" placeholder="Kode kelas dari guru (opsional)" value="${esc(S.profil.kodeKelas || '')}" maxlength="8" autocapitalize="characters" title="Bila diisi, nama dan jejak ujimu (bukan isi chat) terkirim ke gurumu">
       <button class="tombol utama">Simpan</button>
     </form>
   </section>
@@ -176,10 +178,17 @@ function halBeranda() {
   </section>
 
   <p class="catatan-ai">Status AI Tutor: <b>${c.sumber === 'lokal' ? 'Tutor lokal (tanpa AI)' : c.sumber === 'pribadi' ? 'Gemini — kunci pribadi' : 'Gemini — server sekolah'}</b> · <a href="#/pengaturan">ubah</a></p>`;
-  $('#fProfil').onsubmit = e => {
+  $('#fProfil').onsubmit = async e => {
     e.preventDefault();
     S.profil.nama = $('#pNama').value.trim(); S.profil.kelas = $('#pKelas').value.trim();
-    simpan(); toast('Profil tersimpan'); halBeranda();
+    simpan();
+    const kode = $('#pKode').value.trim().toUpperCase();
+    if (kode === (S.profil.kodeKelas || '')) { if (kode) Object.keys(S.misi).forEach(id => kirimJejak(id)); toast('Profil tersimpan'); halBeranda(); return; }
+    try {
+      const h = await gabungKelas(kode);
+      toast(h.keluar ? 'Profil tersimpan — kamu keluar dari kelas' : `Profil tersimpan — bergabung ke kelas ${h.nama}`);
+      halBeranda();
+    } catch (err) { toast(err.message, 'peringatan'); }
   };
 }
 
@@ -260,7 +269,7 @@ function halMisi(id, no) {
     konteksLokal = { langkah: L, misi: m, uji: st.uji };
     const hasil = await periksaIsian(konteksMisi(m, st, L), L, st.isian, m);
     hasil.waktu = Date.now();
-    st.nilai[L.id] = hasil; simpan();
+    st.nilai[L.id] = hasil; simpan(); kirimJejak(m.id);
     $('#hasilNilai').innerHTML = kartuNilai(hasil);
     b.disabled = false; b.textContent = '🔍 Periksa lagi';
     if (hasil.galat) toast(hasil.sumber === 'memori' ? 'AI tidak tersambung — dinilai dari memori Kak Nala' : 'AI tidak tersambung — dinilai tutor lokal', 'peringatan');
@@ -579,7 +588,7 @@ function pasangIsiNyata(m, st) {
     const berkas = $('#nFoto').files[0];
     if (berkas) { try { foto = await kecilkanFoto(berkas); } catch (err) { toast('Foto tidak bisa dibaca', 'peringatan'); } }
     const baris = { no: ny.uji.length + 1, acuan: +$('#nAcuan').value || null, nilai, catatan: $('#nCatatan').value.trim(), foto, waktu: Date.now() };
-    ny.uji.push(baris);
+    ny.uji.push(baris); kirimJejak(m.id);
     if (!simpan()) {
       baris.foto = '';
       if (simpan()) toast('Penyimpanan penuh — hasil disimpan tanpa foto', 'peringatan');
@@ -688,10 +697,10 @@ function pasangLab(m, st) {
     const sebelum = st.uji[st.uji.length - 1];
     const ubah = sebelum ? m.variabel.filter(v => String(sebelum.v[v.id]) !== String(st.v[v.id])).map(v => v.label) : [];
     const hBersih = Object.fromEntries(m.keluaran.map(k => [k.id, h[k.id]]));
-    const uji = { no: st.uji.length + 1, v: { ...st.v }, h: hBersih, lulus: krit.filter(k => k.lulus).length, total: krit.length, adil: sebelum ? ubah.length <= 1 : null, ubah, prediksi: $('#prediksi').value.trim() };
+    const uji = { no: st.uji.length + 1, v: { ...st.v }, h: hBersih, lulus: krit.filter(k => k.lulus).length, total: krit.length, adil: sebelum ? ubah.length <= 1 : null, ubah, prediksi: $('#prediksi').value.trim(), waktu: Date.now() };
     const info = $('#adilInfo');
     if (sebelum && ubah.length === 0) { info.hidden = false; info.className = 'adil-info kuning'; info.textContent = 'Rancangan sama persis dengan uji sebelumnya. Ubah satu variabel dulu.'; return; }
-    st.uji.push(uji); simpan();
+    st.uji.push(uji); simpan(); kirimJejak(m.id);
     if (sim.suara) { try { sim.suara(st.v, h); } catch (e) { /* audio tidak tersedia */ } }
     info.hidden = false;
     if (!sebelum) { info.className = 'adil-info'; info.textContent = 'Uji pertama tercatat sebagai data awal (pembanding).'; }
@@ -736,7 +745,7 @@ function pasangHapusUji(m, st) {
   const b = $('#bHapusUji');
   if (b) b.onclick = () => {
     if (!confirm('Hapus semua data uji misi ini?')) return;
-    st.uji = []; simpan(); rute();
+    st.uji = []; simpan(); kirimJejak(m.id); rute();
   };
 }
 
@@ -1081,6 +1090,7 @@ function halGuru() {
     </tbody></table>
     <h3>🧠 Memori Kak Nala</h3>
     <p>Setiap jawaban dan penilaian AI direkam <b>tanpa nama murid</b> (email, nomor telepon, dan tautan juga disamarkan) ke database sekolah. Saat AI tidak tersedia, Kak Nala mencari tanya-jawab yang mirip di misi dan langkah yang sama, dan penilaian lembar kerja memakai skor jawaban-jawaban serupa yang pernah dinilai AI. Salinan memori juga tersimpan di perangkat murid untuk dipakai saat offline.</p>
+    <p>🧭 <b>Peta Jejak Berpikir:</b> buat kelas di halaman <a href="#/jejak"><b>Peta Jejak Berpikir</b></a> (bersandi), bagikan kodenya, lalu lihat cara tiap murid bereksperimen — uji adil atau coba-coba, menulis prediksi atau tidak, jeda berpikir antar-uji, dan kapan kriterianya terpenuhi.</p>
     <p>Guru memeriksa isi memori di halaman <a href="#/kurasi"><b>Kurasi Memori</b></a> (bersandi): <b>setujui</b> jawaban yang baik agar diutamakan, <b>rapikan</b> jawaban yang merujuk data murid tertentu agar berlaku umum, atau <b>tolak</b> yang kurang tepat. Murid dapat menonaktifkan perekaman di Pengaturan AI.</p>
     <h3>Pengumpulan hasil</h3>
     <p>Data tersimpan di perangkat masing-masing murid. Minta murid membuka <b>Portofolio</b> → <b>Cetak / simpan PDF</b>, atau <b>Salin ringkasan</b> lalu kirim ke guru.</p>
@@ -1283,4 +1293,5 @@ function halPengaturan() {
 $('#tombolMenu').onclick = () => document.body.classList.toggle('menu-buka');
 pasangTutor();
 rute();
+kirimJejakTertunda();
 perbaruiPaketMemori().catch(() => { /* offline: pakai salinan yang ada */ });
