@@ -1408,10 +1408,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Sebuah pesan berantai berbunyi: "Minum air es setelah makan membuat lemak di perut membeku dan memicu kanker!" Tanggapan paling kritis adalah …',
     opsi: [
-      'Meragukannya: suhu tubuh ± 37 °C sehingga air es segera menghangat; klaim sebesar itu butuh bukti penelitian dari sumber tepercaya.',
-      'Percaya, karena es memang bisa membekukan benda.',
-      'Percaya, karena pesan itu sudah dibagikan ribuan kali.',
-      'Tidak peduli, karena semua pesan berantai pasti bohong.'
+      'Meragukannya, karena air es cepat menghangat oleh suhu tubuh ± 37 °C dan klaim sebesar itu perlu bukti penelitian.',
+      'Mempercayainya, karena es memang dapat membekukan minyak dan lemak bila dibiarkan cukup lama di dalam lemari es.',
+      'Mempercayainya, karena pesan itu sudah dibagikan ribuan kali dan dikirim oleh banyak orang yang berbeda-beda setiap hari.',
+      'Menolaknya tanpa memeriksa, karena semua pesan berantai yang beredar di grup percakapan sudah pasti bohong.'
     ],
     bahas: 'Pemikir kritis memeriksa klaim dengan pengetahuan sains (suhu tubuh jauh di atas titik beku lemak) dan menuntut bukti. Jumlah pembagi bukan bukti. Menolak semua pesan tanpa memeriksa juga bukan sikap kritis.'
   },
@@ -1419,10 +1419,10 @@ const UJI_NALAR = [
     ind: 'analisis',
     soal: 'Rina menguji pengaruh jenis pupuk terhadap tinggi tanaman. Tanaman A diberi pupuk X dan diletakkan di teras, tanaman B diberi pupuk Y dan diletakkan di dalam kamar. Kelemahan utama percobaan Rina adalah …',
     opsi: [
-      'Dua variabel berubah sekaligus (jenis pupuk dan tempat/cahaya), sehingga penyebab perbedaan tinggi tidak bisa dipastikan.',
-      'Jumlah pupuk yang dipakai terlalu sedikit.',
-      'Rina tidak memakai tanaman yang mahal.',
-      'Tanaman seharusnya diukur dengan penggaris besi.'
+      'Ada dua hal yang berbeda sekaligus, yaitu jenis pupuk dan tempat, sehingga penyebab perbedaan tinggi tidak jelas.',
+      'Rina tidak mengukur tinggi tanaman setiap hari, sehingga pertumbuhan hariannya tidak dapat digambarkan dalam grafik.',
+      'Pupuk X dan pupuk Y berasal dari merek yang berbeda, sehingga harga keduanya tidak sama dan percobaannya tidak adil.',
+      'Tanaman di dalam kamar terlindung dari hujan, sehingga Rina seharusnya menyiram tanaman di teras lebih banyak.'
     ],
     bahas: 'Uji yang adil hanya mengubah SATU variabel bebas. Tempat (cahaya) juga berubah, jadi perbedaan tinggi bisa disebabkan pupuk, cahaya, atau keduanya.'
   },
@@ -1430,10 +1430,10 @@ const UJI_NALAR = [
     ind: 'inferensi',
     soal: 'Data: pada hari-hari ketika penjualan es krim tinggi, jumlah orang tenggelam di pantai juga tinggi. Kesimpulan paling tepat adalah …',
     opsi: [
-      'Keduanya kemungkinan dipengaruhi faktor ketiga (cuaca panas membuat orang membeli es krim dan berenang), jadi belum tentu ada hubungan sebab-akibat.',
-      'Makan es krim menyebabkan orang tenggelam.',
-      'Orang tenggelam menyebabkan penjualan es krim naik.',
-      'Pantai sebaiknya melarang penjualan es krim.'
+      'Keduanya mungkin dipicu cuaca panas yang membuat orang membeli es krim dan berenang, jadi belum tentu sebab-akibat.',
+      'Makan es krim membuat tubuh kedinginan dan mudah kram saat berenang, sehingga es krim menjadi penyebab orang tenggelam.',
+      'Banyaknya orang tenggelam membuat pengunjung pantai cemas, lalu mereka membeli es krim untuk menenangkan diri.',
+      'Data itu membuktikan pantai harus melarang penjualan es krim agar jumlah orang yang tenggelam ikut berkurang.'
     ],
     bahas: 'Korelasi (dua hal naik-turun bersama) tidak sama dengan sebab-akibat. Cari variabel ketiga yang mungkin memengaruhi keduanya.'
   },
@@ -1441,10 +1441,10 @@ const UJI_NALAR = [
     ind: 'interpretasi',
     soal: 'Grafik menunjukkan suhu air yang dipanaskan naik dari 25 °C ke 100 °C selama 8 menit, lalu tetap 100 °C selama 5 menit berikutnya walaupun api terus menyala. Makna bagian mendatar grafik adalah …',
     opsi: [
-      'Kalor yang diterima digunakan untuk mengubah wujud air menjadi uap, bukan untuk menaikkan suhu.',
-      'Api kompor padam selama 5 menit.',
-      'Termometer rusak sehingga angkanya berhenti.',
-      'Air berhenti menerima kalor.'
+      'Kalor yang diterima dipakai untuk mengubah wujud air menjadi uap air, sehingga suhu air tidak lagi bertambah.',
+      'Air sudah penuh menyimpan kalor, sehingga kalor dari api tidak dapat masuk lagi dan suhu air berhenti naik.',
+      'Termometer biasa hanya dapat mengukur sampai 100 °C, sehingga angkanya berhenti walaupun suhu air terus naik.',
+      'Api kompor mengecil setelah 8 menit, sehingga kalor yang diterima air hanya cukup untuk menjaga suhunya tetap.'
     ],
     bahas: 'Saat mendidih, kalor dipakai untuk mengubah wujud (kalor uap), sehingga suhu tetap walaupun kalor terus diberikan.'
   },
@@ -1452,10 +1452,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Iklan sabun: "9 dari 10 dokter merekomendasikan sabun kami!" Pertanyaan paling penting untuk menilai klaim tersebut adalah …',
     opsi: [
-      'Berapa jumlah dokter yang disurvei, siapa yang memilih mereka, dan apa pertanyaan survei yang diajukan?',
-      'Apa warna kemasan sabun tersebut?',
-      'Berapa harga sabun tersebut?',
-      'Siapa artis yang membintangi iklannya?'
+      'Berapa banyak dokter yang disurvei, bagaimana mereka dipilih, dan pertanyaan apa yang diajukan kepada mereka?',
+      'Apakah sabun itu sudah lama dijual di pasaran dan apakah kemasannya mencantumkan tanggal kedaluwarsa yang jelas?',
+      'Apakah harga sabun itu lebih murah daripada sabun lain yang juga direkomendasikan oleh para dokter terkenal?',
+      'Apakah dokter yang tampil di iklan itu memakai jas putih dan bekerja di rumah sakit yang besar dan terkenal?'
     ],
     bahas: 'Kekuatan bukti bergantung pada cara data dikumpulkan: jumlah sampel, cara memilih sampel, dan pertanyaan yang diajukan. Bisa saja hanya 10 dokter yang ditanya.'
   },
@@ -1463,10 +1463,10 @@ const UJI_NALAR = [
     ind: 'inferensi',
     soal: 'Dua gelas berisi air bersuhu sama. Gelas A dibungkus kain basah, gelas B tidak. Setelah 30 menit di tempat berangin, air di gelas A lebih dingin. Dugaan paling masuk akal adalah …',
     opsi: [
-      'Air pada kain menguap sambil menyerap kalor dari gelas, sehingga air di gelas A mendingin.',
-      'Kain mengandung zat pendingin kimia.',
-      'Gelas A lebih kecil dari gelas B.',
-      'Angin menambah kalor pada gelas B.'
+      'Air pada kain menguap dan menyerap kalor dari gelas, sehingga suhu air di gelas A turun lebih cepat.',
+      'Kain basah menghalangi sinar matahari masuk ke gelas A, sehingga air di dalamnya tidak menjadi lebih panas.',
+      'Angin membawa kalor ke gelas B, sedangkan kain basah menahan kalor dari angin agar tidak masuk ke gelas A.',
+      'Air dingin dari kain meresap menembus dinding gelas, lalu bercampur dengan air di dalam gelas A sedikit demi sedikit.'
     ],
     bahas: 'Penguapan memerlukan kalor. Kalor diambil dari gelas dan isinya, sehingga suhunya turun — prinsip kendi tanah liat dan keringat.'
   },
@@ -1474,21 +1474,21 @@ const UJI_NALAR = [
     ind: 'analisis',
     soal: 'Budi ingin menyelidiki "Apakah warna cahaya memengaruhi laju fotosintesis Hydrilla?" Variabel terikat yang paling tepat adalah …',
     opsi: [
-      'Jumlah gelembung oksigen yang dihasilkan per menit.',
-      'Warna cahaya lampu.',
-      'Jenis tumbuhan Hydrilla.',
-      'Volume air dalam gelas kimia.'
+      'Jumlah gelembung oksigen yang dihasilkan Hydrilla setiap menit.',
+      'Warna cahaya lampu yang diarahkan ke tumbuhan Hydrilla.',
+      'Jarak lampu ke gelas kimia yang dijaga tetap sama.',
+      'Suhu air dalam gelas kimia selama percobaan berlangsung.'
     ],
-    bahas: 'Variabel terikat adalah yang diukur sebagai hasil. Warna cahaya adalah variabel bebas; jenis tumbuhan dan volume air adalah variabel kontrol.'
+    bahas: 'Variabel terikat adalah yang diukur sebagai hasil. Warna cahaya adalah variabel bebas; jarak lampu dan suhu air adalah variabel kontrol yang dijaga tetap.'
   },
   {
     ind: 'eksplanasi',
     soal: 'Manakah penjelasan yang memuat KLAIM, BUKTI, dan PENALARAN secara lengkap?',
     opsi: [
-      'Kotak styrofoam lebih baik menjaga es (klaim) karena es bertahan 20 jam dibanding 5 jam pada kardus (bukti); styrofoam berongga udara sehingga konduktivitas kalornya kecil (penalaran).',
-      'Kotak styrofoam lebih baik karena memang begitu.',
-      'Es di kotak styrofoam bertahan 20 jam.',
-      'Styrofoam adalah isolator dan kardus juga isolator.'
+      'Styrofoam lebih baik menjaga es karena es bertahan 20 jam, sedangkan di kardus 5 jam; rongga udaranya menghambat kalor.',
+      'Styrofoam lebih baik menjaga es karena es bertahan 20 jam, sedangkan di kardus hanya bertahan sekitar 5 jam saja.',
+      'Styrofoam lebih baik menjaga es karena rongga udaranya menghambat perpindahan kalor dari luar ke dalam kotak.',
+      'Kardus dan styrofoam sama-sama isolator, jadi keduanya sama baiknya untuk menjaga es tetap beku selama perjalanan.'
     ],
     bahas: 'Penjelasan ilmiah yang kuat menyatakan jawaban (klaim), menyertakan data (bukti), dan menghubungkannya dengan konsep sains (penalaran).'
   },
@@ -1496,32 +1496,32 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Siti mengukur waktu larut gula hanya SATU kali untuk tiap suhu air. Saran terbaik untuk memperkuat hasilnya adalah …',
     opsi: [
-      'Mengulang pengukuran beberapa kali untuk tiap suhu lalu menghitung rata-ratanya.',
-      'Mengganti gula dengan garam.',
-      'Menulis laporannya dengan huruf yang lebih rapi.',
-      'Hanya melaporkan hasil yang sesuai hipotesis.'
+      'Mengulang pengukuran beberapa kali pada setiap suhu air, lalu menghitung rata-rata waktu larut gulanya.',
+      'Menambah lebih banyak variasi suhu air, misalnya 10 suhu berbeda, tetapi tetap mengukur satu kali saja.',
+      'Memakai stopwatch digital yang lebih mahal agar angka waktu larut yang tercatat menjadi lebih teliti.',
+      'Hanya mencatat hasil yang sesuai hipotesis agar kesimpulan laporannya menjadi lebih meyakinkan.'
     ],
-    bahas: 'Pengulangan mengurangi pengaruh kesalahan acak. Membuang data yang tidak sesuai hipotesis adalah praktik yang tidak jujur.'
+    bahas: 'Pengulangan mengurangi pengaruh kesalahan acak. Alat yang lebih teliti atau variasi suhu yang lebih banyak tidak menggantikan pengulangan, dan membuang data yang tidak sesuai hipotesis adalah praktik yang tidak jujur.'
   },
   {
     ind: 'regulasi',
     soal: 'Hasil percobaanmu ternyata BERTENTANGAN dengan hipotesismu. Sikap ilmiah yang paling tepat adalah …',
     opsi: [
-      'Memeriksa ulang prosedur; jika prosedurnya benar, menerima bahwa hipotesis perlu direvisi — itu tetap temuan yang berharga.',
-      'Mengubah data agar sesuai hipotesis.',
-      'Menyimpulkan bahwa percobaan pasti salah karena hipotesis sudah dipikirkan matang.',
-      'Berhenti meneliti karena gagal.'
+      'Memeriksa ulang prosedur; bila prosedurnya benar, hipotesis direvisi karena itu tetap temuan yang berharga.',
+      'Mengulang percobaan berkali-kali sampai muncul satu hasil yang sesuai, lalu hanya hasil itu yang dilaporkan.',
+      'Menyimpulkan bahwa percobaannya pasti salah, karena hipotesis sudah dipikirkan matang dan didukung buku.',
+      'Mengganti hipotesis agar sesuai dengan data, lalu menulis laporan seolah hipotesis itu sudah ada sejak awal.'
     ],
-    bahas: 'Hipotesis boleh salah. Ilmuwan memeriksa prosedurnya, lalu memperbarui pemahamannya berdasarkan bukti — inilah regulasi diri.'
+    bahas: 'Hipotesis boleh salah. Ilmuwan memeriksa prosedurnya, lalu memperbarui pemahamannya berdasarkan bukti — inilah regulasi diri. Mengulang sampai hasilnya cocok, atau mengubah hipotesis seolah sudah ada sejak awal, adalah tidak jujur.'
   },
   {
     ind: 'inferensi',
     soal: 'Sebuah paku besi dimasukkan ke tabung berisi air, tabung kedua berisi minyak, tabung ketiga kosong dan tertutup rapat berisi kapur tohor (penyerap uap air). Setelah seminggu, hanya paku di air yang berkarat. Kesimpulan yang didukung data adalah …',
     opsi: [
-      'Air (dan oksigen yang terlarut) diperlukan agar besi berkarat.',
-      'Minyak mempercepat perkaratan.',
-      'Semua logam berkarat di dalam air.',
-      'Paku besi tidak pernah berkarat di udara terbuka.'
+      'Air dan oksigen terlarut di dalamnya diperlukan agar besi berkarat; tanpa air, paku tidak berkarat.',
+      'Minyak melindungi paku dari karat, sehingga semua benda yang diolesi minyak tidak akan pernah berkarat.',
+      'Udara kering mempercepat karat, tetapi kapur tohor menyerapnya sehingga paku di tabung ketiga tetap bersih.',
+      'Semua jenis logam pasti berkarat bila direndam air selama seminggu, termasuk emas, perak, dan aluminium.'
     ],
     bahas: 'Kesimpulan harus sebatas bukti. Data hanya tentang besi, jadi tidak boleh digeneralisasi ke semua logam.'
   },
@@ -1529,10 +1529,10 @@ const UJI_NALAR = [
     ind: 'interpretasi',
     soal: 'Tabel: massa 3 benda berturut-turut 50 g, 50 g, 50 g dan volumenya 20 cm³, 50 cm³, 80 cm³. Jika dimasukkan ke air (1 g/cm³), pernyataan yang benar adalah …',
     opsi: [
-      'Benda pertama tenggelam, benda ketiga terapung, benda kedua melayang.',
-      'Ketiganya tenggelam karena massanya sama.',
-      'Ketiganya terapung karena massanya kecil.',
-      'Benda pertama terapung karena volumenya paling kecil.'
+      'Benda pertama tenggelam, benda kedua melayang, dan benda ketiga terapung karena perbedaan massa jenisnya.',
+      'Ketiganya tenggelam karena massanya sama besar, yaitu 50 g, dan lebih berat daripada air di sekitarnya.',
+      'Benda pertama terapung karena volumenya paling kecil sehingga lebih sedikit air yang harus didesaknya.',
+      'Benda pertama melayang, benda kedua terapung, dan benda ketiga tenggelam karena volumenya paling besar.'
     ],
     bahas: 'Massa jenis = massa/volume: 2,5 g/cm³ (tenggelam), 1 g/cm³ (melayang), 0,625 g/cm³ (terapung). Massa saja tidak menentukan.'
   },
@@ -1540,10 +1540,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Saat cuka dicampur soda kue, muncul banyak gelembung dan gelas terasa dingin. Budi berpendapat: "Ini perubahan fisika, karena gelembungnya sama seperti air mendidih." Penilaian paling tepat terhadap pendapat Budi adalah …',
     opsi: [
-      'Kurang tepat: gelembung pada air mendidih adalah uap air (zat yang sama), sedangkan gelembung di sini adalah gas CO₂ — zat baru hasil reaksi, jadi ini perubahan kimia.',
-      'Tepat, karena setiap gelembung pasti menandakan perubahan fisika.',
-      'Tepat, karena suhunya turun, bukan naik seperti air mendidih.',
-      'Kurang tepat, karena perubahan kimia selalu menghasilkan api.'
+      'Kurang tepat: gelembungnya gas CO₂, zat baru hasil reaksi, bukan uap air seperti pada air yang mendidih.',
+      'Tepat: gelembung muncul karena cairan bergolak, sama seperti air mendidih, dan tidak terbentuk zat baru.',
+      'Tepat: suhunya turun, bukan naik, dan perubahan kimia selalu menghasilkan panas sehingga ini perubahan fisika.',
+      'Kurang tepat: ini perubahan kimia karena perubahan kimia selalu ditandai munculnya api atau cahaya terang.'
     ],
     bahas: 'Kemiripan tampilan (sama-sama bergelembung) belum tentu berarti proses yang sama. Kuncinya: apakah terbentuk zat baru? Gas CO₂ dan natrium asetat adalah zat baru. Perubahan kimia juga tidak harus disertai api atau kenaikan suhu.'
   },
@@ -1551,10 +1551,10 @@ const UJI_NALAR = [
     ind: 'inferensi',
     soal: 'Dina meluncurkan roket air bertekanan 2 bar dan roketnya terbang 20 m. Ia menyimpulkan: "Kalau tekanannya 4 bar, roketku pasti terbang tepat 40 m." Tanggapan paling kritis adalah …',
     opsi: [
-      'Belum tentu: hubungan tekanan dan jarak belum tentu sebanding (ada hambatan udara, tekanan turun saat air keluar), jadi perlu diuji — dengan tetap mematuhi batas aman tekanan botol.',
-      'Benar, karena tekanan dua kali lipat pasti menghasilkan jarak dua kali lipat.',
-      'Salah, karena tekanan tidak berpengaruh pada jarak roket.',
-      'Benar, asalkan airnya juga dua kali lipat.'
+      'Belum tentu: jarak belum tentu sebanding dengan tekanan karena ada hambatan udara, jadi perlu diuji dengan aman.',
+      'Benar: tekanan dua kali lipat memberi dorongan dua kali lipat, sehingga jaraknya juga tepat dua kali lipat.',
+      'Salah: tekanan tidak memengaruhi jarak, karena jarak terbang roket hanya ditentukan oleh besar sudut peluncurannya saja.',
+      'Benar: asalkan jumlah air juga dilipatgandakan, karena air yang menyemprot keluar menjadi pendorong roket.'
     ],
     bahas: 'Satu data belum cukup untuk menyimpulkan pola sebanding. Banyak hubungan di alam tidak lurus (linier). Cara ilmiahnya: kumpulkan beberapa data pada tekanan berbeda (variabel lain tetap), lalu lihat polanya — sambil tetap menjaga keselamatan.'
   },
@@ -1562,10 +1562,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Jembatan stik A menahan 20 kg dan massanya 400 g. Jembatan B menahan 15 kg dan massanya 150 g. Juri lomba menilai "rancangan paling baik" berdasarkan efisiensi. Penilaian yang paling tepat adalah …',
     opsi: [
-      'Jembatan B lebih baik: efisiensinya 100 (15.000 g ÷ 150 g), sedangkan A hanya 50 — B menahan beban lebih besar untuk setiap gram bahannya.',
-      'Jembatan A lebih baik karena menahan beban paling besar.',
-      'Keduanya sama baiknya karena sama-sama menahan lebih dari 10 kg.',
-      'Jembatan A lebih baik karena lebih berat sehingga lebih kokoh.'
+      'Jembatan B lebih baik: setiap gram bahannya menahan 100 g beban, sedangkan jembatan A hanya 50 g.',
+      'Jembatan A lebih baik: beban yang ditahannya 20 kg, lebih besar 5 kg daripada beban jembatan B.',
+      'Keduanya sama baik: selisih bebannya hanya 5 kg dan keduanya sama-sama menahan lebih dari 10 kg.',
+      'Jembatan A lebih baik: massanya lebih besar sehingga lebih kokoh dan lebih tahan terhadap guncangan.'
     ],
     bahas: 'Menilai dengan kritis berarti memakai kriteria yang disepakati. Bila kriterianya efisiensi, bandingkan beban per massa bahan, bukan beban mentah saja. Dengan kriteria lain (misalnya beban terbesar), jawabannya bisa berbeda.'
   },
@@ -1573,21 +1573,21 @@ const UJI_NALAR = [
     ind: 'interpretasi',
     soal: 'Daya angin dirumuskan P = ½ × ρ × A × v³. Jika kecepatan angin naik dari 3 m/s menjadi 6 m/s (dua kali lipat), sedangkan kincirnya sama, daya angin yang melewati kincir menjadi …',
     opsi: [
-      'Delapan kali lipat, karena kecepatan dipangkatkan tiga (2³ = 8).',
-      'Dua kali lipat, karena kecepatannya dua kali lipat.',
-      'Empat kali lipat, karena kecepatan dikuadratkan.',
-      'Tetap, karena ukuran kincirnya tidak berubah.'
+      'Delapan kali lipat, karena kecepatan dalam rumus dipangkatkan tiga (2³ = 8).',
+      'Dua kali lipat, karena daya sebanding dengan kecepatan angin yang naik dua kali.',
+      'Empat kali lipat, karena kecepatan dikuadratkan seperti pada energi kinetik (2² = 4).',
+      'Enam kali lipat, karena kecepatan dua kali lipat dikalikan pangkat tiga (2 × 3 = 6).'
     ],
-    bahas: 'Membaca rumus dengan cermat adalah bagian dari interpretasi. Pangkat tiga pada v berarti perubahan kecil kecepatan angin berdampak besar pada daya — itulah sebabnya lokasi kincir (tempat berangin kencang) sangat penting.'
+    bahas: 'Membaca rumus dengan cermat adalah bagian dari interpretasi. Pangkat tiga berarti 2³ = 2 × 2 × 2 = 8, bukan 2 × 3 = 6. Perubahan kecil kecepatan angin berdampak besar pada daya — itulah sebabnya lokasi kincir (tempat berangin kencang) sangat penting.'
   },
   {
     ind: 'inferensi',
     soal: 'Pada lampu hias warna-warni, satu bohlam kecil putus dan seluruh untaian lampu ikut padam. Sementara itu, di rumah, saat lampu kamar putus, lampu ruang tamu tetap menyala. Kesimpulan yang paling didukung bukti ini adalah …',
     opsi: [
-      'Lampu hias itu kemungkinan dirangkai seri (satu jalur), sedangkan lampu rumah dirangkai paralel (bercabang), sehingga cabang lain tetap mendapat arus.',
-      'Lampu hias memakai listrik yang lebih lemah daripada lampu rumah.',
-      'Bohlam lampu hias lebih mudah putus karena harganya murah.',
-      'Lampu rumah tidak pernah bisa padam bersamaan.'
+      'Lampu hias kemungkinan dirangkai seri, sedangkan lampu rumah dirangkai paralel sehingga cabang lain tetap berarus.',
+      'Lampu hias kemungkinan dirangkai paralel, sehingga satu bohlam putus memutus arus ke semua cabang sekaligus.',
+      'Lampu hias memakai listrik yang lebih lemah, sehingga satu bohlam putus membuat arusnya tidak cukup lagi.',
+      'Lampu rumah memakai kabel lebih tebal, sehingga arus tetap dapat melompati lampu kamar yang sudah putus.'
     ],
     bahas: 'Pola "satu putus, semua padam" adalah bukti jalur tunggal (seri). Pola "satu putus, yang lain tetap" adalah bukti jalur bercabang (paralel). Kesimpulan harus berdasar pola bukti, bukan dugaan tentang harga atau kekuatan listrik.'
   },
@@ -1595,10 +1595,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Andi menguji sebuah kaleng minuman dengan magnet. Kaleng itu tidak tertarik sama sekali. Andi menyimpulkan: "Berarti kaleng ini bukan logam." Penilaian yang paling tepat terhadap kesimpulan Andi adalah …',
     opsi: [
-      'Kurang tepat: tidak ditarik magnet hanya menunjukkan kaleng itu bukan bahan magnetik (misalnya aluminium), padahal aluminium juga logam.',
-      'Tepat, karena semua logam pasti ditarik magnet.',
-      'Tepat, karena kaleng minuman selalu terbuat dari plastik.',
-      'Kurang tepat, karena magnetnya pasti rusak.'
+      'Kurang tepat: tidak tertarik magnet hanya berarti bukan bahan magnetik, misalnya aluminium yang juga logam.',
+      'Tepat: semua logam pasti ditarik magnet, jadi benda yang tidak tertarik magnet pasti bukan terbuat dari logam.',
+      'Tepat: kaleng minuman terbuat dari plastik tebal yang dilapisi cat perak agar tampak seperti logam.',
+      'Kurang tepat: magnetnya kemungkinan terlalu lemah, karena semua logam akan tertarik oleh magnet yang kuat.'
     ],
     bahas: 'Kesimpulan Andi melompat terlalu jauh dari buktinya. Bukti "tidak ditarik magnet" hanya berarti bukan bahan magnetik. Banyak logam — aluminium, tembaga, emas — tidak ditarik magnet. Pemikir kritis membedakan "bukan magnetik" dengan "bukan logam".'
   },
@@ -1606,10 +1606,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Sebuah iklan alat takal berbunyi: "Dengan takal kami, usaha Anda mengangkat beban berkurang 4 kali lipat!" Penilaian yang paling tepat terhadap klaim itu adalah …',
     opsi: [
-      'Keliru: takal memperkecil GAYA sekitar 4 kali, tetapi tali harus ditarik ± 4 kali lebih jauh, sehingga usahanya tetap sama — bahkan sedikit lebih besar karena gesekan.',
-      'Benar, karena keuntungan mekanis takal itu 4.',
-      'Benar, karena beban terasa lebih ringan saat diangkat.',
-      'Keliru, karena takal justru memperbesar gaya.'
+      'Keliru: takal memperkecil gaya, tetapi tali ditarik lebih jauh sehingga usahanya tetap, bahkan bertambah.',
+      'Benar: keuntungan mekanis takal itu 4, sehingga usaha untuk mengangkat beban menjadi seperempatnya.',
+      'Benar: beban terasa jauh lebih ringan saat diangkat, dan itu berarti usaha yang dikeluarkan berkurang.',
+      'Keliru: takal justru memperbesar gaya yang diperlukan, sehingga usaha yang dikeluarkan menjadi 4 kali lebih besar.'
     ],
     bahas: 'Usaha = gaya × jarak. Pesawat sederhana menukar gaya kecil dengan jarak yang lebih jauh; usahanya tidak berkurang. Klaim iklan mencampuradukkan "gaya" dan "usaha" — pemikir kritis memeriksa istilah yang dipakai.'
   },
@@ -1617,10 +1617,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Dina berkata, "Lensa cembung (lup) selalu membuat benda tampak lebih besar." Tanggapan yang paling tepat adalah …',
     opsi: [
-      'Belum tentu: sifat bayangan lensa cembung bergantung pada jarak benda. Bila benda jauh (lebih dari 2 kali jarak fokus), bayangannya justru nyata, terbalik, dan diperkecil.',
-      'Benar, karena lensa cembung memang disebut kaca pembesar.',
-      'Salah, karena lensa cembung selalu memperkecil bayangan.',
-      'Benar, asalkan lensanya bersih.'
+      'Belum tentu: bila benda lebih jauh dari dua kali jarak fokus, bayangannya nyata, terbalik, dan diperkecil.',
+      'Benar: lensa cembung disebut kaca pembesar, sehingga benda pada jarak berapa pun tampak lebih besar.',
+      'Salah: lensa cembung selalu memperkecil bayangan, sedangkan yang memperbesar adalah lensa cekung.',
+      'Benar: asalkan lensanya bersih dan cahayanya cukup, benda yang dilihat lewat lup selalu diperbesar.'
     ],
     bahas: 'Kata "selalu" dalam sebuah klaim perlu diuji. Sifat bayangan lensa cembung berubah-ubah menurut posisi benda: di dalam fokus → maya, tegak, diperbesar (lup); antara f dan 2f → nyata, terbalik, diperbesar (proyektor); lebih dari 2f → nyata, terbalik, diperkecil (kamera).'
   },
@@ -1628,10 +1628,10 @@ const UJI_NALAR = [
     ind: 'analisis',
     soal: 'Raka memetik senar gitar lebih keras, lalu berkata, "Nadanya jadi lebih tinggi." Penyetel nada (tuner) di HP menunjukkan frekuensinya tetap 440 Hz. Penjelasan yang paling tepat adalah …',
     opsi: [
-      'Memetik lebih keras memperbesar amplitudo sehingga bunyi lebih nyaring, tetapi frekuensi (tinggi nada) ditentukan panjang, tegangan, dan jenis senar — yang tidak berubah.',
-      'Tuner-nya rusak, karena petikan keras pasti menaikkan nada.',
-      'Memetik lebih keras menambah panjang senar sehingga nadanya naik.',
-      'Nada naik tetapi frekuensinya tetap, karena nada tidak berhubungan dengan frekuensi.'
+      'Petikan keras memperbesar amplitudo sehingga bunyi lebih nyaring, sedangkan frekuensi senar tidak berubah.',
+      'Tuner di HP kemungkinan kurang peka, karena petikan yang lebih keras seharusnya selalu menaikkan frekuensi senar.',
+      'Petikan keras membuat senar sedikit memanjang, sehingga nadanya naik walaupun tuner tidak mencatatnya.',
+      'Petikan keras menaikkan tinggi nada, sedangkan frekuensi hanya menentukan kenyaringan bunyi senar itu.'
     ],
     bahas: 'Analisis membedakan dua besaran yang sering tertukar: amplitudo (kenyaringan) dan frekuensi (tinggi nada). Bukti alat ukur (tuner) lebih kuat daripada kesan pendengaran — telinga kadang mengira bunyi yang lebih keras terdengar lebih tinggi.'
   },
@@ -1639,10 +1639,10 @@ const UJI_NALAR = [
     ind: 'evaluasi',
     soal: 'Setelah sebuah gempa, gedung 10 lantai di satu kota rusak berat, sedangkan rumah 1 lantai di sebelahnya utuh. Seorang warganet menulis: "Terbukti, bangunan tinggi SELALU lebih lemah saat gempa." Evaluasi klaim tersebut.',
     opsi: [
-      'Klaim terlalu luas: kerusakan juga bergantung pada kecocokan frekuensi alami bangunan dengan frekuensi guncangan tanah (resonansi), rancangan, dan bahan. Pada gempa lain, bisa saja rumah rendah yang rusak. Perlu data dari banyak gempa dan bangunan.',
-      'Klaim benar, karena satu kejadian nyata sudah cukup membuktikannya.',
-      'Klaim benar, karena bangunan tinggi pasti lebih berat sehingga selalu roboh.',
-      'Klaim salah, karena bangunan tinggi selalu lebih kuat dari rumah.'
+      'Klaim terlalu luas: kerusakan juga bergantung pada resonansi, rancangan, dan bahan; perlu data banyak gempa.',
+      'Klaim benar: satu kejadian nyata yang disaksikan banyak orang sudah cukup untuk membuktikan klaim tersebut.',
+      'Klaim benar: bangunan tinggi lebih berat sehingga gaya gempanya lebih besar dan pasti roboh lebih dulu.',
+      'Klaim salah: bangunan tinggi dibuat dari beton bertulang dan baja sehingga selalu lebih kuat daripada rumah biasa.'
     ],
     bahas: 'Satu kejadian tidak cukup untuk kata "selalu". Bangunan tinggi biasanya berfrekuensi alami rendah, rumah rendah berfrekuensi tinggi. Gempa yang getarannya lambat membahayakan gedung tinggi; gempa yang getarannya cepat bisa lebih membahayakan rumah rendah. Karena itu insinyur memeriksa resonansi, bukan hanya tinggi bangunan.'
   }
