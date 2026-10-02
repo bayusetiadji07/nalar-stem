@@ -542,3 +542,18 @@ body.pr-cetak { margin: 0; background: #fff; }
 .saran-guru { padding: 10px 14px; border-radius: 11px; background: #fffbeb; border: 1px solid #fde68a; margin-bottom: 10px; font-size: .92rem; }
 .zona-kelas summary { cursor: pointer; }
 .zona-kelas .tombol { margin-top: 8px; }
+
+/* ---------- Peta jejak: partisipasi ---------- */
+.sub-ringkas { font-size: .9rem; margin: 14px 0 8px; color: var(--redup); letter-spacing: .02em; }
+.statistik b small.dari { font-size: .75rem; color: var(--redup); font-weight: 600; }
+.perlu-disapa { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 4px; font-size: .88rem; }
+.kelas-chip.mini { min-width: 0; flex-direction: row; align-items: center; gap: 6px; padding: 4px 10px; font-size: .84rem; border-color: #fecdd3; background: #fff1f2; }
+.kelas-chip.mini small { color: #be123c; font-weight: 700; }
+.cara-skor { margin-top: 8px; }
+.cara-skor summary { cursor: pointer; font-size: .84rem; color: var(--utama-tua); font-weight: 600; }
+.pilih-tampilan { display: inline-flex; border: 1px solid var(--garis); border-radius: 10px; overflow: hidden; margin-left: auto; }
+.pilih-tampilan button { border: 0; background: #fff; padding: 6px 12px; font: 600 .84rem var(--font); color: var(--redup); cursor: pointer; }
+.pilih-tampilan button[aria-selected="true"] { background: var(--utama); color: #fff; }
+.pilih-tampilan button:focus-visible { outline: 2px solid var(--utama); outline-offset: -2px; }
+.tabel-jejak small.naik { color: #15803d; font-weight: 700; }
+.tabel-jejak small.turun { color: #be123c; font-weight: 700; }

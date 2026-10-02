@@ -20,6 +20,7 @@ function ms(id) {
   if (!S.misi[id].v) S.misi[id].v = Object.fromEntries(m.variabel.map(v => [v.id, v.awal]));
   if (!S.misi[id].nyata) S.misi[id].nyata = { cek: {}, uji: [] };
   if (!S.misi[id].nyata.rencana) S.misi[id].nyata.rencana = [];
+  if (!S.misi[id].partisipasi) partisipasiMisi(id); // siapkan hitungan sebelum kegiatan baru dicatat
   return S.misi[id];
 }
 
@@ -269,7 +270,8 @@ function halMisi(id, no) {
     konteksLokal = { langkah: L, misi: m, uji: st.uji };
     const hasil = await periksaIsian(konteksMisi(m, st, L), L, st.isian, m);
     hasil.waktu = Date.now();
-    st.nilai[L.id] = hasil; simpan(); kirimJejak(m.id);
+    const ulang = !!st.nilai[L.id];
+    st.nilai[L.id] = hasil; simpan(); catatPartisipasi(m.id, ulang ? 'periksaUlang' : 'periksa');
     $('#hasilNilai').innerHTML = kartuNilai(hasil);
     b.disabled = false; b.textContent = '🔍 Periksa lagi';
     if (hasil.galat) toast(hasil.sumber === 'memori' ? 'AI tidak tersambung — dinilai dari memori Kak Nala' : 'AI tidak tersambung — dinilai tutor lokal', 'peringatan');
@@ -588,7 +590,7 @@ function pasangIsiNyata(m, st) {
     const berkas = $('#nFoto').files[0];
     if (berkas) { try { foto = await kecilkanFoto(berkas); } catch (err) { toast('Foto tidak bisa dibaca', 'peringatan'); } }
     const baris = { no: ny.uji.length + 1, acuan: +$('#nAcuan').value || null, nilai, catatan: $('#nCatatan').value.trim(), foto, waktu: Date.now() };
-    ny.uji.push(baris); kirimJejak(m.id);
+    ny.uji.push(baris); catatPartisipasi(m.id, 'nyata');
     if (!simpan()) {
       baris.foto = '';
       if (simpan()) toast('Penyimpanan penuh — hasil disimpan tanpa foto', 'peringatan');
@@ -700,7 +702,7 @@ function pasangLab(m, st) {
     const uji = { no: st.uji.length + 1, v: { ...st.v }, h: hBersih, lulus: krit.filter(k => k.lulus).length, total: krit.length, adil: sebelum ? ubah.length <= 1 : null, ubah, prediksi: $('#prediksi').value.trim(), waktu: Date.now() };
     const info = $('#adilInfo');
     if (sebelum && ubah.length === 0) { info.hidden = false; info.className = 'adil-info kuning'; info.textContent = 'Rancangan sama persis dengan uji sebelumnya. Ubah satu variabel dulu.'; return; }
-    st.uji.push(uji); simpan(); kirimJejak(m.id);
+    st.uji.push(uji); simpan(); catatPartisipasi(m.id, 'uji');
     if (sim.suara) { try { sim.suara(st.v, h); } catch (e) { /* audio tidak tersedia */ } }
     info.hidden = false;
     if (!sebelum) { info.className = 'adil-info'; info.textContent = 'Uji pertama tercatat sebagai data awal (pembanding).'; }
@@ -872,19 +874,20 @@ function gambarChat() {
 function bukaTutor(pesanAwal, tingkat) {
   document.body.classList.add('tutor-buka');
   gambarChat();
-  if (pesanAwal) kirimChat(pesanAwal, tingkat);
+  if (pesanAwal) kirimChat(pesanAwal, tingkat, true);
   else setTimeout(() => $('#chatMasuk').focus(), 150);
 }
 function tutupTutor() { document.body.classList.remove('tutor-buka'); }
 
 let sedangKirim = false;
-async function kirimChat(teks, tingkat = 1) {
+async function kirimChat(teks, tingkat = 1, otomatis = false) {
   teks = (teks || '').trim();
   if (!teks || sedangKirim) return;
   sedangKirim = true;
   const k = kunciChat();
   S.chat[k] = S.chat[k] || [];
-  S.chat[k].push({ peran: 'user', teks });
+  S.chat[k].push({ peran: 'user', teks, otomatis: otomatis || undefined });
+  if (KONTEKS_TUTOR.jenis === 'misi') catatPartisipasi(KONTEKS_TUTOR.m.id, otomatis ? 'tombol' : 'tanya');
   gambarChat();
   const box = $('#chatIsi');
   box.insertAdjacentHTML('beforeend', '<div class="gelembung nala mengetik"><span></span><span></span><span></span></div>');
@@ -906,7 +909,7 @@ function pasangTutor() {
   $('#latarTutor').onclick = tutupTutor;
   $('#fChat').onsubmit = e => { e.preventDefault(); const t = $('#chatMasuk').value; $('#chatMasuk').value = ''; kirimChat(t, 1); };
   $('#chatMasuk').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#fChat').requestSubmit(); } });
-  $$('.chip-cepat button').forEach(b => b.onclick = () => kirimChat(b.dataset.pesan, +b.dataset.tingkat));
+  $$('.chip-cepat button').forEach(b => b.onclick = () => kirimChat(b.dataset.pesan, +b.dataset.tingkat, true));
   $('#bBersihChat').onclick = () => { if (confirm('Hapus percakapan ini?')) { S.chat[kunciChat()] = []; simpan(); gambarChat(); } };
   document.addEventListener('keydown', e => { if (e.key === 'Escape') tutupTutor(); });
 }
@@ -938,7 +941,9 @@ function halUjiNalar() {
   if (bp) bp.onclick = () => {
     const kosong = UJI_NALAR.map((q, i) => i).filter(i => K.jawab[i] === undefined);
     if (kosong.length) { const g = $('#galatKuis'); g.textContent = `Masih ada ${kosong.length} soal yang belum dijawab (nomor ${kosong.map(i => i + 1).join(', ')}).`; g.hidden = false; return; }
-    K.diperiksa = true; simpan(); halUjiNalar();
+    K.diperiksa = true; simpan();
+    catatUjiNalar(UJI_NALAR.filter((q, i) => K.jawab[i] === 0).length, UJI_NALAR.length);
+    halUjiNalar();
   };
   const bu = $('#bUlangKuis');
   if (bu) bu.onclick = () => { S.kuis = { jawab: {}, diperiksa: false, urutan: null }; simpan(); halUjiNalar(); };

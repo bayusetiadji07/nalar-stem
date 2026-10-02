@@ -12,29 +12,80 @@ function idPerangkat() {
 }
 const jejakAktif = () => !!(S.profil.kodeKelas && S.profil.nama && location.protocol !== 'file:');
 
+/* ---------------- Partisipasi murid ----------------
+   st.partisipasi = { tanya, tombol, periksa, periksaUlang, hari: ['2026-10-02', …], pertama, terakhir }
+   Isi percakapan TIDAK pernah dikirim — hanya hitungannya. */
+const PESAN_OTOMATIS = /^(Beri aku petunjuk|Aku masih bingung|Bantu aku membaca pola|Uji pemahamanku|Aku sedang di langkah|Masalah pada prototipe|Ini rencana langkah kerja|Soal nomor)/;
+const hariIni = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const tanggalDari = w => { const d = new Date(w); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+// Murid yang sudah memakai aplikasi sebelum fitur ini ada: hitungan disusun dari riwayat yang tersimpan.
+function partisipasiMisi(misiId) {
+  const st = S.misi[misiId];
+  if (!st.partisipasi) {
+    const chat = (S.chat['misi-' + misiId] || []).filter(r => r.peran === 'user');
+    const hari = [...new Set(st.uji.filter(u => u.waktu).map(u => tanggalDari(u.waktu)))];
+    st.partisipasi = {
+      tanya: chat.filter(r => !r.otomatis && !PESAN_OTOMATIS.test(r.teks)).length,
+      tombol: chat.filter(r => r.otomatis || PESAN_OTOMATIS.test(r.teks)).length,
+      periksa: Object.keys(st.nilai || {}).length, periksaUlang: 0, hari, pertama: null, terakhir: null
+    };
+  }
+  return st.partisipasi;
+}
+
+// jenis: 'tanya' | 'tombol' | 'periksa' | 'periksaUlang' | 'uji' | 'nyata'
+function catatPartisipasi(misiId, jenis) {
+  if (!S.misi[misiId]) return;
+  const P = partisipasiMisi(misiId);
+  if (['tanya', 'tombol', 'periksa', 'periksaUlang'].includes(jenis)) P[jenis]++;
+  const h = hariIni();
+  if (!P.hari.includes(h)) { P.hari.push(h); if (P.hari.length > 90) P.hari.shift(); }
+  P.pertama = P.pertama || Date.now(); P.terakhir = Date.now();
+  simpan(); kirimJejak(misiId);
+}
+
 function ringkasJejak(m, st) {
   const nilai = {};
   Object.values(st.nilai || {}).forEach(n => Object.entries(n.skor || {}).forEach(([id, s]) => { (nilai[id] = nilai[id] || []).push(s); }));
+  const P = partisipasiMisi(m.id);
+  const kolom = LANGKAH.flatMap(L => L.isian);
   return {
-    v: 1,
+    v: 2,
     uji: st.uji.slice(-60).map(u => ({ n: u.no, l: u.lulus, t: u.total, a: u.adil, u: u.ubah || [], p: (u.prediksi || '').slice(0, 160), w: u.waktu || null, x: u.v })),
     langkah: kemajuan(m),
     nilai: Object.fromEntries(Object.entries(nilai).map(([id, a]) => [id, Math.round(a.reduce((x, y) => x + y, 0) / a.length * 10) / 10])),
     nyata: (st.nyata && st.nyata.uji.length) || 0,
-    rencana: (st.nyata && st.nyata.rencana ? st.nyata.rencana.length : 0)
+    rencana: (st.nyata && st.nyata.rencana ? st.nyata.rencana.length : 0),
+    partisipasi: {
+      tanya: P.tanya, tombol: P.tombol, periksa: P.periksa, periksaUlang: P.periksaUlang,
+      hari: P.hari.length, pertama: P.pertama, terakhir: P.terakhir,
+      isian: kolom.filter(f => (st.isian[f.id] || '').trim().length >= 3).length, isianTotal: kolom.length
+    }
   };
 }
 
+// Riwayat Uji Nalar disimpan terpisah dari S.kuis, karena "Ulangi dengan urutan baru" mengosongkan S.kuis.
+function catatUjiNalar(skor, total) {
+  S.ujiNalarRiwayat = S.ujiNalarRiwayat || [];
+  S.ujiNalarRiwayat.push({ skor, total, w: Date.now() });
+  if (S.ujiNalarRiwayat.length > 20) S.ujiNalarRiwayat.shift();
+  simpan(); kirimJejak('ujinalar');
+}
+
+const ID_UJI_NALAR = 'ujinalar';
 const tundaJejak = {};
 function kirimJejak(misiId, segera = false) {
-  if (!jejakAktif() || !S.misi[misiId]) return;
+  const nalar = misiId === ID_UJI_NALAR;
+  if (!jejakAktif() || (nalar ? !(S.ujiNalarRiwayat || []).length : !S.misi[misiId])) return;
   S.jejakTertunda = S.jejakTertunda || {};
   S.jejakTertunda[misiId] = true; simpan();
   clearTimeout(tundaJejak[misiId]);
   tundaJejak[misiId] = setTimeout(async () => {
-    const m = MISI.find(x => x.id === misiId); if (!m) return;
+    const m = MISI.find(x => x.id === misiId); if (!m && !nalar) return;
+    const data = nalar ? { v: 2, riwayat: S.ujiNalarRiwayat.slice(-10) } : ringkasJejak(m, S.misi[misiId]);
     try {
-      await memoriApi({ aksi: 'jejak_kirim', kode: S.profil.kodeKelas, perangkat: idPerangkat(), nama: S.profil.nama, kelas: S.profil.kelas, misi: misiId, data: ringkasJejak(m, S.misi[misiId]) }, 12000);
+      await memoriApi({ aksi: 'jejak_kirim', kode: S.profil.kodeKelas, perangkat: idPerangkat(), nama: S.profil.nama, kelas: S.profil.kelas, misi: misiId, data }, 12000);
       delete S.jejakTertunda[misiId]; S.jejakTerkirim = Date.now(); simpan();
     } catch (e) { /* dicoba lagi saat aplikasi dibuka / kembali online */ }
   }, segera ? 0 : 2500);
@@ -51,7 +102,11 @@ async function gabungKelas(kode) {
   const d = await memoriApi({ aksi: 'kelas_cek', kode }, 12000);
   if (!d.nama) throw new Error('Kode kelas tidak ditemukan. Periksa lagi kode dari gurumu.');
   S.profil.kodeKelas = kode; S.profil.namaKelas = d.nama; simpan();
-  Object.keys(S.misi).forEach((id, i) => { if (S.misi[id].uji.length) setTimeout(() => kirimJejak(id, true), i * 400); });
+  Object.keys(S.misi).forEach((id, i) => {
+    const m = MISI.find(x => x.id === id);
+    if (m && (S.misi[id].uji.length || kemajuan(m))) setTimeout(() => kirimJejak(id, true), i * 400);
+  });
+  if ((S.ujiNalarRiwayat || []).length) setTimeout(() => kirimJejak(ID_UJI_NALAR, true), 300);
   return { nama: d.nama };
 }
 
@@ -209,72 +264,166 @@ async function muatKelas() {
   muatJejakKelas(kelas.find(k => k.kode === jejakTerpilih.kode));
 }
 
+/* ---------------- Analisis partisipasi ----------------
+   Skor 0–100 = langkah selesai 30 + uji maya 20 + prediksi 10 + bertanya sendiri 20
+              + lembar kerja terisi 10 + pemeriksaan lembar kerja 10. */
+const TINGKAT_PARTISIPASI = {
+  tinggi: { nama: 'Tinggi', warna: '#15803d', arti: 'Terlibat di sebagian besar kegiatan dan aktif bertanya.' },
+  sedang: { nama: 'Sedang', warna: '#b45309', arti: 'Sudah terlibat, tetapi ada kegiatan yang masih jarang dilakukan.' },
+  rendah: { nama: 'Rendah', warna: '#be123c', arti: 'Baru sedikit terlibat — perlu disapa dan didampingi.' }
+};
+function analisisPartisipasi(d) {
+  const P = (d && d.partisipasi) || null, A = analisisJejak(d);
+  const langkah = (d && d.langkah) || 0;
+  const isianRasio = P && P.isianTotal ? P.isian / P.isianTotal : null;
+  const tanya = P ? P.tanya : null, periksa = P ? P.periksa + P.periksaUlang : null;
+  const skor = Math.round(
+    30 * Math.min(1, langkah / LANGKAH.length) + 20 * Math.min(A.n, 6) / 6 + 10 * (A.n ? A.predRasio : 0) +
+    20 * Math.min(tanya || 0, 5) / 5 + 10 * (isianRasio || 0) + 10 * Math.min(periksa || 0, 7) / 7);
+  return {
+    ada: !!P, skor, tingkat: skor >= 70 ? 'tinggi' : skor >= 40 ? 'sedang' : 'rendah', langkah, uji: A.n, predRasio: A.n ? A.predRasio : null,
+    tanya, tombol: P ? P.tombol : null, isian: P ? P.isian : null, isianTotal: P ? P.isianTotal : null, isianRasio,
+    periksa: P ? P.periksa : null, periksaUlang: P ? P.periksaUlang : null, hari: P ? P.hari : null, terakhir: P ? P.terakhir : null
+  };
+}
+function ringkasNalar(d) {
+  const R = (d && d.riwayat) || [];
+  if (!R.length) return null;
+  const nilai = x => Math.round(x.skor / x.total * 100);
+  return { kali: R.length, awal: nilai(R[0]), akhir: nilai(R[R.length - 1]), naik: R.length >= 2 ? nilai(R[R.length - 1]) - nilai(R[0]) : null };
+}
+const rataRata = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const desimal = (x, d = 1) => x === null ? '—' : x.toFixed(d).replace('.', ',');
+const teksNalar = N => !N ? '<span class="redup">—</span>' : N.kali >= 2 ? `${N.awal} → <b>${N.akhir}</b> <small class="${N.naik >= 0 ? 'naik' : 'turun'}">(${N.naik >= 0 ? '+' : ''}${N.naik})</small>` : `${N.awal} <small class="redup">(1×)</small>`;
+const tagTingkat = T => `<span class="pola-tag" style="--c:${TINGKAT_PARTISIPASI[T.tingkat].warna}">${T.skor} · ${TINGKAT_PARTISIPASI[T.tingkat].nama}</span>`;
+
 async function muatJejakKelas(kelas) {
   const wadah = $('#isiJejak'); if (!wadah) return;
   wadah.innerHTML = '<p class="redup">Memuat jejak murid…</p>';
   let baris = [];
   try { baris = (await memoriApi({ aksi: 'guru_jejak', sandi: sandiGuru(), kode: kelas.kode }, 20000)).hasil || []; }
   catch (err) { wadah.innerHTML = `<p class="galat">${esc(err.message)}</p>`; return; }
+  const nalarPer = Object.fromEntries(baris.filter(r => r.misi === ID_UJI_NALAR).map(r => [r.perangkat, ringkasNalar(r.data)]));
   const misiAda = MISI.filter(m => baris.some(r => r.misi === m.id));
   const kartuKode = `<div class="kartu kartu-kode"><div><small class="redup">Kode kelas <b>${esc(kelas.nama)}</b></small><div class="kode-besar">${esc(kelas.kode)}</div></div>
-    <p class="redup kecil">Murid: Beranda → kartu profil → isi <b>Kode kelas</b> → Simpan. Jejak terkirim otomatis setiap kali murid menguji rancangan.</p></div>`;
-  if (!misiAda.length) { wadah.innerHTML = kartuKode + '<div class="kartu kosong"><p class="redup">Belum ada jejak dari murid di kelas ini. Minta murid bergabung dengan kode di atas, lalu mengerjakan Langkah 4 sebuah misi.</p></div>' + htmlZonaKelas(kelas); pasangZonaKelas(kelas); return; }
+    <p class="redup kecil">Murid: Beranda → kartu profil → isi <b>Kode kelas</b> → Simpan. Jejak terkirim otomatis setiap kali murid menguji rancangan, memeriksa lembar kerja, bertanya ke Kak Nala, atau mengerjakan Uji Nalar.</p></div>`;
+  if (!misiAda.length) { wadah.innerHTML = kartuKode + '<div class="kartu kosong"><p class="redup">Belum ada jejak dari murid di kelas ini. Minta murid bergabung dengan kode di atas, lalu mengerjakan sebuah misi.</p></div>' + htmlZonaKelas(kelas); pasangZonaKelas(kelas); return; }
   if (!misiAda.some(m => m.id === jejakTerpilih.misi)) jejakTerpilih.misi = misiAda.map(m => [m.id, baris.filter(r => r.misi === m.id).length]).sort((a, b) => b[1] - a[1])[0][0];
+  const tampilan = jejakTerpilih.tampilan === 'partisipasi' ? 'partisipasi' : 'berpikir';
   const m = MISI.find(x => x.id === jejakTerpilih.misi);
-  const murid = baris.filter(r => r.misi === m.id).map(r => ({ ...r, A: analisisJejak(r.data) }));
-  const urutanPola = Object.keys(POLA_JEJAK);
-  murid.sort((a, b) => urutanPola.indexOf(b.A.pola) - urutanPola.indexOf(a.A.pola) || a.nama.localeCompare(b.nama, 'id'));
+  const murid = baris.filter(r => r.misi === m.id).map(r => ({ ...r, A: analisisJejak(r.data), T: analisisPartisipasi(r.data), N: nalarPer[r.perangkat] || null }));
+  const urutanPola = Object.keys(POLA_JEJAK), urutanTingkat = Object.keys(TINGKAT_PARTISIPASI);
+  if (tampilan === 'partisipasi') murid.sort((a, b) => a.T.skor - b.T.skor || a.nama.localeCompare(b.nama, 'id'));
+  else murid.sort((a, b) => urutanPola.indexOf(b.A.pola) - urutanPola.indexOf(a.A.pola) || a.nama.localeCompare(b.nama, 'id'));
   const aktif = murid.filter(r => r.A.n);
   const adilSemua = aktif.filter(r => r.A.adilRasio !== null);
   const sebaran = urutanPola.map(p => [p, murid.filter(r => r.A.pola === p).length]).filter(x => x[1]);
+  // ringkasan partisipasi kelas
+  const adaP = murid.filter(r => r.T.ada);
+  const sebaranT = urutanTingkat.map(t => [t, murid.filter(r => r.T.tingkat === t).length]).filter(x => x[1]);
+  const nalarDua = murid.filter(r => r.N && r.N.kali >= 2);
+  const perluDisapa = murid.filter(r => r.T.tingkat === 'rendah');
+  const kolomBerpikir = `<tr><th>Murid</th><th>Pola</th><th>Uji</th><th>Uji adil</th><th>Prediksi</th><th>Jeda</th><th>Tuntas di</th><th>Jejak</th></tr>`;
+  const kolomPartisipasi = `<tr><th>Murid</th><th>Partisipasi</th><th>Langkah</th><th>Uji</th><th>Bertanya</th><th>Lembar kerja</th><th>Hari aktif</th><th>Uji Nalar</th></tr>`;
+  const barisMurid = r => tampilan === 'partisipasi'
+    ? `<td>${tagTingkat(r.T)}</td><td>${r.T.langkah}/${LANGKAH.length}</td><td>${r.T.uji}</td>
+       <td>${r.T.ada ? `<b>${r.T.tanya}</b> <small class="redup">sendiri</small> · ${r.T.tombol} <small class="redup">tombol</small>` : '<span class="redup">—</span>'}</td>
+       <td>${r.T.ada ? `${r.T.isian}/${r.T.isianTotal} <small class="redup">diisi</small> · ${r.T.periksa + r.T.periksaUlang}× <small class="redup">diperiksa</small>` : '<span class="redup">—</span>'}</td>
+       <td>${r.T.ada ? r.T.hari : '—'}</td><td>${teksNalar(r.N)}</td>`
+    : `<td><span class="pola-tag" style="--c:${POLA_JEJAK[r.A.pola].warna}">${POLA_JEJAK[r.A.pola].ikon} ${POLA_JEJAK[r.A.pola].nama}</span></td>
+       <td>${r.A.n}</td><td>${persen(r.A.adilRasio)}</td><td>${persen(r.A.n ? r.A.predRasio : null)}</td><td>${detik(r.A.jedaMedian)}</td>
+       <td>${r.A.tuntas ? `uji ke-${r.A.tuntas}` : `<span class="redup">${r.A.terbaik}/${r.A.total || '—'}</span>`}</td><td>${jejakMini(r.data)}</td>`;
   wadah.innerHTML = `${kartuKode}
   <div class="kartu">
     <div class="lab-kepala"><h3>📊 Ringkasan kelas</h3>
       <label class="ctl ctl-sebaris"><span>Misi</span><select id="jMisi">${misiAda.map(x => `<option value="${x.id}" ${x.id === m.id ? 'selected' : ''}>${x.ikon} ${esc(x.judul)} (${baris.filter(r => r.misi === x.id).length})</option>`).join('')}</select></label></div>
+    <h4 class="sub-ringkas">🧭 Cara berpikir</h4>
     <div class="statistik">
       <div><b>${murid.length}</b><small>murid</small></div>
-      <div><b>${aktif.length ? (aktif.reduce((x, r) => x + r.A.n, 0) / aktif.length).toFixed(1).replace('.', ',') : '—'}</b><small>rata-rata uji</small></div>
-      <div><b>${adilSemua.length ? persen(adilSemua.reduce((x, r) => x + r.A.adilRasio, 0) / adilSemua.length) : '—'}</b><small>uji adil</small></div>
+      <div><b>${aktif.length ? desimal(rataRata(aktif.map(r => r.A.n))) : '—'}</b><small>rata-rata uji</small></div>
+      <div><b>${adilSemua.length ? persen(rataRata(adilSemua.map(r => r.A.adilRasio))) : '—'}</b><small>uji adil</small></div>
       <div><b>${murid.length ? persen(murid.filter(r => r.A.tuntas).length / murid.length) : '—'}</b><small>memenuhi semua kriteria</small></div>
     </div>
     <div class="sebaran-pola" role="img" aria-label="Sebaran pola eksplorasi">${sebaran.map(([p, n]) => `<span style="flex:${n};background:${POLA_JEJAK[p].warna}" title="${POLA_JEJAK[p].nama}: ${n}">${POLA_JEJAK[p].ikon} ${n}</span>`).join('')}</div>
     <div class="legenda-pola">${sebaran.map(([p]) => `<span><i style="background:${POLA_JEJAK[p].warna}"></i><b>${POLA_JEJAK[p].ikon} ${POLA_JEJAK[p].nama}</b> — ${POLA_JEJAK[p].arti}</span>`).join('')}</div>
+    <h4 class="sub-ringkas">🙋 Partisipasi</h4>
+    <div class="statistik">
+      <div><b>${desimal(rataRata(murid.map(r => r.T.skor)), 0)}</b><small>skor partisipasi rata-rata</small></div>
+      <div><b>${adaP.length ? persen(adaP.filter(r => r.T.tanya > 0).length / adaP.length) : '—'}</b><small>aktif bertanya sendiri</small></div>
+      <div><b>${desimal(rataRata(murid.map(r => r.T.langkah)))}<small class="dari">/${LANGKAH.length}</small></b><small>langkah selesai</small></div>
+      <div><b>${adaP.length ? desimal(rataRata(adaP.map(r => r.T.hari))) : '—'}</b><small>hari aktif rata-rata</small></div>
+      <div><b>${nalarDua.length ? `${desimal(rataRata(nalarDua.map(r => r.N.awal)), 0)} → ${desimal(rataRata(nalarDua.map(r => r.N.akhir)), 0)}` : '—'}</b><small>Uji Nalar awal → akhir${nalarDua.length ? ` (${nalarDua.length} murid)` : ''}</small></div>
+    </div>
+    <div class="sebaran-pola" role="img" aria-label="Sebaran tingkat partisipasi">${sebaranT.map(([t, n]) => `<span style="flex:${n};background:${TINGKAT_PARTISIPASI[t].warna}" title="${TINGKAT_PARTISIPASI[t].nama}: ${n}">${TINGKAT_PARTISIPASI[t].nama} ${n}</span>`).join('')}</div>
+    ${perluDisapa.length ? `<div class="perlu-disapa"><b>👋 Perlu disapa (${perluDisapa.length}):</b> ${perluDisapa.slice(0, 15).map(r => `<button type="button" class="kelas-chip mini" data-sapa="${esc(r.perangkat)}">${esc(r.nama)} <small>${r.T.skor}</small></button>`).join('')}</div>` : ''}
+    <details class="cara-skor"><summary>Cara menghitung skor partisipasi</summary>
+      <p class="redup kecil">Skor 0–100 = langkah misi selesai (30) + jumlah uji di laboratorium maya, penuh pada 6 uji (20) + proporsi uji yang disertai prediksi (10) + pertanyaan yang diketik sendiri ke Kak Nala, penuh pada 5 pertanyaan (20) + isian lembar kerja terisi (10) + pemeriksaan lembar kerja, penuh pada 7 kali (10). Tinggi ≥ 70, Sedang 40–69, Rendah &lt; 40. Pertanyaan lewat tombol cepat dihitung terpisah dan tidak menambah skor. Isi percakapan tidak pernah dikirim ke guru.</p>
+    </details>
   </div>
   <div class="kartu">
-    <div class="lab-kepala"><h3>👥 Jejak tiap murid</h3><button class="tombol kecil" id="bUnduhJejak">⬇️ Unduh CSV</button></div>
-    <p class="redup kecil">Jejak mini: <span class="lgd bulat teal"></span> uji adil · <span class="lgd kotak"></span> uji mengubah >1 variabel · <span class="lgd bulat emas"></span> semua kriteria terpenuhi. Klik baris untuk melihat peta lengkapnya.</p>
-    <div class="tabel-gulir"><table class="tabel tabel-jejak"><thead><tr><th>Murid</th><th>Pola</th><th>Uji</th><th>Uji adil</th><th>Prediksi</th><th>Jeda</th><th>Tuntas di</th><th>Jejak</th></tr></thead>
+    <div class="lab-kepala"><h3>👥 Tiap murid</h3>
+      <div class="pilih-tampilan" role="tablist" aria-label="Tampilan tabel">
+        <button type="button" role="tab" data-tampilan="berpikir" aria-selected="${tampilan === 'berpikir'}">🧭 Cara berpikir</button>
+        <button type="button" role="tab" data-tampilan="partisipasi" aria-selected="${tampilan === 'partisipasi'}">🙋 Partisipasi</button>
+      </div>
+      <button class="tombol kecil" id="bUnduhJejak">⬇️ Unduh CSV</button></div>
+    <p class="redup kecil">${tampilan === 'partisipasi'
+      ? 'Diurutkan dari partisipasi terendah. "Sendiri" = pertanyaan yang diketik murid; "tombol" = tombol petunjuk cepat. Uji Nalar = nilai pertama → terakhir (skala 100). Klik baris untuk rinciannya.'
+      : 'Jejak mini: <span class="lgd bulat teal"></span> uji adil · <span class="lgd kotak"></span> uji mengubah >1 variabel · <span class="lgd bulat emas"></span> semua kriteria terpenuhi. Klik baris untuk melihat peta lengkapnya.'}</p>
+    <div class="tabel-gulir"><table class="tabel tabel-jejak"><thead>${tampilan === 'partisipasi' ? kolomPartisipasi : kolomBerpikir}</thead>
       <tbody>${murid.map(r => `<tr data-murid="${esc(r.perangkat)}" class="${r.perangkat === jejakTerpilih.murid ? 'dipilih' : ''}" tabindex="0">
-        <td><b>${esc(r.nama)}</b>${r.kelas ? `<br><small class="redup">${esc(r.kelas)}</small>` : ''}</td>
-        <td><span class="pola-tag" style="--c:${POLA_JEJAK[r.A.pola].warna}">${POLA_JEJAK[r.A.pola].ikon} ${POLA_JEJAK[r.A.pola].nama}</span></td>
-        <td>${r.A.n}</td><td>${persen(r.A.adilRasio)}</td><td>${persen(r.A.n ? r.A.predRasio : null)}</td><td>${detik(r.A.jedaMedian)}</td>
-        <td>${r.A.tuntas ? `uji ke-${r.A.tuntas}` : `<span class="redup">${r.A.terbaik}/${r.A.total || '—'}</span>`}</td>
-        <td>${jejakMini(r.data)}</td></tr>`).join('')}</tbody></table></div>
+        <td><b>${esc(r.nama)}</b>${r.kelas ? `<br><small class="redup">${esc(r.kelas)}</small>` : ''}</td>${barisMurid(r)}</tr>`).join('')}</tbody></table></div>
   </div>
   <div id="detailJejak"></div>
   ${htmlZonaKelas(kelas)}`;
   $('#jMisi').onchange = e => { jejakTerpilih.misi = e.target.value; jejakTerpilih.murid = ''; simpanPilihanJejak(); muatJejakKelas(kelas); };
+  $$('[data-tampilan]').forEach(b => b.onclick = () => { jejakTerpilih.tampilan = b.dataset.tampilan; simpanPilihanJejak(); muatJejakKelas(kelas); });
   const pilih = id => {
     jejakTerpilih.murid = id; simpanPilihanJejak();
     $$('[data-murid]').forEach(tr => tr.classList.toggle('dipilih', tr.dataset.murid === id));
     tampilDetailJejak(m, murid.find(r => r.perangkat === id), kelas);
   };
   $$('[data-murid]').forEach(tr => { tr.onclick = () => pilih(tr.dataset.murid); tr.onkeydown = e => { if (e.key === 'Enter') pilih(tr.dataset.murid); }; });
-  if (murid.some(r => r.perangkat === jejakTerpilih.murid)) tampilDetailJejak(m, murid.find(r => r.perangkat === jejakTerpilih.murid), kelas);
+  $$('[data-sapa]').forEach(b => b.onclick = () => pilih(b.dataset.sapa));
+  if (murid.some(r => r.perangkat === jejakTerpilih.murid)) tampilDetailJejak(m, murid.find(r => r.perangkat === jejakTerpilih.murid), kelas, false);
   $('#bUnduhJejak').onclick = () => unduhCsvJejak(kelas, baris);
   pasangZonaKelas(kelas);
 }
 
-function tampilDetailJejak(m, r, kelas) {
+// Saran tindak lanjut partisipasi: dari kegiatan yang paling rendah
+function saranPartisipasi(T) {
+  if (!T.ada) return 'Data partisipasi rinci belum ada untuk murid ini (aplikasinya belum diperbarui di perangkat murid). Data akan muncul setelah murid membuka aplikasi lagi.';
+  const s = [];
+  if (T.langkah < 3) s.push('Ia baru menyelesaikan sedikit langkah — tanyakan bagian mana yang membuatnya berhenti.');
+  if (T.tanya === 0) s.push(T.tombol ? 'Ia hanya memakai tombol petunjuk dan belum pernah mengetik pertanyaan sendiri — ajak ia merumuskan satu pertanyaan dengan kata-katanya.' : 'Ia belum pernah bertanya ke Kak Nala — tunjukkan cara bertanya dan contohkan satu pertanyaan.');
+  if (T.uji < 3) s.push('Uji di laboratorium maya masih kurang dari 3 — minta ia menguji ulang dengan mengubah satu variabel.');
+  if (T.isianRasio !== null && T.isianRasio < 0.5) s.push('Lebih dari separuh lembar kerja masih kosong.');
+  if (T.periksaUlang === 0 && T.periksa > 0) s.push('Ia belum pernah memperbaiki jawaban setelah diperiksa — dorong ia membaca umpan balik dan memperbaiki satu jawaban.');
+  return s.length ? s.join(' ') : 'Partisipasinya baik. Beri peran sebagai teman diskusi bagi murid yang partisipasinya rendah.';
+}
+
+function tampilDetailJejak(m, r, kelas, gulir = true) {
   const wadah = $('#detailJejak'); if (!wadah || !r) return;
-  const A = r.A, P = POLA_JEJAK[A.pola], U = (r.data && r.data.uji) || [];
+  const A = r.A, P = POLA_JEJAK[A.pola], T = r.T, U = (r.data && r.data.uji) || [];
   const nilai = Object.entries((r.data && r.data.nilai) || {});
   wadah.innerHTML = `<div class="kartu detail-jejak" style="--c:${P.warna}">
-    <div class="lab-kepala"><h3>🗺️ Peta jejak — ${esc(r.nama)}</h3><span class="pola-tag" style="--c:${P.warna}">${P.ikon} ${P.nama}</span></div>
+    <div class="lab-kepala"><h3>🗺️ ${esc(r.nama)}</h3><span><span class="pola-tag" style="--c:${P.warna}">${P.ikon} ${P.nama}</span> ${tagTingkat(T)}</span></div>
     <p class="redup kecil">${m.ikon} ${esc(m.judul)} · ${r.data.langkah || 0}/${LANGKAH.length} langkah · ${r.data.nyata || 0} uji nyata · rencana ${r.data.rencana || 0} langkah · diperbarui ${new Date(r.diperbarui).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</p>
+    <h4 class="sub-ringkas">🙋 Partisipasi</h4>
+    <div class="statistik">
+      <div><b>${T.langkah}<small class="dari">/${LANGKAH.length}</small></b><small>langkah selesai</small></div>
+      <div><b>${T.ada ? T.tanya : '—'}</b><small>pertanyaan diketik sendiri</small></div>
+      <div><b>${T.ada ? T.tombol : '—'}</b><small>petunjuk lewat tombol</small></div>
+      <div><b>${T.ada ? `${T.isian}<small class="dari">/${T.isianTotal}</small>` : '—'}</b><small>isian lembar kerja</small></div>
+      <div><b>${T.ada ? `${T.periksa}+${T.periksaUlang}` : '—'}</b><small>diperiksa + diperbaiki</small></div>
+      <div><b>${T.ada ? T.hari : '—'}</b><small>hari aktif</small></div>
+      <div><b>${r.N ? (r.N.kali >= 2 ? `${r.N.awal}→${r.N.akhir}` : r.N.awal) : '—'}</b><small>Uji Nalar${r.N ? ` (${r.N.kali}×)` : ''}</small></div>
+    </div>
+    <div class="saran-guru"><b>👋 Saran partisipasi:</b> ${esc(saranPartisipasi(T))}</div>
+    <h4 class="sub-ringkas">🧭 Peta jejak berpikir</h4>
     <div class="peta-gulir"><canvas id="petaJejak"></canvas></div>
     <p class="redup kecil">Titik = uji (nomor di dalamnya). <b style="color:#0d9488">●</b> adil · <b style="color:#ef4444">■</b> mengubah lebih dari satu variabel · cincin emas = semua kriteria terpenuhi · 💭 = menulis prediksi. Label berwarna = variabel yang diubah; angka abu-abu = jeda berpikir sebelum uji (<span style="color:#be123c">merah</span> bila &lt; 6 detik).</p>
-    <div class="saran-guru"><b>💡 Saran tindak lanjut:</b> ${esc(P.saran)}</div>
+    <div class="saran-guru"><b>💡 Saran cara berpikir:</b> ${esc(P.saran)}</div>
     ${nilai.length ? `<p class="kecil"><b>Rata-rata rubrik Kak Nala:</b> ${nilai.map(([id, s]) => { const I = INDIKATOR.find(x => x.id === id); return I ? `${I.nama} ${String(s).replace('.', ',')}` : ''; }).filter(Boolean).join(' · ')}</p>` : ''}
     <details><summary><b>Rincian ${U.length} uji</b></summary>
       <div class="tabel-gulir"><table class="tabel"><thead><tr><th>Uji</th><th>Yang diubah</th><th>Kriteria</th><th>Prediksi murid</th></tr></thead>
@@ -289,7 +438,7 @@ function tampilDetailJejak(m, r, kelas) {
     try { await memoriApi({ aksi: 'guru_jejak_hapus', sandi: sandiGuru(), kode: kelas.kode, perangkat: r.perangkat }, 15000); jejakTerpilih.murid = ''; simpanPilihanJejak(); toast('Jejak murid dihapus'); muatKelas(); }
     catch (err) { toast(err.message, 'peringatan'); }
   };
-  wadah.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (gulir) wadah.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function htmlZonaKelas(kelas) {
@@ -308,12 +457,17 @@ function pasangZonaKelas(kelas) {
 
 function unduhCsvJejak(kelas, baris) {
   const sel = v => { const s = String(v ?? ''); return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  const kepala = ['nama', 'kelas', 'misi', 'pola', 'jumlah_uji', 'uji_adil_persen', 'prediksi_persen', 'jeda_median_detik', 'tuntas_di_uji', 'kriteria_terbaik', 'jumlah_kriteria', 'langkah_selesai', 'uji_nyata', 'diperbarui'];
-  const isi = baris.map(r => {
-    const A = analisisJejak(r.data), m = MISI.find(x => x.id === r.misi);
+  const kepala = ['nama', 'kelas', 'misi', 'pola', 'jumlah_uji', 'uji_adil_persen', 'prediksi_persen', 'jeda_median_detik', 'tuntas_di_uji', 'kriteria_terbaik', 'jumlah_kriteria',
+    'langkah_selesai', 'uji_nyata', 'skor_partisipasi', 'tingkat_partisipasi', 'pertanyaan_diketik', 'pertanyaan_tombol', 'isian_terisi', 'isian_total', 'lembar_diperiksa', 'lembar_diperbaiki', 'hari_aktif',
+    'uji_nalar_pertama', 'uji_nalar_terakhir', 'uji_nalar_kali', 'diperbarui'];
+  const nalarPer = Object.fromEntries(baris.filter(r => r.misi === ID_UJI_NALAR).map(r => [r.perangkat, ringkasNalar(r.data)]));
+  const isi = baris.filter(r => r.misi !== ID_UJI_NALAR).map(r => {
+    const A = analisisJejak(r.data), T = analisisPartisipasi(r.data), N = nalarPer[r.perangkat], m = MISI.find(x => x.id === r.misi);
+    const kosong = v => (v === null || v === undefined ? '' : v);
     return [r.nama, r.kelas, m ? m.judul : r.misi, POLA_JEJAK[A.pola].nama, A.n, A.adilRasio === null ? '' : Math.round(A.adilRasio * 100), A.n ? Math.round(A.predRasio * 100) : '',
-      A.jedaMedian === null ? '' : Math.round(A.jedaMedian), A.tuntas || '', A.n ? A.terbaik : '', A.n ? A.total : '', (r.data && r.data.langkah) || 0, (r.data && r.data.nyata) || 0,
-      new Date(r.diperbarui).toLocaleString('id-ID')].map(sel).join(';');
+      A.jedaMedian === null ? '' : Math.round(A.jedaMedian), A.tuntas || '', A.n ? A.terbaik : '', A.n ? A.total : '', T.langkah, (r.data && r.data.nyata) || 0,
+      T.skor, TINGKAT_PARTISIPASI[T.tingkat].nama, kosong(T.tanya), kosong(T.tombol), kosong(T.isian), kosong(T.isianTotal), kosong(T.periksa), kosong(T.periksaUlang), kosong(T.hari),
+      N ? N.awal : '', N && N.kali >= 2 ? N.akhir : '', N ? N.kali : '', new Date(r.diperbarui).toLocaleString('id-ID')].map(sel).join(';');
   });
   const blob = new Blob(['﻿' + [kepala.join(';'), ...isi].join('\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
