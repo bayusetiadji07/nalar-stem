@@ -30,6 +30,12 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
 - **Peta Jejak Berpikir** (`#/jejak`, bersandi guru) — guru membuat kelas berkode; murid memasukkan kode di Beranda dan jejak ujinya terkirim otomatis (tabel `nalar_kelas`/`nalar_jejak`, RPC `nalar_jejak_kirim`, `nalar_guru_*`). Per murid: uji adil vs coba-coba, prediksi, jeda berpikir antar-uji, kapan kriteria terpenuhi → pola Sistematis/Berkembang/Coba-coba/Tebak cepat/Berhenti dini + saran tindak lanjut; peta jejak per uji; unduh CSV. Tab **Partisipasi**: skor 0–100 (langkah selesai 30, uji maya 20, prediksi 10, pertanyaan diketik sendiri ke Kak Nala 20, isian lembar kerja 10, pemeriksaan lembar kerja 10), pertanyaan sendiri vs tombol, lembar kerja diisi/diperiksa/diperbaiki, hari aktif, Uji Nalar pertama → terakhir (riwayat di S.ujiNalarRiwayat, dikirim sebagai misi "ujinalar"), daftar "perlu disapa". Isi chat tidak ikut terkirim, hanya hitungannya.
 - **Panduan Guru** — sintaks, rubrik, catatan model.
 
+## Aplikasi terpasang & offline (PWA)
+
+- `manifest.webmanifest` + `sw.js` (service worker). Setelah dibuka sekali saat online, semua halaman, kode, gambar (±5 MB) dan Google Fonts tersimpan di perangkat; aplikasi bisa dibuka tanpa internet dan dipasang ke layar utama (tombol "📲 Pasang aplikasi" atau menu browser).
+- Strategi: berkas aplikasi stale-while-revalidate (cepat & offline, diperbarui di latar); `/api/*` selalu lewat jaringan. Saat offline Kak Nala memakai salinan Memori + tutor lokal; jejak Peta Jejak antre lalu terkirim saat online. Status kesiapan offline ada di halaman Pengaturan.
+- **Wajib sebelum commit bila ada berkas aplikasi yang berubah/ditambah:** `node alat/perbarui-sw.js` (memperbarui DAFTAR_SIMPAN & VERSI di sw.js). Folder `alat/` tidak ikut tayang (.vercelignore).
+
 ## Sumber AI (menu Pengaturan AI)
 | Mode | Keterangan |
 |---|---|

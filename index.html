@@ -9,6 +9,10 @@
   <meta name="theme-color" content="#0d9488">
   <link rel="icon" type="image/png" href="assets/img/ikon-64.png">
   <link rel="apple-touch-icon" href="assets/img/ikon-180.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="NalarSTEM">
   <meta property="og:type" content="website">
   <meta property="og:title" content="NalarSTEM — Lab IPA STEM dengan AI Tutor">
   <meta property="og:description" content="14 misi STEM IPA SMP dengan laboratorium maya, praktik nyata, dan AI Tutor Kak Nala yang melatih berpikir kritis.">
@@ -25,6 +29,7 @@
 <body>
   <header class="atas">
     <a href="#/" class="merek"><img class="logo" src="assets/img/logo.jpg" alt="" width="36" height="36"><span>Nalar<b>STEM</b></span></a>
+    <button id="bPasang" class="tombol-pasang" type="button" hidden>📲 Pasang aplikasi</button>
     <button id="tombolMenu" class="tombol-menu" aria-label="Buka menu">☰</button>
     <nav class="nav">
       <a href="#/">Beranda</a>
@@ -36,6 +41,7 @@
     </nav>
   </header>
 
+  <div id="pitaOffline" class="pita-offline" role="status" hidden>📴 Sedang offline. NalarSTEM tetap bisa dipakai; Kak Nala menjawab dari memori dan tutor lokal. Data terkirim otomatis saat online lagi.</div>
   <main id="app" class="wadah"></main>
 
   <footer class="kaki">

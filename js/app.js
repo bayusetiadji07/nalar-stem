@@ -1265,6 +1265,17 @@ function halPengaturan() {
     <p>Kak Nala merekam jawaban AI (tanpa nama murid) ke memori sekolah. Saat AI tidak tersedia, ia mencari jawaban untuk pertanyaan yang mirip. Salinan memori juga disimpan di perangkat ini untuk dipakai saat offline.</p>
     <p id="statusMemori" class="redup">Memeriksa salinan memori…</p>
     <div class="aksi-lembar"><button type="button" class="tombol" id="bPerbaruiMemori">🔄 Perbarui salinan offline</button><a class="tombol" href="#/kurasi">🔐 Kurasi memori (guru)</a></div>
+  </div>
+  <div class="kartu prosa" id="kartuOffline">
+    <h3>📲 Pasang aplikasi &amp; pakai tanpa internet</h3>
+    <p>Setelah dibuka sekali saat ada sinyal, NalarSTEM tersimpan di perangkat ini dan bisa dibuka tanpa internet: misi, laboratorium maya, Uji Nalar, praktik nyata, presentasi, dan portofolio. Saat offline, Kak Nala menjawab dari salinan memori dan tutor lokal; jejak untuk guru terkirim otomatis begitu online lagi.</p>
+    <p id="statusOffline" class="redup">Memeriksa kesiapan offline…</p>
+    <div class="aksi-lembar"><button type="button" class="tombol utama" id="bPasang2" hidden>📲 Pasang aplikasi</button></div>
+    <details><summary><b>Cara memasang secara manual</b></summary>
+      <ul><li><b>Android (Chrome):</b> buka menu ⋮ di kanan atas → <b>Tambahkan ke layar utama</b> atau <b>Instal aplikasi</b>.</li>
+      <li><b>iPhone/iPad (Safari):</b> ketuk tombol Bagikan → <b>Tambahkan ke Layar Utama</b>.</li>
+      <li><b>Laptop (Chrome/Edge):</b> klik ikon pasang di ujung kanan kolom alamat.</li></ul>
+    </details>
   </div>`;
   const tulisStatusMemori = () => {
     const p = paketLokal();
@@ -1273,6 +1284,9 @@ function halPengaturan() {
       : 'Belum ada salinan offline di perangkat ini.';
   };
   tulisStatusMemori();
+  tulisStatusOffline();
+  $('#bPasang2').hidden = !ajakanPasang;
+  $('#bPasang2').onclick = pasangAplikasi;
   $('#bPerbaruiMemori').onclick = async () => {
     const b = $('#bPerbaruiMemori'); b.disabled = true;
     try { await perbaruiPaketMemori(true); tulisStatusMemori(); toast('Salinan memori diperbarui'); }
@@ -1293,6 +1307,40 @@ function halPengaturan() {
     }
   };
 }
+
+/* ---------------- Aplikasi terpasang & offline (PWA) ---------------- */
+let ajakanPasang = null;
+const bisaSW = 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+function pasangAplikasi() {
+  if (!ajakanPasang) { toast('Pasang lewat menu browser: "Tambahkan ke layar utama"'); return; }
+  ajakanPasang.prompt();
+  ajakanPasang.userChoice.finally(() => { ajakanPasang = null; $$('#bPasang, #bPasang2').forEach(b => { b.hidden = true; }); });
+}
+function tulisStatusOffline() {
+  const el = $('#statusOffline'); if (!el) return;
+  if (!bisaSW) { el.textContent = 'Browser ini belum mendukung mode offline. Gunakan Chrome, Edge, atau Safari terbaru lewat alamat web.'; return; }
+  if (!navigator.serviceWorker.controller) { el.textContent = 'Sedang menyiapkan mode offline… Biarkan halaman ini terbuka sebentar saat ada sinyal, lalu muat ulang.'; return; }
+  navigator.serviceWorker.controller.postMessage('status');
+}
+if (bisaSW) {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* mode offline tidak tersedia */ });
+  navigator.serviceWorker.addEventListener('message', e => {
+    const d = e.data || {}; const el = $('#statusOffline');
+    if (d.jenis !== 'status' || !el) return;
+    el.innerHTML = d.tersimpan >= d.total ? `✅ <b>Siap dipakai tanpa internet.</b> ${d.tersimpan} berkas tersimpan di perangkat ini.` : `⏳ Menyimpan berkas untuk offline: ${d.tersimpan} dari ${d.total}. Biarkan terbuka saat ada sinyal.`;
+  });
+  navigator.serviceWorker.addEventListener('controllerchange', tulisStatusOffline);
+}
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); ajakanPasang = e;
+  $$('#bPasang, #bPasang2').forEach(b => { b.hidden = false; });
+});
+window.addEventListener('appinstalled', () => { ajakanPasang = null; $$('#bPasang, #bPasang2').forEach(b => { b.hidden = true; }); toast('NalarSTEM terpasang di perangkat ini'); });
+$('#bPasang').onclick = pasangAplikasi;
+const perbaruiPitaOffline = () => { $('#pitaOffline').hidden = navigator.onLine; };
+window.addEventListener('offline', perbaruiPitaOffline);
+window.addEventListener('online', () => { perbaruiPitaOffline(); perbaruiPaketMemori().catch(() => {}); });
+perbaruiPitaOffline();
 
 /* ---------------- Mulai ---------------- */
 $('#tombolMenu').onclick = () => document.body.classList.toggle('menu-buka');

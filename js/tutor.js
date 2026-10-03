@@ -64,6 +64,7 @@ async function mintaLangsung(kunci, model, permintaan, pakaiThinking) {
 async function panggilAI(permintaan) {
   const c = bacaAI();
   if (c.sumber === 'lokal') throw new Error('LOKAL');
+  if (!navigator.onLine) throw new Error('perangkat sedang offline');
   if (c.sumber === 'pribadi') {
     if (!c.kunci) throw new Error('Kunci API Gemini pribadi belum diisi di Pengaturan AI.');
     const daftar = [c.model, ...MODEL_DAFTAR.filter(m => m !== c.model)];
