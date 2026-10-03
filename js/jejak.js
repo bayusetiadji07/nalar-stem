@@ -76,14 +76,14 @@ function catatUjiNalar(skor, total) {
 const ID_UJI_NALAR = 'ujinalar';
 const tundaJejak = {};
 function kirimJejak(misiId, segera = false) {
-  const nalar = misiId === ID_UJI_NALAR;
-  if (!jejakAktif() || (nalar ? !(S.ujiNalarRiwayat || []).length : !S.misi[misiId])) return;
+  const nalar = misiId === ID_UJI_NALAR, tes = misiId === ID_TES;
+  if (!jejakAktif() || (nalar ? !(S.ujiNalarRiwayat || []).length : tes ? !Object.keys(S.tes || {}).length : !S.misi[misiId])) return;
   S.jejakTertunda = S.jejakTertunda || {};
   S.jejakTertunda[misiId] = true; simpan();
   clearTimeout(tundaJejak[misiId]);
   tundaJejak[misiId] = setTimeout(async () => {
-    const m = MISI.find(x => x.id === misiId); if (!m && !nalar) return;
-    const data = nalar ? { v: 2, riwayat: S.ujiNalarRiwayat.slice(-10) } : ringkasJejak(m, S.misi[misiId]);
+    const m = MISI.find(x => x.id === misiId); if (!m && !nalar && !tes) return;
+    const data = nalar ? { v: 2, riwayat: S.ujiNalarRiwayat.slice(-10) } : tes ? ringkasTes() : ringkasJejak(m, S.misi[misiId]);
     try {
       await memoriApi({ aksi: 'jejak_kirim', kode: S.profil.kodeKelas, perangkat: idPerangkat(), nama: S.profil.nama, kelas: S.profil.kelas, misi: misiId, data }, 12000);
       delete S.jejakTertunda[misiId]; S.jejakTerkirim = Date.now(); simpan();
@@ -98,15 +98,17 @@ window.addEventListener('online', kirimJejakTertunda);
 
 async function gabungKelas(kode) {
   kode = String(kode || '').trim().toUpperCase();
-  if (!kode) { delete S.profil.kodeKelas; delete S.profil.namaKelas; simpan(); return { keluar: true }; }
+  if (!kode) { delete S.profil.kodeKelas; delete S.profil.namaKelas; delete S.tesKelas; simpan(); return { keluar: true }; }
   const d = await memoriApi({ aksi: 'kelas_cek', kode }, 12000);
   if (!d.nama) throw new Error('Kode kelas tidak ditemukan. Periksa lagi kode dari gurumu.');
-  S.profil.kodeKelas = kode; S.profil.namaKelas = d.nama; simpan();
+  S.profil.kodeKelas = kode; S.profil.namaKelas = d.nama; S.tesKelas = null; simpan();
+  await segarkanTesKelas();
   Object.keys(S.misi).forEach((id, i) => {
     const m = MISI.find(x => x.id === id);
     if (m && (S.misi[id].uji.length || kemajuan(m))) setTimeout(() => kirimJejak(id, true), i * 400);
   });
   if ((S.ujiNalarRiwayat || []).length) setTimeout(() => kirimJejak(ID_UJI_NALAR, true), 300);
+  if (Object.keys(S.tes || {}).length) setTimeout(() => kirimJejak(ID_TES, true), 600);
   return { nama: d.nama };
 }
 
@@ -306,8 +308,9 @@ async function muatJejakKelas(kelas) {
   const nalarPer = Object.fromEntries(baris.filter(r => r.misi === ID_UJI_NALAR).map(r => [r.perangkat, ringkasNalar(r.data)]));
   const misiAda = MISI.filter(m => baris.some(r => r.misi === m.id));
   const kartuKode = `<div class="kartu kartu-kode"><div><small class="redup">Kode kelas <b>${esc(kelas.nama)}</b></small><div class="kode-besar">${esc(kelas.kode)}</div></div>
-    <p class="redup kecil">Murid: Beranda → kartu profil → isi <b>Kode kelas</b> → Simpan. Jejak terkirim otomatis setiap kali murid menguji rancangan, memeriksa lembar kerja, bertanya ke Kak Nala, atau mengerjakan Uji Nalar.</p></div>`;
-  if (!misiAda.length) { wadah.innerHTML = kartuKode + '<div class="kartu kosong"><p class="redup">Belum ada jejak dari murid di kelas ini. Minta murid bergabung dengan kode di atas, lalu mengerjakan sebuah misi.</p></div>' + htmlZonaKelas(kelas); pasangZonaKelas(kelas); return; }
+    <p class="redup kecil">Murid: Beranda → kartu profil → isi <b>Kode kelas</b> → Simpan. Jejak terkirim otomatis setiap kali murid menguji rancangan, memeriksa lembar kerja, bertanya ke Kak Nala, mengerjakan Uji Nalar, atau mengirim Mode Tes.</p></div>`;
+  const panelTes = htmlPanelTes(kelas, baris), muatUlang = () => muatJejakKelas(kelas);
+  if (!misiAda.length) { wadah.innerHTML = kartuKode + panelTes + '<div class="kartu kosong"><p class="redup">Belum ada jejak dari murid di kelas ini. Minta murid bergabung dengan kode di atas, lalu mengerjakan sebuah misi.</p></div>' + htmlZonaKelas(kelas); pasangZonaKelas(kelas); pasangPanelTes(kelas, baris, muatUlang); return; }
   if (!misiAda.some(m => m.id === jejakTerpilih.misi)) jejakTerpilih.misi = misiAda.map(m => [m.id, baris.filter(r => r.misi === m.id).length]).sort((a, b) => b[1] - a[1])[0][0];
   const tampilan = jejakTerpilih.tampilan === 'partisipasi' ? 'partisipasi' : 'berpikir';
   const m = MISI.find(x => x.id === jejakTerpilih.misi);
@@ -334,6 +337,7 @@ async function muatJejakKelas(kelas) {
        <td>${r.A.n}</td><td>${persen(r.A.adilRasio)}</td><td>${persen(r.A.n ? r.A.predRasio : null)}</td><td>${detik(r.A.jedaMedian)}</td>
        <td>${r.A.tuntas ? `uji ke-${r.A.tuntas}` : `<span class="redup">${r.A.terbaik}/${r.A.total || '—'}</span>`}</td><td>${jejakMini(r.data)}</td>`;
   wadah.innerHTML = `${kartuKode}
+  ${panelTes}
   <div class="kartu">
     <div class="lab-kepala"><h3>📊 Ringkasan kelas</h3>
       <label class="ctl ctl-sebaris"><span>Misi</span><select id="jMisi">${misiAda.map(x => `<option value="${x.id}" ${x.id === m.id ? 'selected' : ''}>${x.ikon} ${esc(x.judul)} (${baris.filter(r => r.misi === x.id).length})</option>`).join('')}</select></label></div>
@@ -388,6 +392,7 @@ async function muatJejakKelas(kelas) {
   if (murid.some(r => r.perangkat === jejakTerpilih.murid)) tampilDetailJejak(m, murid.find(r => r.perangkat === jejakTerpilih.murid), kelas, false);
   $('#bUnduhJejak').onclick = () => unduhCsvJejak(kelas, baris);
   pasangZonaKelas(kelas);
+  pasangPanelTes(kelas, baris, muatUlang);
 }
 
 // Saran tindak lanjut partisipasi: dari kegiatan yang paling rendah

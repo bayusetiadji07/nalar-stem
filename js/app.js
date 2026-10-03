@@ -83,6 +83,7 @@ function rute() {
   if (hal === 'misi' && a) return halMisi(a, +b || 1);
   if (hal === 'misi') return halDaftarMisi();
   if (hal === 'uji-nalar') return halUjiNalar();
+  if (hal === 'tes') return halTes();
   if (hal === 'portofolio') return halPortofolio();
   if (hal === 'guru') return halGuru();
   if (hal === 'pengaturan') return halPengaturan();
@@ -145,6 +146,8 @@ function halBeranda() {
     </div>
   </section>
 
+  <div id="kartuTes"></div>
+
   <section class="profil-kartu kartu">
     <div>
       <h2>👋 ${S.profil.nama ? `Halo, ${esc(S.profil.nama)}!` : 'Kenalan dulu, yuk!'}</h2>
@@ -179,6 +182,7 @@ function halBeranda() {
   </section>
 
   <p class="catatan-ai">Status AI Tutor: <b>${c.sumber === 'lokal' ? 'Tutor lokal (tanpa AI)' : c.sumber === 'pribadi' ? 'Gemini — kunci pribadi' : 'Gemini — server sekolah'}</b> · <a href="#/pengaturan">ubah</a></p>`;
+  pasangKartuTes();
   $('#fProfil').onsubmit = async e => {
     e.preventDefault();
     S.profil.nama = $('#pNama').value.trim(); S.profil.kelas = $('#pKelas').value.trim();
@@ -843,7 +847,7 @@ function setKonteksTutor(k) {
   if (k.jenis === 'misi') konteksLokal = { langkah: k.L, misi: k.m, uji: ms(k.m.id).uji };
   else konteksLokal = { langkah: null, misi: null, uji: [] };
   const sub = $('#tutorSub');
-  if (sub) sub.textContent = k.jenis === 'misi' ? `${k.m.judul} · Langkah ${k.L.no}` : k.jenis === 'kuis' ? 'Uji Nalar' : 'Tanya apa saja tentang IPA';
+  if (sub) sub.textContent = k.jenis === 'misi' ? `${k.m.judul} · Langkah ${k.L.no}` : k.jenis === 'kuis' ? 'Uji Nalar' : k.jenis === 'tes' ? 'Mode Tes — Kak Nala istirahat dulu' : 'Tanya apa saja tentang IPA';
   gambarChat();
 }
 function kunciChat() { return KONTEKS_TUTOR.jenis === 'misi' ? 'misi-' + KONTEKS_TUTOR.m.id : KONTEKS_TUTOR.jenis; }
@@ -872,6 +876,7 @@ function gambarChat() {
 }
 
 function bukaTutor(pesanAwal, tingkat) {
+  if (document.body.classList.contains('mode-tes')) { toast('Selama tes, Kak Nala tidak tersedia. Kerjakan sendiri, ya!'); return; }
   document.body.classList.add('tutor-buka');
   gambarChat();
   if (pesanAwal) kirimChat(pesanAwal, tingkat, true);

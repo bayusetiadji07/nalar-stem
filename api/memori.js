@@ -88,6 +88,12 @@ module.exports = async function handler(req, res) {
       // ---- Peta jejak berpikir ----
       case 'kelas_cek':
         return res.status(200).json({ nama: await rpc('nalar_kelas_cek', { p_kode: String(b.kode || '').slice(0, 12) }) });
+      case 'kelas_info':
+        return res.status(200).json((await rpc('nalar_kelas_info', { p_kode: String(b.kode || '').slice(0, 12) })) || {});
+      case 'guru_tes_atur': {
+        const t = b.tes && typeof b.tes === 'object' ? { misi: String(b.tes.misi || ''), paket: b.tes.paket === 'B' ? 'B' : 'A', bahas: !!b.tes.bahas } : null;
+        return res.status(200).json({ tes: await rpc('nalar_guru_tes_atur', { p_sandi: String(b.sandi || ''), p_kode: String(b.kode || '').slice(0, 12), p_tes: t }) });
+      }
       case 'jejak_kirim': {
         if (!b.data || typeof b.data !== 'object') return res.status(400).json({ error: 'Data jejak tidak valid.' });
         await rpc('nalar_jejak_kirim', {
