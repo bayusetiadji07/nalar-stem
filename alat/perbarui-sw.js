@@ -17,12 +17,14 @@ const berkas = [
   ...daftarDir('assets/img/sim', /\.(jpg|png|webp|svg)$/)
 ];
 
-const sidik = crypto.createHash('sha1');
-for (const f of berkas) sidik.update(f).update(fs.readFileSync(path.join(AKAR, f)));
-const versi = 'nalarstem-' + sidik.digest('hex').slice(0, 8);
-
 const fileSw = path.join(AKAR, 'sw.js');
 let sw = fs.readFileSync(fileSw, 'utf8');
+
+const sidik = crypto.createHash('sha1');
+for (const f of berkas) sidik.update(f).update(fs.readFileSync(path.join(AKAR, f)));
+// logika sw.js sendiri juga ikut, agar perubahan cara menyimpan menghasilkan versi baru
+sidik.update(sw.replace(/const VERSI = '[^']*';/, '').replace(/const DAFTAR_SIMPAN = \[[\s\S]*?\];/, ''));
+const versi = 'nalarstem-' + sidik.digest('hex').slice(0, 8);
 sw = sw.replace(/const VERSI = '[^']*';/, `const VERSI = '${versi}';`)
        .replace(/const DAFTAR_SIMPAN = \[[\s\S]*?\];/, `const DAFTAR_SIMPAN = [\n  './',\n${berkas.map(f => `  '${f}'`).join(',\n')}\n];`);
 fs.writeFileSync(fileSw, sw);
