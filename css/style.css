@@ -588,3 +588,9 @@ body.mode-tes .fab-tutor { display: none; }
 .pratinjau-tes li { margin: 6px 0; }
 .pratinjau-tes small { color: #15803d; }
 @media (max-width: 640px) { .kartu-tes-beranda { flex-wrap: wrap; } .status-tes .aksi-tes { margin-left: 0; } }
+
+/* Tombol uji tepat di bawah layar simulasi */
+.bilah-uji { display: flex; gap: 8px; margin: 10px 0 6px; flex-wrap: wrap; align-items: stretch; }
+.bilah-uji input { flex: 1 1 220px; min-width: 0; }
+.bilah-uji #bUji { flex: 0 0 auto; font-size: 1rem; padding: 10px 20px; }
+@media (max-width: 640px) { .bilah-uji #bUji, .bilah-uji #bDengar { flex: 1 1 100%; } }

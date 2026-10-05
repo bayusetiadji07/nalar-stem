@@ -603,9 +603,17 @@ function gambarHidroponik(ctx, W, H, v, h, p) {
    --------------------------------------------------------- */
 const RT_28C = 24.7; // L·atm/mol pada ± 28 °C
 
+// Jenis cuka: kadar asam asetat dan harga per mL larutan yang dimasukkan ke botol.
+// Cuka 20% (botol 125 mL di pasaran, ± Rp 5.000) → label menyarankan 5 mL cuka + 20 mL air (≈ 4%).
+const JENIS_CUKA = {
+  dapur: { kadar: 0.05, harga: 20, aman: true },
+  encer: { kadar: 0.025, harga: 10, aman: true },
+  pekat20encer: { kadar: 0.04, harga: 8, aman: true },
+  pekat20: { kadar: 0.20, harga: 40, aman: false }
+};
 function hitungRoket(v) {
   const cuka = +v.cuka, soda = +v.soda, botol = +v.botol;
-  const kadar = v.kadar === 'encer' ? 0.025 : 0.05;
+  const J = JENIS_CUKA[v.kadar] || JENIS_CUKA.dapur, kadar = J.kadar;
   const nAsam = cuka * kadar / 60;   // massa jenis cuka ≈ 1 g/mL, Mr asam asetat 60
   const nSoda = soda / 84;           // Mr NaHCO3 84
   const n = Math.min(nAsam, nSoda);
@@ -633,7 +641,7 @@ function hitungRoket(v) {
   const jarak = Math.max(0, v0 * v0 * Math.sin(2 * th) / 9.8 * 0.6);
   return {
     gas: bulat(n * RT_28C, 2), pembatas, sisa, tekanan: bulat(pLepas, 2), kecepatan: bulat(v0, 1),
-    tinggi: bulat(tinggi, 1), jarak: bulat(jarak, 1), biaya: Math.round((cuka * 20 + soda * 100) / 100) * 100,
+    tinggi: bulat(tinggi, 1), jarak: bulat(jarak, 1), biaya: Math.round((cuka * J.harga + soda * 100) / 100) * 100,
     _terbuang: terbuang, _meluap: meluap, _isi: isi
   };
 }
@@ -643,7 +651,8 @@ function kriteriaRoket(v, h) {
     { teks: 'Mendarat di zona 15–25 m', lulus: h.jarak >= 15 && h.jarak <= 25, nilai: `${h.jarak} m` },
     { teks: 'Pereaksi terbuang ≤ 20%', lulus: h._terbuang <= 20, nilai: h.sisa },
     { teks: 'Busa tidak meluap', lulus: !h._meluap, nilai: `botol terisi ${Math.round(h._isi * 100)}%` },
-    { teks: 'Biaya ≤ Rp 10.000', lulus: h.biaya <= 10000, nilai: rp(h.biaya) }
+    { teks: 'Biaya ≤ Rp 10.000', lulus: h.biaya <= 10000, nilai: rp(h.biaya) },
+    { teks: 'Cuka aman dipakai (kadar ≤ 5%)', lulus: (JENIS_CUKA[v.kadar] || JENIS_CUKA.dapur).aman, nilai: `${Math.round((JENIS_CUKA[v.kadar] || JENIS_CUKA.dapur).kadar * 100)}%${(JENIS_CUKA[v.kadar] || {}).aman === false ? ' — encerkan dulu!' : ''}` }
   ];
 }
 

@@ -622,13 +622,15 @@ function htmlLab(m, st) {
           ? `<label class="ctl"><span>${esc(v.label)} <b data-nilai="${v.id}">${esc(tampilVar(v, st.v[v.id]))}</b></span>
              <input type="range" data-v="${v.id}" min="${v.min}" max="${v.max}" step="${v.step}" value="${st.v[v.id]}"></label>`
           : `<label class="ctl"><span>${esc(v.label)}</span><select data-v="${v.id}">${opsiVar(v).map(o => `<option value="${o[0]}" ${o[0] === st.v[v.id] ? 'selected' : ''}>${esc(o[1])}</option>`).join('')}</select></label>`).join('')}
-        <label class="ctl"><span>Prediksimu sebelum menguji (opsional)</span><input id="prediksi" placeholder="Aku menduga hasilnya ..." maxlength="200"></label>
-        <button class="tombol utama lebar" id="bUji">▶ Uji Rancangan</button>
-        ${SIM[m.id].suara ? '<button class="tombol lebar" id="bDengar" type="button">🔊 Dengarkan nada</button>' : ''}
-        <p id="adilInfo" class="adil-info" hidden></p>
       </div>
       <div class="panggung-wrap">
         <canvas id="kanvas" aria-label="Simulasi ${esc(m.judul)}"></canvas>
+        <div class="bilah-uji">
+          <input id="prediksi" placeholder="Prediksimu (opsional): aku menduga …" maxlength="200" aria-label="Prediksimu sebelum menguji">
+          <button class="tombol utama" id="bUji">▶ Uji Rancangan</button>
+          ${SIM[m.id].suara ? '<button class="tombol" id="bDengar" type="button">🔊 Dengarkan nada</button>' : ''}
+        </div>
+        <p id="adilInfo" class="adil-info" hidden></p>
         <div class="hasil-grid" id="hasilGrid">${m.keluaran.map(k => `<div><small>${esc(k.label)}</small><b data-k="${k.id}">—</b></div>`).join('')}</div>
         <div id="cekKriteria" class="cek-kriteria"></div>
       </div>

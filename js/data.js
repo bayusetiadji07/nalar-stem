@@ -333,7 +333,7 @@ const NYATA = {
       'Botol plastik bekas minuman bersoda (lebih kuat) sesuai ukuran rancangan',
       'Sumbat gabus/karet yang pas dengan mulut botol',
       'Karton tebal untuk sirip dan kerucut, lakban',
-      'Cuka dapur 5% dan soda kue',
+      'Cuka (cuka dapur 5% atau cuka 20% botol 125 mL yang diencerkan) dan soda kue',
       'Tisu, gelas takar, sendok teh, timbangan dapur',
       'Peluncur: 3 tongkat/bata agar botol bisa berdiri miring, busur derajat',
       'Meteran 30 m (atau tali yang ditandai tiap 1 m), patok/kapur',
@@ -343,7 +343,7 @@ const NYATA = {
       'Semua orang di area peluncuran wajib memakai kacamata pelindung.',
       'Peluncuran di lapangan terbuka dengan pendampingan guru; penonton di belakang garis aman 5 m dan tidak ada orang di arah luncur.',
       'Hanya botol PLASTIK bekas minuman bersoda — jangan botol kaca, botol retak, atau penyok.',
-      'Hanya cuka dapur 5% — jangan cuka biang atau asam lain.',
+      'Pakai cuka dapur 5% atau cuka 20% yang SUDAH diencerkan (1 bagian cuka + 4 bagian air). Jangan memakai cuka 20% langsung, cuka biang, atau asam lain. Bila cuka mengenai mata atau kulit, segera bilas dengan air mengalir.',
       'Jika roket tidak meluncur: JANGAN didekati/diintip. Tunggu minimal 2 menit, lalu guru membuka sumbat dengan wajah dan tubuh menjauh dari mulut botol.',
       'Jangan mengarahkan roket ke orang, jendela, kendaraan, atau kabel listrik.'
     ],
@@ -360,7 +360,10 @@ const NYATA = {
     takaran: v => [
       `Cuka ${v.cuka} mL ≈ ${fxd(+v.cuka / 250)} gelas belimbing (250 mL).`,
       `Soda kue ${v.soda} g ≈ ${fxd(+v.soda / 5)} sendok teh peres (1 sdt ≈ 5 g) — lebih tepat bila ditimbang.`,
-      `Jenis cuka: ${v.kadar === 'encer' ? 'cuka dapur 5% dicampur air sama banyak (jadi 2,5%)' : 'cuka dapur 5% tanpa dicampur'}.`,
+      v.kadar === 'encer' ? 'Jenis cuka: cuka dapur 5% dicampur air sama banyak (jadi 2,5%).'
+        : v.kadar === 'pekat20encer' ? `Jenis cuka: cuka 20% diencerkan — ${Math.round(+v.cuka / 5)} mL cuka 20% + ${Math.round(+v.cuka * 4 / 5)} mL air (± ${fxd(+v.cuka / 5 / 125)} botol 125 mL). Tuang cuka ke dalam air, lalu aduk pelan.`
+        : v.kadar === 'pekat20' ? '⚠️ Cuka 20% tanpa diencerkan TIDAK BOLEH dipakai di praktik nyata. Ubah rancanganmu ke cuka 20% yang diencerkan, lalu uji ulang di laboratorium maya.'
+        : 'Jenis cuka: cuka dapur 5% tanpa dicampur.',
       `Botol ${v.botol === '1500' ? '1,5 L' : '600 mL'}; soda kue ${v.bungkus === 'tisu' ? 'dibungkus tisu' : 'dituang langsung'}; sudut peluncur ${v.sudut}° dari tanah.`
     ],
     ukur: [
@@ -986,26 +989,26 @@ const MISI = [
     kelas: 'Kelas 7 · Perubahan Materi (Fisika & Kimia)',
     warna: '#7c3aed',
     ringkas: 'Manfaatkan gas hasil reaksi kimia cuka dan soda kue untuk meluncurkan roket botol tepat ke zona target.',
-    kisah: 'Pekan Sains sekolah mengadakan <b>lomba roket botol ramah lingkungan</b>. Bahan bakarnya hanya boleh <b>cuka dapur dan soda kue</b>. Roket harus mendarat di <b>zona target 15–25 m</b> — lebih jauh dari itu akan melewati pagar lapangan. Juri juga menilai <b>hemat bahan</b>: jangan sampai banyak cuka atau soda kue yang terbuang tanpa bereaksi.',
+    kisah: 'Pekan Sains sekolah mengadakan <b>lomba roket botol ramah lingkungan</b>. Bahan bakarnya hanya boleh <b>cuka dan soda kue</b>. Di warung sekitar sekolah, cuka yang mudah ditemukan adalah <b>cuka 20% dalam botol 125 mL</b>, yang menurut labelnya harus diencerkan (5 mL cuka + 20 mL air) sebelum dipakai. Roket harus mendarat di <b>zona target 15–25 m</b> — lebih jauh dari itu akan melewati pagar lapangan. Juri juga menilai <b>hemat bahan</b>: jangan sampai banyak cuka atau soda kue yang terbuang tanpa bereaksi.',
     kriteria: [
       'Roket mendarat di zona target 15–25 m',
       'Pereaksi yang terbuang (tidak ikut bereaksi) paling banyak 20%',
       'Busa tidak meluap sebelum botol tertutup'
     ],
-    kendala: ['Biaya bahan paling banyak Rp 10.000 (cuka Rp 20/mL, soda kue Rp 100/g)', 'Hanya cuka dapur (5%) atau cuka yang diencerkan — cuka biang (25%) DILARANG karena korosif'],
+    kendala: ['Biaya bahan paling banyak Rp 10.000 (cuka dapur 5% Rp 20/mL; cuka 20% ± Rp 5.000 per botol 125 mL ≈ Rp 40/mL, atau ± Rp 8/mL setelah diencerkan 1 : 4; soda kue Rp 100/g)', 'Kadar cuka di dalam botol paling tinggi 5% — cuka 20% WAJIB diencerkan dulu, cuka biang (25%) DILARANG karena korosif'],
     konsep: `
       <p><b>Perubahan fisika</b> tidak menghasilkan zat baru (misalnya es mencair, gula larut). <b>Perubahan kimia</b> menghasilkan zat baru yang sifatnya berbeda dari zat asal.</p>
       <p>Saat cuka (mengandung asam asetat) bertemu soda kue (natrium bikarbonat), terjadi <b>reaksi kimia</b>:</p>
       <p class="rumus">CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑</p>
       <p><b>Ciri perubahan kimia</b> yang teramati: muncul gelembung gas, campuran terasa lebih dingin (reaksi menyerap kalor), dan terbentuk zat baru (natrium asetat, air, gas karbon dioksida).</p>
-      <p><b>Perbandingan massa:</b> 60 g asam asetat tepat bereaksi dengan 84 g soda kue. Cuka dapur 5% berarti 100 mL cuka mengandung ± 5 g asam asetat. Pereaksi yang habis lebih dulu disebut <b>pereaksi pembatas</b> — ia menentukan banyaknya gas yang terbentuk; kelebihan pereaksi lain terbuang percuma.</p>
+      <p><b>Perbandingan massa:</b> 60 g asam asetat tepat bereaksi dengan 84 g soda kue. Cuka dapur 5% berarti 100 mL cuka mengandung ± 5 g asam asetat. Cuka 20% yang dijual dalam botol 125 mL mengandung asam empat kali lebih pekat (± 25 g per botol); setelah diencerkan sesuai label (1 bagian cuka + 4 bagian air) kadarnya menjadi ± 4%, sehingga satu botol menghasilkan ± 625 mL cuka encer. Pereaksi yang habis lebih dulu disebut <b>pereaksi pembatas</b> — ia menentukan banyaknya gas yang terbentuk; kelebihan pereaksi lain terbuang percuma.</p>
       <p><b>Gas CO₂</b> terkumpul di ruang kosong botol sehingga <b>tekanan</b> naik. Saat sumbat lepas, gas mendorong cairan keluar ke bawah dan roket terdorong ke atas (<b>Hukum III Newton: aksi–reaksi</b>). Terlalu sedikit cairan → sedikit "massa dorong"; terlalu banyak → ruang gas sempit.</p>
-      <p class="peringatan">⚠️ Keselamatan: pakai kacamata pelindung, luncurkan di lapangan terbuka, jangan mengarahkan roket ke orang, pakai botol plastik (bukan kaca), dan jangan memakai cuka biang.</p>`,
+      <p class="peringatan">⚠️ Keselamatan: pakai kacamata pelindung, luncurkan di lapangan terbuka, jangan mengarahkan roket ke orang, pakai botol plastik (bukan kaca), jangan memakai cuka biang, dan selalu encerkan cuka 20% sesuai label sebelum dipakai (tuang cuka ke dalam air, bukan sebaliknya).</p>`,
     kataKunci: ['reaksi', 'kimia', 'perubahan kimia', 'zat baru', 'gas', 'karbon dioksida', 'co2', 'asam', 'pereaksi', 'pembatas', 'tekanan', 'gelembung', 'aksi', 'newton', 'bikarbonat'],
     variabel: [
       { id: 'cuka', label: 'Volume cuka', tipe: 'range', min: 50, max: 700, step: 25, satuan: 'mL', awal: 100 },
       { id: 'soda', label: 'Massa soda kue', tipe: 'range', min: 5, max: 50, step: 1, satuan: 'g', awal: 10 },
-      { id: 'kadar', label: 'Jenis cuka', tipe: 'select', awal: 'dapur', opsi: [['dapur', 'Cuka dapur 5%'], ['encer', 'Cuka diencerkan 2,5%']] },
+      { id: 'kadar', label: 'Jenis cuka', tipe: 'select', awal: 'dapur', opsi: [['dapur', 'Cuka dapur 5%'], ['encer', 'Cuka dapur diencerkan 2,5%'], ['pekat20encer', 'Cuka 20% + air 1:4 (≈ 4%)'], ['pekat20', 'Cuka 20% tanpa diencerkan']] },
       { id: 'bungkus', label: 'Cara memasukkan soda kue', tipe: 'select', awal: 'langsung', opsi: [['langsung', 'Dituang langsung'], ['tisu', 'Dibungkus tisu (reaksi tertunda)']] },
       { id: 'botol', label: 'Ukuran botol', tipe: 'select', awal: '600', opsi: [['600', 'Botol 600 mL'], ['1500', 'Botol 1,5 L']] },
       { id: 'sudut', label: 'Sudut peluncuran', tipe: 'range', min: 30, max: 90, step: 5, satuan: '°', awal: 90 }
