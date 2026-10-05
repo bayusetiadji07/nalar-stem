@@ -995,7 +995,7 @@ const MISI = [
       'Pereaksi yang terbuang (tidak ikut bereaksi) paling banyak 20%',
       'Busa tidak meluap sebelum botol tertutup'
     ],
-    kendala: ['Biaya bahan paling banyak Rp 10.000 (cuka dapur 5% Rp 20/mL; cuka 20% ± Rp 5.000 per botol 125 mL ≈ Rp 40/mL, atau ± Rp 8/mL setelah diencerkan 1 : 4; soda kue Rp 100/g)', 'Kadar cuka di dalam botol paling tinggi 5% — cuka 20% WAJIB diencerkan dulu, cuka biang (25%) DILARANG karena korosif'],
+    kendala: ['Biaya bahan paling banyak Rp 10.000 (cuka dapur 5% Rp 20/mL; cuka 20% Rp 4.000 per botol 125 mL = Rp 32/mL, atau ± Rp 6,4/mL setelah diencerkan 1 : 4; soda kue Rp 100/g)', 'Kadar cuka di dalam botol paling tinggi 5% — cuka 20% WAJIB diencerkan dulu, cuka biang (25%) DILARANG karena korosif'],
     konsep: `
       <p><b>Perubahan fisika</b> tidak menghasilkan zat baru (misalnya es mencair, gula larut). <b>Perubahan kimia</b> menghasilkan zat baru yang sifatnya berbeda dari zat asal.</p>
       <p>Saat cuka (mengandung asam asetat) bertemu soda kue (natrium bikarbonat), terjadi <b>reaksi kimia</b>:</p>

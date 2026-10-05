@@ -604,12 +604,12 @@ function gambarHidroponik(ctx, W, H, v, h, p) {
 const RT_28C = 24.7; // L·atm/mol pada ± 28 °C
 
 // Jenis cuka: kadar asam asetat dan harga per mL larutan yang dimasukkan ke botol.
-// Cuka 20% (botol 125 mL di pasaran, ± Rp 5.000) → label menyarankan 5 mL cuka + 20 mL air (≈ 4%).
+// Cuka 20% (botol 125 mL di pasaran, Rp 4.000 = Rp 32/mL) → label menyarankan 5 mL cuka + 20 mL air (≈ 4%).
 const JENIS_CUKA = {
   dapur: { kadar: 0.05, harga: 20, aman: true },
   encer: { kadar: 0.025, harga: 10, aman: true },
-  pekat20encer: { kadar: 0.04, harga: 8, aman: true },
-  pekat20: { kadar: 0.20, harga: 40, aman: false }
+  pekat20encer: { kadar: 0.04, harga: 6.4, aman: true },
+  pekat20: { kadar: 0.20, harga: 32, aman: false }
 };
 function hitungRoket(v) {
   const cuka = +v.cuka, soda = +v.soda, botol = +v.botol;
