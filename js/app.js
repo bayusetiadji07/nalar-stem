@@ -1329,8 +1329,27 @@ function tulisStatusOffline() {
   if (!navigator.serviceWorker.controller) { el.textContent = 'Sedang menyiapkan mode offline… Biarkan halaman ini terbuka sebentar saat ada sinyal, lalu muat ulang.'; return; }
   navigator.serviceWorker.controller.postMessage('status');
 }
+// Versi baru: SW baru langsung aktif (skipWaiting + clients.claim). Halaman yang sedang terbuka
+// masih memakai kode lama, jadi muat ulang otomatis bila baru saja dibuka, selain itu tawarkan tombol.
+const adaPengendaliAwal = bisaSW && !!navigator.serviceWorker.controller, waktuBuka = Date.now();
+let sudahMuatUlang = false;
+function tawarkanVersiBaru() {
+  if (sudahMuatUlang || !adaPengendaliAwal) return; // kunjungan pertama: tidak perlu muat ulang
+  const sedangMengetik = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName);
+  if (Date.now() - waktuBuka < 15000 && !sedangMengetik) { sudahMuatUlang = true; location.reload(); return; }
+  if ($('#pitaVersi')) return;
+  const p = document.createElement('div');
+  p.id = 'pitaVersi'; p.className = 'pita-versi'; p.setAttribute('role', 'status');
+  p.innerHTML = '✨ Versi baru NalarSTEM sudah tersedia. <button type="button" class="tombol kecil utama">Muat ulang</button>';
+  p.querySelector('button').onclick = () => { sudahMuatUlang = true; location.reload(); };
+  document.body.appendChild(p);
+}
 if (bisaSW) {
-  navigator.serviceWorker.register('sw.js').catch(() => { /* mode offline tidak tersedia */ });
+  navigator.serviceWorker.register('sw.js').then(reg => {
+    // periksa pembaruan saat aplikasi dibuka kembali dari latar belakang
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+  }).catch(() => { /* mode offline tidak tersedia */ });
+  navigator.serviceWorker.addEventListener('controllerchange', tawarkanVersiBaru);
   navigator.serviceWorker.addEventListener('message', e => {
     const d = e.data || {}; const el = $('#statusOffline');
     if (d.jenis !== 'status' || !el) return;
