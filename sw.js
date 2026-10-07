@@ -8,7 +8,7 @@
    - /api/* (Kak Nala AI, memori, jejak) selalu lewat jaringan, tidak disimpan.
    VERSI dan DAFTAR_SIMPAN diperbarui otomatis oleh: node alat/perbarui-sw.js
    ========================================================= */
-const VERSI = 'nalarstem-3fe7815f';
+const VERSI = 'nalarstem-7d13cca4';
 const DAFTAR_SIMPAN = [
   './',
   'index.html',
@@ -34,19 +34,28 @@ const DAFTAR_SIMPAN = [
   'assets/img/kosong.jpg',
   'assets/img/logo.jpg',
   'assets/img/misi-angin.jpg',
+  'assets/img/misi-boraks.jpg',
   'assets/img/misi-bunyi.jpg',
+  'assets/img/misi-garam.jpg',
   'assets/img/misi-gempa.jpg',
   'assets/img/misi-hidroponik.jpg',
   'assets/img/misi-jembatan.jpg',
+  'assets/img/misi-kompos.jpg',
   'assets/img/misi-listrik.jpg',
   'assets/img/misi-magnet.jpg',
+  'assets/img/misi-mangrove.jpg',
+  'assets/img/misi-nyamuk.jpg',
   'assets/img/misi-optik.jpg',
   'assets/img/misi-pendingin.jpg',
+  'assets/img/misi-pengering.jpg',
   'assets/img/misi-penjernih.jpg',
   'assets/img/misi-perahu.jpg',
   'assets/img/misi-pesawat.jpg',
   'assets/img/misi-roket.jpg',
   'assets/img/misi-roketair.jpg',
+  'assets/img/misi-sejuk.jpg',
+  'assets/img/misi-tempe.jpg',
+  'assets/img/misi-tetes.jpg',
   'assets/img/og-cover.jpg',
   'assets/img/portofolio.jpg',
   'assets/img/uji-nalar.jpg',
