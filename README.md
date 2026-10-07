@@ -4,7 +4,7 @@ Aplikasi pembelajaran IPA berbasis **STEM** (SMP, Fase D) untuk melatih **berpik
 dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pertanyaan, bukan memberi jawaban.
 
 ## Isi
-- **14 Misi STEM** (kontekstual pesisir Besuki), masing-masing 7 langkah (6 langkah Engineering Design Process + praktik nyata):
+- **23 Misi STEM** (kontekstual pesisir Besuki), masing-masing 7 langkah (6 langkah Engineering Design Process + praktik nyata):
   1. Perahu Penyelamat Hasil Panen — Hukum Archimedes (kelas 8)
   2. Penjernih Air Sederhana — pemisahan campuran/filtrasi (kelas 7)
   3. Kotak Pendingin Ikan Nelayan — kalor & perpindahan kalor (kelas 7)
@@ -19,6 +19,16 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
   12. Proyektor HP dari Kardus — cermin & lensa: 1/f = 1/s + 1/s', bayangan nyata/maya, perbesaran, ketajaman, kecerahan, diagram sinar (kelas 8)
   13. Sasando Mini dari Kardus — getaran, gelombang & bunyi: hukum Mersenne, frekuensi vs amplitudo, resonansi, nada dibunyikan via Web Audio (kelas 8)
   14. Rumah Tahan Gempa dari Kardus — meja getar 3 Hz, frekuensi alami & resonansi, bresing/dinding geser, atap ringan, isolasi dasar karet vs kelereng (kelas 8)
+  Misi 15–23 (masalah sehari-hari; data di `js/data-2.js`, simulasi di `js/sim-2.js`):
+  15. Pengering Ikan Asin Tenaga Surya — radiasi & konveksi, penguapan vs kelembapan, ventilasi optimum, batas 60 °C (kelas 7)
+  16. Panen Garam Lebih Cepat dan Bersih — campuran, penguapan & kristalisasi, air tua, alas & penyaringan, kemurnian 94% (kelas 7)
+  17. Detektor Boraks dari Kunyit — zat aditif, indikator kurkumin, positif palsu basa (diasamkan), batas deteksi, etika penapisan (kelas 8)
+  18. Perangkap Nyamuk DBD dari Botol — fermentasi ragi → CO₂, suhu optimum ragi, perilaku & daur hidup Aedes, ganti ≤ 7 hari (kelas 7–9)
+  19. Kompos Sampah Kantin Tanpa Bau — dekomposer, rasio C/N, kelembapan, oksigen/pembalikan, suhu termofilik (kelas 7)
+  20. Ruang Kelas Sejuk Tanpa AC — kalor dari atap/dinding/murid, ventilasi silang & roster, plafon/foil, suhu terasa vs suhu udara, CO₂ (kelas 7)
+  21. Penyiram Tetes Otomatis — tekanan hidrostatis ρgh, Torricelli, debit ∝ luas lubang, keseragaman jalur, mulsa (kelas 8)
+  22. Sabuk Mangrove Penahan Abrasi — redaman gelombang e^(−k·lebar), jenis/zona, kerapatan optimum, umur, karbon (kelas 7)
+  23. Tempe Gagal Lagi? — bioteknologi konvensional, suhu optimum kapang, panas fermentasi vs ketebalan, oksigen, kontaminasi, kelewatan (kelas 9)
 - **Langkah 7 "Wujudkan di Dunia Nyata"** di setiap misi: alat & bahan, cek keselamatan wajib (langkah kerja terkunci sampai semua dicentang), **rencana langkah kerja yang disusun murid bersama Kak Nala** (murid menulis/mengurutkan langkahnya sendiri; Kak Nala meninjau keselamatan, takaran, pengukuran & keadilan uji lalu memberi maks. 4 saran tambah/ubah/hapus beralasan yang bisa diterima/diabaikan satu per satu; ada peninjau lokal bila AI mati), takaran praktis dihitung dari uji terbaik di simulasi, tabel data uji nyata + foto (dikompres, localStorage), selisih otomatis terhadap prediksi simulasi, tombol "Ada masalah?" ke Kak Nala (keselamatan didahulukan). Data di `NYATA` (js/data.js).
 - **Laboratorium maya** (Canvas 2D) + tabel data + grafik pilih-sumbu + **detektor uji adil**
   (menandai uji yang mengubah >1 variabel) + kolom **prediksi sebelum menguji**.
@@ -28,7 +38,7 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
 - **Mode presentasi** (js/presentasi.js) — salindia 16:9 otomatis dari data murid (judul & kelompok, masalah, hipotesis, rancangan terbaik + gambar simulasi, data uji, rencana kerja ✨, hasil uji nyata vs simulasi, evaluasi, kesimpulan CER, penutup) dengan tips bicara per salindia, navigasi keyboard/geser, layar penuh, dan cetak/PDF satu salindia per halaman. Dibuka dari Langkah 7 atau Portofolio.
 - **Portofolio** — grafik radar indikator, ringkasan, jawaban lengkap, cetak/PDF.
 - **Peta Jejak Berpikir** (`#/jejak`, bersandi guru) — guru membuat kelas berkode; murid memasukkan kode di Beranda dan jejak ujinya terkirim otomatis (tabel `nalar_kelas`/`nalar_jejak`, RPC `nalar_jejak_kirim`, `nalar_guru_*`). Per murid: uji adil vs coba-coba, prediksi, jeda berpikir antar-uji, kapan kriteria terpenuhi → pola Sistematis/Berkembang/Coba-coba/Tebak cepat/Berhenti dini + saran tindak lanjut; peta jejak per uji; unduh CSV. Tab **Partisipasi**: skor 0–100 (langkah selesai 30, uji maya 20, prediksi 10, pertanyaan diketik sendiri ke Kak Nala 20, isian lembar kerja 10, pemeriksaan lembar kerja 10), pertanyaan sendiri vs tombol, lembar kerja diisi/diperiksa/diperbaiki, hari aktif, Uji Nalar pertama → terakhir (riwayat di S.ujiNalarRiwayat, dikirim sebagai misi "ujinalar"), daftar "perlu disapa". Isi chat tidak ikut terkirim, hanya hitungannya.
-- **Mode Tes** (`#/tes`, dibuka guru dari `#/jejak`) — tes awal (Paket A) & tes akhir (Paket B) **khusus tiap misi**: 14 misi × 2 paket × 6 soal = 168 soal sesuai materi & tujuan pembelajaran (3 tujuan per misi), satu soal per indikator berurutan interpretasi → analisis → inferensi → evaluasi → eksplanasi → regulasi; Paket A/B paralel. Murid mengerjakan sekali, tanpa Kak Nala, hanya melihat skor + ✔/✗ per indikator; kunci & pembahasan tampil setelah guru menekan "Buka pembahasan". Hasil dikirim sebagai jejak misi "tes" (`S.tes`); guru melihat rata-rata awal/akhir, N-gain (Hake), persentase benar per indikator, per murid, unduh CSV. Kolom `nalar_kelas.tes` + RPC `nalar_kelas_info`, `nalar_guru_tes_atur`. Bank soal disunting di `alat/tes-bagian-*.js` → `node alat/cek-tes.js` (aturan panjang opsi) → `node alat/gabung-tes.js` (menulis `js/tes.js`).
+- **Mode Tes** (`#/tes`, dibuka guru dari `#/jejak`) — tes awal (Paket A) & tes akhir (Paket B) **khusus tiap misi**: 23 misi × 2 paket × 6 soal = 276 soal sesuai materi & tujuan pembelajaran (3 tujuan per misi), satu soal per indikator berurutan interpretasi → analisis → inferensi → evaluasi → eksplanasi → regulasi; Paket A/B paralel. Murid mengerjakan sekali, tanpa Kak Nala, hanya melihat skor + ✔/✗ per indikator; kunci & pembahasan tampil setelah guru menekan "Buka pembahasan". Hasil dikirim sebagai jejak misi "tes" (`S.tes`); guru melihat rata-rata awal/akhir, N-gain (Hake), persentase benar per indikator, per murid, unduh CSV. Kolom `nalar_kelas.tes` + RPC `nalar_kelas_info`, `nalar_guru_tes_atur`. Bank soal disunting di `alat/tes-bagian-*.js` → `node alat/cek-tes.js` (aturan panjang opsi) → `node alat/gabung-tes.js` (menulis `js/tes.js`).
 - **Panduan Guru** — sintaks, rubrik, catatan model.
 
 ## Aplikasi terpasang & offline (PWA)
