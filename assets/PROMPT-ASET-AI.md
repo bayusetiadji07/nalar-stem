@@ -107,6 +107,51 @@ Illustration of an Indonesian junior high classroom workshop: students build a s
 Illustration of an Indonesian junior high classroom: students test a two-storey miniature house made of cardboard with crossed bamboo skewer bracing and a light roof, standing on small rubber pads on top of a homemade shake table (a plywood board resting on round pens between two wooden stoppers). One student slides the board back and forth, another films in slow motion with a smartphone, a third holds a ruler behind the house to measure the sway. Motion lines show the shaking; a second cardboard house without bracing has collapsed beside it. A simple poster of tectonic plates on the wall (no text). Warm, curious, energetic atmosphere.
 ```
 
+### `misi-pengering.jpg` — Pengering Ikan Asin Tenaga Surya (misi ke-15)
+```
+Illustration of a sunny fishing village beach in East Java: two junior high students and a smiling fisherman stand beside a homemade solar fish dryer — a tilted wooden box with a black inner base, a clear plastic cover, small mesh-covered vent holes on its sides, and rows of salted fish on a wire rack inside. Soft wavy heat lines rise under the cover, a gentle airflow arrow enters a lower vent and leaves an upper vent. In the background, traditional open bamboo drying racks with flies hovering over the fish, fishing boats and the sea. Bright, hopeful midday light.
+```
+
+### `misi-garam.jpg` — Panen Garam Lebih Cepat dan Bersih (misi ke-16)
+```
+Illustration of coastal salt ponds in East Java under a bright dry-season sun: in the foreground a small square demonstration pond lined with black plastic sheeting, its shallow water almost evaporated, sparkling white salt crystals forming on the surface; a junior high student gently rakes the crystals while another holds a clean white handful next to a pile of greyish muddy salt from a traditional earth-floor pond for comparison. A cloth filter over a bucket, a ruler standing in the water, a windmill and salt storage huts in the background.
+```
+
+### `misi-boraks.jpg` — Detektor Boraks dari Kunyit (misi ke-17)
+```
+Illustration of a clean school science table: junior high students wearing lab aprons test snacks from the school canteen with homemade turmeric test strips. Grated fresh turmeric, a small glass of bright yellow extract, a dropper bottle of vinegar, and four small plates holding crackers (kerupuk) and meatballs (bakso). A row of paper strips shows bright yellow on some and brick-red on one, next to a color comparison card without text. A girl in a white hijab compares the colors carefully while another student writes notes. Calm, careful, scientific atmosphere, no text on labels.
+```
+
+### `misi-nyamuk.jpg` — Perangkap Nyamuk DBD dari Botol (misi ke-18)
+```
+Illustration of a shady corner of an Indonesian school veranda: a homemade mosquito trap made from a cut plastic bottle — the top part turned upside down as a funnel, the bottle wrapped in black paper with a small window showing yellowish sugar-and-yeast liquid with rising bubbles. Small mosquitoes with striped legs fly toward the funnel, faint swirls suggest invisible carbon dioxide drifting out. A junior high student counts trapped mosquitoes with a magnifying glass while another empties an old trap onto the soil (not into a puddle). Potted plants, a clean water drum with its lid closed, soft green tones.
+```
+
+### `misi-kompos.jpg` — Kompos Sampah Kantin Tanpa Bau (misi ke-19)
+```
+Illustration of a tidy composting corner behind an Indonesian school canteen: a woven basket composter (Takakura style) lined with cardboard, filled with layers of chopped vegetable scraps and dry brown leaves; a student wearing gloves turns the compost with a small trowel while another pushes a long thermometer into the center, where faint warm glow and tiny friendly microbes and an earthworm suggest decomposition. Nearby: a bin of fruit peels from the canteen, a pile of dry leaves from the schoolyard, and healthy plants growing in pots of dark finished compost. Fresh, clean, earthy colors.
+```
+
+### `misi-sejuk.jpg` — Ruang Kelas Sejuk Tanpa AC (misi ke-20)
+```
+Cross-section illustration of an Indonesian junior high classroom building at noon in the dry season: the roof painted bright white reflects sunlight, a ceiling layer with shiny aluminium foil underneath blocks heat, windows open on both sides with ventilation blocks (roster) near the top, and soft blue airflow arrows sweep across the room while warm air rises and exits through the top vents. A shade tree stands on the sunny west side, two ceiling fans turn gently, and students study comfortably at their desks. Next to it, a small comparison classroom with a dark roof and closed windows shows red wavy heat lines and tired students fanning themselves.
+```
+
+### `misi-tetes.jpg` — Penyiram Tetes Otomatis untuk Kemarau (misi ke-21)
+```
+Illustration of a school garden during the dry-season holiday: a row of ten chili plants in pots, their soil covered with golden straw mulch, each receiving slow water drops from a thin hose. The hose branches from a covered water bucket raised on a sturdy wooden stand about one meter high, with a gentle downward arrow suggesting water pressure. Two junior high students check that the drip at the last plant matches the first, one holding a small measuring cup under a drip. Dry cracked soil outside the garden, a bright sun, but the plants look fresh and green.
+```
+
+### `misi-mangrove.jpg` — Sabuk Mangrove Penahan Abrasi (misi ke-22)
+```
+Wide illustration of an East Java coastline: on one side the shore is eroded with exposed roots, a broken wall and a fishing house close to the waves; on the other side a thick belt of mangrove trees — api-api with pencil-like breathing roots at the front and bakau with arching stilt roots behind — calms the incoming waves so they arrive small and gentle at a safe village. Junior high students and local villagers in rubber boots plant young mangrove seedlings in the mud at low tide, guided by a teacher. Small fish, crabs and herons among the roots, soft teal water and warm afternoon light.
+```
+
+### `misi-tempe.jpg` — Tempe Gagal Lagi? (misi ke-23)
+```
+Illustration of a small home tempeh workshop next to an Indonesian school: on a clean wooden table, freshly made tempeh blocks wrapped in banana leaves and in plastic with small holes, one block sliced open to show soybeans tightly bound by fluffy white mycelium. A junior high student checks the temperature in the middle of a block with a thermometer while another sprinkles tempeh starter onto cooled boiled soybeans with a clean spoon; a friendly tempeh maker watches. For comparison, a failed block on a small plate looks loose and pale. Warm kitchen light, steam from a pot in the background, clean and appetizing.
+```
+
 ## 4. Hiasan & ilustrasi pendukung
 
 ### `uji-nalar.webp` — halaman Uji Nalar (16:9)
