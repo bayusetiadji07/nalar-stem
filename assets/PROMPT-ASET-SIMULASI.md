@@ -120,6 +120,80 @@ Wide side-view background of an Indonesian school hall prepared for an art perfo
 | `sasando.png` | a traditional sasando musical instrument from Rote, East Nusa Tenggara: bamboo tube with strings surrounded by a fan-shaped dried lontar palm leaf resonator, standing upright |
 | `piala.png` | a small golden trophy with a star on top (dipakai saat semua kriteria terpenuhi) |
 
+---
+
+## TAHAP 4 — Aset "Rancang & Uji" untuk 9 misi masalah sehari-hari (misi 15–23)
+Pakai GAYA SIMULASI yang sama. Latar: 16:9, 1920×1080, tampak samping lurus, **tanpa matahari dan
+tanpa awan besar** (matahari/awan/cuaca digambar kode sesuai pilihan murid), **bagian tengah kosong
+dan agak pudar** karena di atasnya digambar alat, panah, angka, dan bilah hasil.
+
+### Latar belakang
+#### `bg-jemur-pantai.jpg` — Pengering ikan asin (pasir di 88% tinggi)
+```
+Wide side-view background of a quiet fishing village beach in East Java at midday: clear pale blue sky with no sun and no clouds, the sea horizon as a straight line at 60% of the image height with tiny fishing boats, a few palm trees and traditional bamboo fish-drying racks only at the far left and far right edges, flat light sand as a straight horizontal strip from 88% of the image height to the bottom. The large center area is empty and calm for a solar dryer box.
+```
+
+#### `bg-tambak-garam.jpg` — Panen garam (tanah pematang di 84% tinggi)
+```
+Wide side-view background of coastal salt ponds in the dry season: very pale blue sky with no sun and no clouds filling the upper 55%, a far horizon at 55% with tiny salt storage huts, a small windmill and distant white salt piles, then wide flat shallow salt pans in soft perspective, and a pale earthen dyke as a straight horizontal strip from 84% of the image height to the bottom. Center area calm and low-contrast for a cross-section of a salt pan.
+```
+
+#### `bg-lab-sekolah.jpg` — Detektor boraks (meja di 62% tinggi)
+```
+Wide side-view background of a clean school science laboratory: a soft pale mint wall, a window with daylight at the far upper left, shelves with a few glass jars and a microscope only at the far right edge, a white lab bench top as a straight horizontal line at 62% of the image height, the bench front panel below in light grey. Center wall above the bench completely empty and softly lit for four test strips and sample bowls.
+```
+
+#### `bg-teras-teduh.jpg` dan `bg-halaman-terik.jpg` — Perangkap nyamuk (lantai di 88% tinggi)
+```
+(1) bg-teras-teduh: Wide side-view background of a shady corner of an Indonesian school veranda: cool green-tinted shade from a large tree canopy at the upper left, a damp tiled wall, potted plants and a closed water drum only at the far left and right edges, a tiled floor as a straight horizontal strip from 88% of the image height to the bottom. Calm, slightly dim, center empty for a bottle trap.
+(2) bg-halaman-terik: The same school veranda corner but in harsh bright sunlight: warm yellow light, no tree shade, bright wall, the same floor line at 88% of the image height, center empty.
+```
+
+#### `bg-sudut-kompos.jpg` — Kompos (tanah di 89% tinggi)
+```
+Wide side-view background of a tidy corner behind an Indonesian school canteen: a light cream wall with a small window at the far left, a few potted plants and a broom only at the far right edge, brown earth ground as a straight horizontal strip from 89% of the image height to the bottom. Center area plain and empty for a compost container and a thermometer.
+```
+
+#### `bg-halaman-sekolah.jpg` — Ruang kelas sejuk (rumput di 89% tinggi)
+```
+Wide side-view background of an Indonesian junior high schoolyard at noon: pale blue sky with no sun and no clouds, a distant row of low school buildings and a flagpole very small on the horizon, a flat green grass strip from 89% of the image height to the bottom. The large center area is empty sky for a cross-section of a classroom building.
+```
+
+#### `bg-kebun-kemarau.jpg` — Penyiram tetes (tanah di 86% tinggi)
+```
+Wide side-view background of a school vegetable garden in the dry season: warm pale sky with no sun, distant dry rice fields and a few trees on the horizon, a low bamboo fence only at the far right edge, dry cracked brown soil as a straight horizontal strip from 86% of the image height to the bottom. Center and left areas empty for a raised water container, a hose and a row of potted plants.
+```
+
+#### `bg-pesisir-langit.jpg` — Sabuk mangrove (cakrawala di 55% tinggi)
+```
+Wide side-view background of an East Java coastline sky: soft afternoon sky with no sun, a distant green headland and tiny fishing boats on the horizon, the sea horizon as a perfectly straight line at 55% of the image height; below 55% only plain flat teal water with no waves (waves, mangroves and the shore will be drawn on top). Very calm and low contrast.
+```
+
+#### `bg-dapur-tempe.jpg` — Tempe (meja di 88% tinggi)
+```
+Wide side-view background of a clean small home tempeh kitchen: a warm cream tiled wall, a window with soft daylight at the far left, a steaming pot on a stove and bamboo trays only at the far right edge, a wooden table top as a straight horizontal line at 88% of the image height. Center wall empty and softly lit for a sliced tempeh block and a thermometer.
+```
+
+### Benda Tahap 4 (PNG transparan, 1024×1024 — tambahan yang sama seperti Tahap 2)
+| Berkas | Prompt |
+|---|---|
+| `ikan-asin.png` | a dried salted fish, flat and golden-brown with visible salt crystals, lying sideways facing right (same size and pose as `ikan.png`) |
+| `lalat.png` | a small house fly seen from above with transparent wings, simple and not scary |
+| `tumpukan-garam.png` | a neat small pile of clean sparkling white salt crystals |
+| `tumpukan-garam-kusam.png` | the same pile of salt but greyish brown and mixed with mud specks |
+| `mangkuk-kerupuk.png` | a small white ceramic bowl seen from the side holding a few Indonesian crackers (kerupuk) |
+| `mangkuk-bakso.png` | the same small white bowl holding three meatballs (bakso) |
+| `nyamuk-aedes.png` | a single Aedes mosquito seen from the side, black body with white stripes on its legs, slender wings, simple and friendly, not scary |
+| `cacing.png` | a single pink earthworm, gently curved, friendly |
+| `daun-kering.png` | a small pile of dry brown fallen leaves |
+| `sisa-sayur.png` | a small pile of vegetable scraps and fruit peels (green leaves, carrot peel, banana peel) |
+| `pohon-peneduh.png` | a rounded shade tree (such as a ketapang tree) with a full green canopy and a straight trunk, standing upright |
+| `tanaman-cabai.png` | a healthy chili plant with green leaves and a few red chilies in a small black polybag pot |
+| `tanaman-cabai-layu.png` | the same chili plant in the same pot but wilted, droopy and yellowish |
+| `pohon-bakau.png` | a young Rhizophora mangrove (bakau) tree standing upright with arching stilt roots at the base |
+| `pohon-apiapi.png` | a young Avicennia mangrove (api-api) tree standing upright with many short pencil-like breathing roots sticking up around the base |
+| `rumah-nelayan.png` | a small wooden Indonesian fisherman's house on short stilts with a red tiled roof, side view |
+
 Setelah ditempel ke `assets/img/sim/`, bilang "sudah" — Claude akan mengecilkan, menghapus latar
 putih bila perlu, lalu memasangnya ke simulasi dengan garis meja/tanah yang pas.
 
