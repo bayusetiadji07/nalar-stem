@@ -6,6 +6,12 @@
    dan selalu ada titik optimum (bukan "makin banyak makin baik").
    ========================================================= */
 
+/* ---------- aset ilustrasi misi 15–23 (latar JPG; benda PNG transparan) ---------- */
+Object.assign(BERKAS_ASET, {
+  'bg-jemur-pantai': 'jpg', 'bg-tambak-garam': 'jpg', 'bg-lab-sekolah': 'jpg', 'bg-teras-teduh': 'jpg', 'bg-halaman-terik': 'jpg',
+  'bg-sudut-kompos': 'jpg', 'bg-halaman-sekolah': 'jpg', 'bg-kebun-kemarau': 'jpg', 'bg-pesisir-langit': 'jpg', 'bg-dapur-tempe': 'jpg'
+});
+
 /* ---------- bantuan gambar bersama ---------- */
 function termometer2(ctx, x, y, tinggi, T, Tmin, Tmax, teks, batas) {
   const fr = jepit((T - Tmin) / (Tmax - Tmin), 0, 1);
@@ -92,15 +98,16 @@ function kriteriaPengering(v, h) {
 }
 function gambarPengering(ctx, W, H, v, h, p) {
   const cerah = v.cuaca === 'cerah', tanah = H - 40;
-  langit(ctx, W, H, cerah);
+  const adaLatar = latar(ctx, W, H, 'bg-jemur-pantai', 0.8, tanah);
+  if (!adaLatar) { langit(ctx, W, H, cerah); ctx.fillStyle = '#fde68a'; ctx.fillRect(0, tanah, W, H - tanah); }
+  else if (!cerah) { ctx.fillStyle = 'rgba(100,116,139,.32)'; ctx.fillRect(0, 0, W, tanah); }
   matahari(ctx, W * 0.12, 46, 22, p);
   if (!cerah) { awan(ctx, W * 0.08, 52, 1.1); awan(ctx, W * 0.4, 40, 0.9); }
-  ctx.fillStyle = '#fde68a'; ctx.fillRect(0, tanah, W, H - tanah);
   // sinar matahari
   ctx.strokeStyle = cerah ? 'rgba(250,204,21,.65)' : 'rgba(250,204,21,.3)'; ctx.lineWidth = 2;
   for (let k = 0; k < 5; k++) { const x = W * 0.3 + k * 34; ctx.beginPath(); ctx.moveTo(W * 0.14 + k * 6, 70); ctx.lineTo(x, tanah - 120 + k * 8); ctx.stroke(); }
   // kotak pengering miring
-  const cx = W * 0.47, cy = tanah - 46, lebar = Math.min(300, W * 0.48), tinggi = 56;
+  const lebar = Math.min(300, W * 0.48), tinggi = 56, cx = W * 0.47, cy = tanah - 24 - Math.sin(+v.miring * Math.PI / 180) * lebar / 2;
   const rot = -(+v.miring) * Math.PI / 180;
   ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
   ctx.fillStyle = '#92400e'; ctx.fillRect(-lebar / 2, 0, lebar, 10);
@@ -110,6 +117,7 @@ function gambarPengering(ctx, W, H, v, h, p) {
   const nIkan = Math.min(8, Math.round(+v.ikan * 2));
   for (let k = 0; k < nIkan; k++) {
     const x = -lebar / 2 + 22 + k * (lebar - 44) / Math.max(1, nIkan - 1);
+    if (benda(ctx, kering > 0.5 ? 'ikan-asin' : 'ikan', x, -12, 34)) continue;
     ctx.fillStyle = `rgb(${Math.round(lerp(148, 180, kering))},${Math.round(lerp(163, 140, kering))},${Math.round(lerp(184, 100, kering))})`;
     ctx.beginPath(); ctx.ellipse(x, -12, 13 - 3 * kering, 5, 0, 0, 7); ctx.fill();
     ctx.beginPath(); ctx.moveTo(x + 12, -12); ctx.lineTo(x + 19, -17); ctx.lineTo(x + 19, -7); ctx.closePath(); ctx.fill();
@@ -139,10 +147,12 @@ function gambarPengering(ctx, W, H, v, h, p) {
   ctx.restore();
   // kaki penyangga
   ctx.strokeStyle = '#78350f'; ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(cx - lebar * 0.42, tanah); ctx.lineTo(cx - lebar * 0.42, cy + Math.sin(-rot) * lebar * 0.42 + 6); ctx.moveTo(cx + lebar * 0.42, tanah); ctx.lineTo(cx + lebar * 0.42, cy - Math.sin(-rot) * lebar * 0.42 + 6); ctx.stroke();
+  // titik dasar kotak (koordinat lokal ±0,42·lebar, 10) setelah diputar sebesar rot
+  const kaki = sisi => ({ x: cx + Math.cos(rot) * sisi * lebar * 0.42 - Math.sin(rot) * 10, y: cy + Math.sin(rot) * sisi * lebar * 0.42 + Math.cos(rot) * 10 });
+  ctx.beginPath(); [-1, 1].forEach(sisi => { const k = kaki(sisi); ctx.moveTo(k.x, tanah); ctx.lineTo(k.x, k.y); }); ctx.stroke();
   // lalat
   if (h._terbuka) {
-    for (let k = 0; k < 4; k++) { const a = p * 12 + k * 1.6, x = cx - 40 + k * 26 + Math.cos(a) * 10, y = cy - 40 + Math.sin(a * 1.3) * 8; ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(148,163,184,.8)'; ctx.beginPath(); ctx.ellipse(x - 2, y - 3, 3, 1.5, 0.5, 0, 7); ctx.ellipse(x + 2, y - 3, 3, 1.5, -0.5, 0, 7); ctx.fill(); }
+    for (let k = 0; k < 4; k++) { const a = p * 12 + k * 1.6, x = cx - 40 + k * 26 + Math.cos(a) * 10, y = cy - 40 + Math.sin(a * 1.3) * 8; if (benda(ctx, 'lalat', x, y, 16, { rot: Math.sin(a) * 0.4 })) continue; ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(148,163,184,.8)'; ctx.beginPath(); ctx.ellipse(x - 2, y - 3, 3, 1.5, 0.5, 0, 7); ctx.ellipse(x + 2, y - 3, 3, 1.5, -0.5, 0, 7); ctx.fill(); }
   }
   termometer2(ctx, W - 42, 30, 90, T_LUAR_KERING + (h.suhu - T_LUAR_KERING) * mulus(p), 25, 75, `${fx(h.suhu)} °C`, 60);
   bilahNilai(ctx, W - 160, 150, 120, h.lembap, 100, h.lembap > 75 ? '#dc2626' : '#0ea5e9', `kelembapan ${h.lembap}%`);
@@ -196,12 +206,12 @@ function kriteriaGaram(v, h) {
 }
 function gambarGaram(ctx, W, H, v, h, p) {
   const cerah = v.cuaca === 'cerah';
-  langit(ctx, W, H * 0.6, cerah);
-  ctx.fillStyle = cerah ? '#e0f2fe' : '#e2e8f0'; ctx.fillRect(0, H * 0.6, W, H * 0.4);
-  matahari(ctx, W * 0.85, 42, 22, p);
-  if (!cerah) { awan(ctx, W * 0.72, 46, 1); awan(ctx, W * 0.3, 36, 0.8); }
   // petak dilihat dari samping
   const x0 = W * 0.08, x1 = W * 0.72, dasar = H - 60, skalaD = 9; // px per cm
+  if (latar(ctx, W, H, 'bg-tambak-garam', 0.88, dasar + 12)) { if (!cerah) { ctx.fillStyle = 'rgba(100,116,139,.3)'; ctx.fillRect(0, 0, W, H); } }
+  else { langit(ctx, W, H * 0.6, cerah); ctx.fillStyle = cerah ? '#e0f2fe' : '#e2e8f0'; ctx.fillRect(0, H * 0.6, W, H * 0.4); }
+  matahari(ctx, W * 0.85, 42, 22, p);
+  if (!cerah) { awan(ctx, W * 0.72, 46, 1); awan(ctx, W * 0.3, 36, 0.8); }
   const dAwal = +v.dalam, dSisa = dAwal * (1 - mulus(p));
   ctx.fillStyle = '#a16207'; ctx.fillRect(x0 - 14, dasar - dAwal * skalaD - 16, 14, dAwal * skalaD + 30); ctx.fillRect(x1, dasar - dAwal * skalaD - 16, 14, dAwal * skalaD + 30);
   ctx.fillStyle = { tanah: '#92400e', terpal: '#111827', putih: '#f1f5f9' }[v.alas]; ctx.fillRect(x0, dasar, x1 - x0, 12);
@@ -219,6 +229,7 @@ function gambarGaram(ctx, W, H, v, h, p) {
   // uap
   ctx.strokeStyle = 'rgba(148,163,184,.75)'; ctx.lineWidth = 1.5;
   for (let k = 0; k < 6; k++) { const x = x0 + 30 + k * (x1 - x0) / 6, n = ((p * 3 + k * 0.17) % 1) * 40; ctx.beginPath(); ctx.moveTo(x, dasar - dSisa * skalaD - 6 - n); ctx.quadraticCurveTo(x + 6, dasar - dSisa * skalaD - 14 - n, x, dasar - dSisa * skalaD - 22 - n); ctx.stroke(); }
+  if (p >= 1) benda(ctx, h.murni >= 94 ? 'tumpukan-garam' : 'tumpukan-garam-kusam', x0 + 70, dasar, 110, { ay: 1 });
   label(ctx, `kedalaman ${fx(dSisa, 1)} cm`, x0 + 6, dasar - dAwal * skalaD - 28, { ukuran: 10, tebal: true, warna: '#0c4a6e', latar: 'rgba(255,255,255,.88)' });
   label(ctx, `${SUMBER_GARAM[v.sumber].nama} · ${ALAS_GARAM[v.alas].nama}`, 12, 16, { ukuran: 10, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
   // panel kanan
@@ -276,18 +287,19 @@ function warnaKertas(sinyal, kuning) {
   return `rgb(${Math.round(lerp(dasar[0], 178, t))},${Math.round(lerp(dasar[1], 58, t))},${Math.round(lerp(dasar[2], 38, t))})`;
 }
 function gambarBoraks(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, H * 0.62, W, H * 0.28);
+  if (!latar(ctx, W, H, 'bg-lab-sekolah', 0.64, H * 0.64)) { ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, H * 0.62, W, H * 0.28); }
   label(ctx, `Ekstrak ${v.kunyit} g kunyit dalam ${v.pelarut === 'alkohol' ? 'alkohol 70%' : 'air'} · ${v.asam === 'cuka' ? 'sampel + 2 tetes cuka' : 'sampel tanpa diasamkan'} · dikeringkan ${v.kering} menit`, 12, 16, { ukuran: 10, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.95)' });
   const n = 4, lebarKol = (W - 40) / n, kuning = jepit(+v.kunyit * (v.pelarut === 'alkohol' ? 1 : 0.35) / 6, 0.15, 1);
   const t = mulus(p);
   h._hasil.forEach((s, i) => {
     const cx = 20 + lebarKol * (i + 0.5);
     // mangkuk sampel
+    if (!benda(ctx, s.nama.startsWith('Kerupuk') ? 'mangkuk-kerupuk' : 'mangkuk-bakso', cx, H * 0.62 + 12, lebarKol * 0.46, { ay: 1 })) {
     ctx.fillStyle = '#fff'; ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
     ctx.beginPath(); ctx.ellipse(cx, H * 0.62, lebarKol * 0.32, 12, 0, 0, 7); ctx.fill(); ctx.stroke();
     ctx.fillStyle = s.nama.startsWith('Kerupuk') ? '#fde68a' : '#d6d3d1';
     ctx.beginPath(); ctx.ellipse(cx, H * 0.62 - 4, lebarKol * 0.2, 7, 0, 0, 7); ctx.fill();
+    }
     // kertas uji: dicelup lalu warnanya berubah seiring waktu kering
     const turun = jepit(t / 0.3, 0, 1) - jepit((t - 0.35) / 0.25, 0, 1), y0 = 56 + turun * 40;
     const s0 = s.basa ? 9 * h._kontras * (v.asam === 'cuka' ? 0.1 : 1) : 0;
@@ -295,15 +307,16 @@ function gambarBoraks(ctx, W, H, v, h, p) {
     ctx.fillStyle = warnaKertas(sNow, kuning); ctx.strokeStyle = '#a8a29e'; ctx.lineWidth = 1;
     ctx.fillRect(cx - 12, y0, 24, 110); ctx.strokeRect(cx - 12, y0, 24, 110);
     ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillRect(cx - 12, y0, 24, 18);
-    label(ctx, s.nama, cx, H * 0.62 + 26, { rata: 'center', ukuran: 11, tebal: true });
+    label(ctx, s.nama, cx, H * 0.62 + 26, { rata: 'center', ukuran: 11, tebal: true, latar: 'rgba(255,255,255,.85)' });
     if (p >= 1) {
       const ikon = s.benar ? '✔' : '✘', teks = s.positif ? 'POSITIF' : 'negatif';
       label(ctx, `${teks} ${ikon}`, cx, H * 0.62 + 46, { rata: 'center', ukuran: 10, tebal: true, warna: '#fff', latar: s.benar ? '#15803d' : '#b91c1c' });
-      label(ctx, s.ppm ? `${s.ppm} ppm` : (s.basa ? 'basa, 0 ppm' : '0 ppm'), cx, H * 0.62 + 66, { rata: 'center', ukuran: 9, warna: '#64748b' });
+      label(ctx, s.ppm ? `${s.ppm} ppm` : (s.basa ? 'basa, 0 ppm' : '0 ppm'), cx, H * 0.62 + 66, { rata: 'center', ukuran: 9, warna: '#334155', latar: 'rgba(255,255,255,.85)' });
     }
   });
   // skala warna
   const sx = W - 150, sy = 34;
+  ctx.fillStyle = 'rgba(255,255,255,.9)'; kotakBulat(ctx, sx - 6, sy - 6, 144, 40, 6); ctx.fill();
   for (let k = 0; k <= 10; k++) { ctx.fillStyle = warnaKertas(k * 1.2, kuning); ctx.fillRect(sx + k * 12, sy, 12, 10); }
   label(ctx, 'kuning', sx, sy + 20, { ukuran: 9, warna: '#64748b' }); label(ctx, 'merah bata', sx + 132, sy + 20, { rata: 'right', ukuran: 9, warna: '#64748b' });
   if (p >= 1) hasilAkhir(ctx, W, H, `${h.benar} sampel benar · batas deteksi ± ${h.batas} ppm · ${h.waktu} menit`, h._benar === 4 && h.waktu <= 20 && h.biaya <= 10000, h._benar >= 3);
@@ -340,10 +353,12 @@ function kriteriaNyamuk(v, h) {
 }
 function gambarNyamuk(ctx, W, H, v, h, p) {
   const teduh = v.letak === 'teduh';
-  ctx.fillStyle = teduh ? '#d1fae5' : '#fef9c3'; ctx.fillRect(0, 0, W, H);
-  if (teduh) { ctx.fillStyle = '#166534'; ctx.beginPath(); ctx.arc(W * 0.1, 30, 70, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(21,128,61,.18)'; ctx.fillRect(0, 0, W, H); }
-  else matahari(ctx, W * 0.1, 40, 24, p);
-  ctx.fillStyle = '#a8a29e'; ctx.fillRect(0, H - 40, W, 40);
+  if (!latar(ctx, W, H, teduh ? 'bg-teras-teduh' : 'bg-halaman-terik', 0.8, H - 40)) {
+    ctx.fillStyle = teduh ? '#d1fae5' : '#fef9c3'; ctx.fillRect(0, 0, W, H);
+    if (teduh) { ctx.fillStyle = '#166534'; ctx.beginPath(); ctx.arc(W * 0.1, 30, 70, 0, 7); ctx.fill(); ctx.fillStyle = 'rgba(21,128,61,.18)'; ctx.fillRect(0, 0, W, H); }
+    else matahari(ctx, W * 0.1, 40, 24, p);
+    ctx.fillStyle = '#a8a29e'; ctx.fillRect(0, H - 40, W, 40);
+  }
   // botol: bagian bawah berisi larutan, corong terbalik di atas
   const bx = W * 0.42, bw = 74, alas = H - 40, bt = 150;
   ctx.fillStyle = v.botol === 'hitam' ? '#1f2937' : 'rgba(255,255,255,.55)'; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 2;
@@ -365,12 +380,14 @@ function gambarNyamuk(ctx, W, H, v, h, p) {
   for (let k = 0; k < nN; k++) {
     const a0 = k * 2.4, jauh = 1 - mulus(jepit(p * 1.3 - k * 0.04, 0, 1)) * (h._mati ? 0.1 : 0.85);
     const x = bx + Math.cos(a0) * 200 * jauh + Math.sin(p * 30 + k) * 4, y = alas - bt - 20 + Math.sin(a0) * 90 * jauh + Math.cos(p * 25 + k) * 4;
+    if (benda(ctx, 'nyamuk-aedes', x, y, 36, { rot: Math.sin(p * 20 + k) * 0.2 })) continue;
     ctx.fillStyle = '#111827'; ctx.beginPath(); ctx.ellipse(x, y, 5, 2, 0.3, 0, 7); ctx.fill();
     ctx.strokeStyle = '#111827'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(x - 2, y); ctx.lineTo(x - 6, y + 5); ctx.moveTo(x + 2, y); ctx.lineTo(x + 6, y + 5); ctx.stroke();
     ctx.fillStyle = 'rgba(148,163,184,.7)'; ctx.beginPath(); ctx.ellipse(x - 1, y - 3, 4, 1.5, -0.6, 0, 7); ctx.fill();
   }
   // panel
   const px = W * 0.66;
+  ctx.fillStyle = 'rgba(255,255,255,.88)'; kotakBulat(ctx, px - 10, 12, W * 0.3 + 20, 132, 10); ctx.fill();
   label(ctx, `hari ke-${Math.round(+v.ganti * mulus(p))} dari ${v.ganti}`, px, 30, { ukuran: 12, tebal: true });
   bilahNilai(ctx, px, 64, W * 0.3, Math.max(0, h.lama - +v.ganti * mulus(p)), Math.max(+v.ganti, h.lama), '#f59e0b', `sisa gula untuk ${fx(Math.max(0, h.lama - +v.ganti * mulus(p)))} hari`);
   bilahNilai(ctx, px, 100, W * 0.3, h.tangkap * mulus(p), 60, '#0f766e', `tertangkap ${Math.round(h.tangkap * mulus(p))} nyamuk/minggu`);
@@ -417,9 +434,10 @@ function kriteriaKompos(v, h) {
   ];
 }
 function gambarKompos(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#f5f5f4'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#d6d3d1'; ctx.fillRect(0, H - 36, W, 36);
   const cx = W * 0.36, lebar = Math.min(220, W * 0.36), tinggi = H - 110, alas = H - 36;
+  if (!latar(ctx, W, H, 'bg-sudut-kompos', 0.74, alas)) { ctx.fillStyle = '#f5f5f4'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#d6d3d1'; ctx.fillRect(0, H - 36, W, 36); }
+  benda(ctx, 'daun-kering', W * 0.08, alas + 4, 120, { ay: 1 });
+  benda(ctx, 'sisa-sayur', cx + lebar / 2 + 62, alas + 4, 110, { ay: 1 });
   // wadah
   ctx.fillStyle = v.wadah === 'takakura' ? '#d4a373' : '#1d4ed8'; ctx.strokeStyle = '#334155'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(cx - lebar / 2, alas - tinggi); ctx.lineTo(cx - lebar / 2 + 14, alas); ctx.lineTo(cx + lebar / 2 - 14, alas); ctx.lineTo(cx + lebar / 2, alas - tinggi); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -435,6 +453,8 @@ function gambarKompos(ctx, W, H, v, h, p) {
     ctx.fillStyle = k % 2 === 0 ? `rgb(${Math.round(lerp(74, 87, campur))},${Math.round(lerp(124, 66, campur))},${Math.round(lerp(39, 39, campur))})` : `rgb(${Math.round(lerp(161, 87, campur))},${Math.round(lerp(98, 66, campur))},${Math.round(lerp(7, 39, campur))})`;
     ctx.fillRect(cx - lebar / 2 + 12 + (1 - y / alas) * 0, y, lebar - 24, isiT / 8 * (0.6 + hijau * 0.8) / 1);
   }
+  // cacing muncul bila penguraian aktif
+  if (h._k > 0.4 && p > 0.4) benda(ctx, 'cacing', cx + 26, alas - 6 - isiT + 6, 58, { ay: 1, alpha: jepit((p - 0.4) / 0.3, 0, 1) });
   // mikroba
   ctx.fillStyle = 'rgba(255,255,255,.85)';
   for (let k = 0; k < Math.round(h._k * 40 * mulus(p)); k++) { ctx.beginPath(); ctx.arc(cx - lebar / 2 + 20 + (k * 29) % (lebar - 40), alas - 10 - (k * 17) % Math.max(10, isiT - 10), 1.6, 0, 7); ctx.fill(); }
@@ -491,10 +511,9 @@ function kriteriaSejuk(v, h) {
   ];
 }
 function gambarSejuk(ctx, W, H, v, h, p) {
-  langit(ctx, W, H, true);
-  matahari(ctx, W - 40, 40, 22, p);
-  ctx.fillStyle = '#86efac'; ctx.fillRect(0, H - 36, W, 36);
   const x0 = W * 0.12, x1 = W * 0.7, lantai = H - 36, dinding = 120, puncak = lantai - dinding - 60;
+  if (!latar(ctx, W, H, 'bg-halaman-sekolah', 0.86, lantai)) { langit(ctx, W, H, true); ctx.fillStyle = '#86efac'; ctx.fillRect(0, H - 36, W, 36); }
+  matahari(ctx, W - 40, 40, 22, p);
   // atap
   ctx.fillStyle = { gelap: '#7f1d1d', terang: '#fca5a5', putih: '#f8fafc' }[v.atap]; ctx.strokeStyle = '#475569'; ctx.lineWidth = 2;
   ctx.beginPath(); ctx.moveTo(x0 - 20, lantai - dinding); ctx.lineTo((x0 + x1) / 2, puncak); ctx.lineTo(x1 + 20, lantai - dinding); ctx.closePath(); ctx.fill(); ctx.stroke();
@@ -520,7 +539,7 @@ function gambarSejuk(ctx, W, H, v, h, p) {
   // kipas
   for (let k = 0; k < +v.kipas; k++) { const x = x0 + (k + 1) * (x1 - x0) / (+v.kipas + 1), y = lantai - dinding + 18, a = p * 40; ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, lantai - dinding + 6); ctx.lineTo(x, y); ctx.stroke(); ctx.lineWidth = 3; for (let b = 0; b < 3; b++) { const s = a + b * 2.09; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + Math.cos(s) * 18, y + Math.sin(s) * 4); ctx.stroke(); } }
   // pohon peneduh di sisi barat (kiri)
-  if (v.peneduh === 'barat') { ctx.fillStyle = '#78350f'; ctx.fillRect(x0 - 52, lantai - 70, 8, 70); ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(x0 - 48, lantai - 90, 32, 0, 7); ctx.fill(); }
+  if (v.peneduh === 'barat' && !benda(ctx, 'pohon-peneduh', x0 + 4, lantai + 2, 140, { ay: 1 })) { ctx.fillStyle = '#78350f'; ctx.fillRect(x0 - 52, lantai - 70, 8, 70); ctx.fillStyle = '#15803d'; ctx.beginPath(); ctx.arc(x0 - 48, lantai - 90, 32, 0, 7); ctx.fill(); }
   const tSekarang = T_LUAR_SEJUK + (h.terasa - T_LUAR_SEJUK) * mulus(p);
   termometer2(ctx, W * 0.8, 40, 100, tSekarang, 24, 42, `terasa ${fx(tSekarang)} °C`, 30);
   bilahNilai(ctx, W * 0.74, 190, W * 0.22, h.co2, 2000, h.co2 > 1000 ? '#dc2626' : '#16a34a', `CO₂ ${h.co2} ppm`);
@@ -565,10 +584,9 @@ function kriteriaTetes(v, h) {
   ];
 }
 function gambarTetes(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#fefce8'; ctx.fillRect(0, 0, W, H);
-  matahari(ctx, W - 36, 34, 18, p);
   const tanah = H - 46;
-  ctx.fillStyle = '#a16207'; ctx.fillRect(0, tanah, W, 46);
+  if (!latar(ctx, W, H, 'bg-kebun-kemarau', 0.82, tanah)) { ctx.fillStyle = '#fefce8'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#a16207'; ctx.fillRect(0, tanah, W, 46); }
+  matahari(ctx, W - 36, 34, 18, p);
   const Wd = WADAH_TETES[v.wadah], skala = Math.min(70, (tanah - 80) / 2.4);
   const wx = 50, wy = tanah - +v.tinggi * skala, wt = 30 + Math.sqrt(Wd.vol) * 10, ww = 26 + Math.sqrt(Wd.vol) * 8;
   // penyangga
@@ -580,17 +598,18 @@ function gambarTetes(ctx, W, H, v, h, p) {
   label(ctx, `↕ ${fx(+v.tinggi, 1)} m`, wx, (wy + tanah) / 2, { rata: 'center', ukuran: 10, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
   // selang & tanaman
   const xa = wx + ww / 2, x1 = W - 30, yTanam = tanah - 6;
-  ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx, wy + 8); ctx.lineTo(xa + 10, yTanam - 26); ctx.lineTo(x1, yTanam - 26); ctx.stroke();
-  if (v.jalur === 'cabang') { ctx.beginPath(); ctx.moveTo(xa + 10, yTanam - 26); ctx.lineTo(xa + 10, yTanam - 40); ctx.lineTo((xa + x1) / 2 + 20, yTanam - 40); ctx.stroke(); }
+  ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(wx, wy); ctx.lineTo(wx, wy + 8); ctx.lineTo(xa + 10, yTanam - 64); ctx.lineTo(x1, yTanam - 64); ctx.stroke();
+  if (v.jalur === 'cabang') { ctx.beginPath(); ctx.moveTo(xa + 10, yTanam - 64); ctx.lineTo(xa + 10, yTanam - 78); ctx.lineTo((xa + x1) / 2 + 20, yTanam - 78); ctx.stroke(); }
   for (let k = 0; k < TANAMAN_TETES; k++) {
     const x = xa + 30 + k * (x1 - xa - 40) / (TANAMAN_TETES - 1);
     const urut = v.jalur === 'cabang' ? (k % 5) / 4 : k / (TANAMAN_TETES - 1);
     const air = h.debit * (1 - (1 - h.rata / 100) * urut), cukup = air >= h.butuh;
     // tetes
     const t = (p * 6 + k * 0.13) % 1;
-    ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.arc(x, yTanam - 22 + t * 14, 2.2, 0, 7); ctx.fill();
+    ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.arc(x, yTanam - 60 + t * 44, 2.4, 0, 7); ctx.fill();
     // tanaman (layu bila kurang)
     const layu = cukup ? 0 : jepit((h.butuh - air) / h.butuh, 0, 1) * mulus(p);
+    if (benda(ctx, layu > 0.25 ? 'tanaman-cabai-layu' : 'tanaman-cabai', x, yTanam + 8, 44, { ay: 1 })) { if (v.mulsa === 'jerami') { ctx.strokeStyle = '#ca8a04'; ctx.lineWidth = 1.5; for (let s2 = -3; s2 <= 3; s2++) { ctx.beginPath(); ctx.moveTo(x - 10 + s2 * 3, yTanam + 8); ctx.lineTo(x - 5 + s2 * 3, yTanam + 4); ctx.stroke(); } } continue; }
     ctx.strokeStyle = cukup ? '#15803d' : '#a3a3a3'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(x, yTanam + 6); ctx.lineTo(x, yTanam - 4); ctx.stroke();
     ctx.fillStyle = cukup ? '#22c55e' : `rgb(${Math.round(lerp(34, 202, layu))},${Math.round(lerp(197, 138, layu))},${Math.round(lerp(94, 4, layu))})`;
@@ -637,14 +656,14 @@ function kriteriaMangrove(v, h) {
   ];
 }
 function gambarMangrove(ctx, W, H, v, h, p) {
-  langit(ctx, W, H * 0.5, true);
   const muka = H * 0.55, x0 = 0, xPantai = W * 0.8;
-  ctx.fillStyle = '#0ea5e9'; ctx.fillRect(0, muka, xPantai, H - muka);
+  const adaLatar = latar(ctx, W, H, 'bg-pesisir-langit', 0.52, muka), warnaLaut = adaLatar ? '#2fb7c4' : '#0ea5e9';
+  if (!adaLatar) { langit(ctx, W, H * 0.5, true); ctx.fillStyle = '#0ea5e9'; ctx.fillRect(0, muka, xPantai, H - muka); }
   // daratan & rumah
   ctx.fillStyle = '#fde68a'; ctx.beginPath(); ctx.moveTo(xPantai - 20, H); ctx.lineTo(xPantai, muka - 6); ctx.lineTo(W, muka - 14); ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
   const kikis = h.abrasi * 18 * mulus(p);
-  ctx.fillStyle = '#0ea5e9'; ctx.beginPath(); ctx.moveTo(xPantai - 2, muka); ctx.lineTo(xPantai + kikis, muka); ctx.lineTo(xPantai + kikis * 0.6, muka + 18); ctx.lineTo(xPantai - 8, muka + 18); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#b45309'; ctx.fillRect(W - 46, muka - 40, 30, 26); ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(W - 50, muka - 40); ctx.lineTo(W - 31, muka - 56); ctx.lineTo(W - 12, muka - 40); ctx.closePath(); ctx.fill();
+  ctx.fillStyle = warnaLaut; ctx.beginPath(); ctx.moveTo(xPantai - 2, muka); ctx.lineTo(xPantai + kikis, muka); ctx.lineTo(xPantai + kikis * 0.6, muka + 18); ctx.lineTo(xPantai - 8, muka + 18); ctx.closePath(); ctx.fill();
+  if (!benda(ctx, 'rumah-nelayan', W - 46, muka - 8, 84, { ay: 1 })) { ctx.fillStyle = '#b45309'; ctx.fillRect(W - 46, muka - 40, 30, 26); ctx.fillStyle = '#7f1d1d'; ctx.beginPath(); ctx.moveTo(W - 50, muka - 40); ctx.lineTo(W - 31, muka - 56); ctx.lineTo(W - 12, muka - 40); ctx.closePath(); ctx.fill(); }
   // sabuk mangrove
   const lebarPx = (xPantai - W * 0.15) * jepit(+v.lebar / 150, 0, 1), xa = xPantai - lebarPx;
   const nPohon = Math.round(jepit(+v.rapat / 40, 0, 1) * lebarPx / 9), tinggiPohon = 14 + 30 * (1 - Math.exp(-(+v.umur) / 5));
@@ -653,6 +672,7 @@ function gambarMangrove(ctx, W, H, v, h, p) {
     const mati = (k * 37 % 100) >= h.hidup;
     if (mati) continue;
     const bakau = v.jenis === 'bakau' || (v.jenis === 'campur' && x > xa + lebarPx * 0.4);
+    if (benda(ctx, bakau ? 'pohon-bakau' : 'pohon-apiapi', x, muka + 6, 12 + tinggiPohon * 0.75, { ay: 1 })) continue;
     ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2;
     if (bakau) { for (let a = -1; a <= 1; a += 2) { ctx.beginPath(); ctx.moveTo(x, muka - 8); ctx.quadraticCurveTo(x + a * 8, muka - 6, x + a * 9, muka + 6); ctx.stroke(); } }
     else { for (let a = -2; a <= 2; a++) { ctx.beginPath(); ctx.moveTo(x + a * 4, muka + 2); ctx.lineTo(x + a * 4, muka - 4); ctx.stroke(); } }
@@ -713,8 +733,7 @@ function kriteriaTempe(v, h) {
   ];
 }
 function gambarTempe(ctx, W, H, v, h, p) {
-  ctx.fillStyle = '#fafaf9'; ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, H - 40, W, 40);
+  if (!latar(ctx, W, H, 'bg-dapur-tempe', 0.775, H - 64)) { ctx.fillStyle = '#fafaf9'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, H - 40, W, 40); }
   const tebalPx = Math.min(H - 150, 30 + +v.tebal * 22), x0 = W * 0.06, x1 = W * 0.62, y1 = H - 64, y0 = y1 - tebalPx;
   // kedelai
   for (let r = 0; r < Math.round(tebalPx / 12); r++) for (let c = 0; c < Math.round((x1 - x0) / 13); c++) {
