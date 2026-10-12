@@ -8,7 +8,7 @@
    - /api/* (Kak Nala AI, memori, jejak) selalu lewat jaringan, tidak disimpan.
    VERSI dan DAFTAR_SIMPAN diperbarui otomatis oleh: node alat/perbarui-sw.js
    ========================================================= */
-const VERSI = 'nalarstem-42d6e193';
+const VERSI = 'nalarstem-691321b2';
 const DAFTAR_SIMPAN = [
   './',
   'index.html',
