@@ -54,7 +54,7 @@ dengan AI Tutor Sokratik **"Kak Nala"** (Google Gemini) yang menuntun lewat pert
 | Kunci pribadi | Browser memanggil Gemini langsung dengan kunci milik pengguna (disimpan di localStorage). |
 | Tutor lokal | Tanpa internet: petunjuk & penilaian berbasis aturan. Juga jadi cadangan otomatis bila AI gagal. |
 
-Model: `gemini-3.6-flash` (tercepat, ± 2 detik), dengan rantai cadangan otomatis `3.5-flash-lite` → `3.5-flash` → `flash-lite-latest` → `2.5-flash` (batas 12 detik per model) saat model sibuk (503), kuota habis (429), atau sudah ditutup Google (404). Model yang tak lagi tersedia di pengaturan lama otomatis diganti bawaan.
+Model: `gemini-3.6-flash` (tercepat, ± 1–2 detik), dengan rantai cadangan otomatis `3.5-flash` → `3.5-flash-lite` → `3.1-flash-lite` → `flash-lite-latest` → `flash-latest` → `2.5-flash` (batas 12 detik per model, 45 detik total) saat model sibuk (503), kuota habis (429), atau sudah ditutup Google (404). `3.8-flash` dan `3.7-flash` bisa dipilih di Pengaturan AI, tetapi tidak masuk rantai bawaan karena saat diuji (26 Okt 2026) sering sibuk. Model yang tak lagi tersedia di pengaturan lama otomatis diganti bawaan.
 
 ## Memori Kak Nala (kecerdasan lokal)
 - Setiap jawaban chat & penilaian AI direkam **tanpa nama** (email/telepon/tautan disamarkan) ke Supabase,

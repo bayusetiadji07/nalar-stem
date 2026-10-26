@@ -7,13 +7,19 @@
    ========================================================= */
 
 const AI_KUNCI_SIMPAN = 'nalarstem-ai';
-const MODEL_DAFTAR = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
+// Rantai cadangan (diuji 26 Okt 2026): model stabil & cepat lebih dulu.
+const MODEL_DAFTAR = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-2.5-flash'];
 const MODEL_PILIHAN = [
   ['gemini-3.6-flash', 'Gemini 3.6 Flash (disarankan, tercepat)'],
+  ['gemini-3.8-flash', 'Gemini 3.8 Flash (terbaru, sering sibuk)'],
+  ['gemini-3.7-flash', 'Gemini 3.7 Flash (baru, sering sibuk)'],
   ['gemini-3.5-flash', 'Gemini 3.5 Flash'],
-  ['gemini-2.5-flash', 'Gemini 2.5 Flash'],
-  ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (hemat kuota)']
+  ['gemini-3.5-flash-lite', 'Gemini 3.5 Flash-Lite (hemat kuota)'],
+  ['gemini-3.1-flash-lite', 'Gemini 3.1 Flash-Lite'],
+  ['gemini-2.5-flash', 'Gemini 2.5 Flash']
 ];
+// Model yang boleh dipilih = pilihan di Pengaturan + rantai cadangan
+const MODEL_IZIN = [...new Set([...MODEL_PILIHAN.map(p => p[0]), ...MODEL_DAFTAR])];
 const COBA_LAGI = [404, 429, 500, 503];
 
 function bacaAI() {
@@ -21,7 +27,7 @@ function bacaAI() {
   try { c = JSON.parse(localStorage.getItem(AI_KUNCI_SIMPAN) || '{}'); } catch (e) { /* abaikan */ }
   const dariBerkas = location.protocol === 'file:';
   // model lama yang sudah ditutup Google (mis. gemini-2.5-flash-lite) otomatis diganti bawaan
-  const model = MODEL_DAFTAR.includes(c.model) ? c.model : MODEL_DAFTAR[0];
+  const model = MODEL_IZIN.includes(c.model) ? c.model : MODEL_DAFTAR[0];
   return { sumber: c.sumber || (dariBerkas ? 'lokal' : 'bawaan'), kunci: c.kunci || '', model, rekam: c.rekam !== false };
 }
 function simpanAI(c) {
@@ -68,8 +74,9 @@ async function panggilAI(permintaan) {
   if (c.sumber === 'pribadi') {
     if (!c.kunci) throw new Error('Kunci API Gemini pribadi belum diisi di Pengaturan AI.');
     const daftar = [c.model, ...MODEL_DAFTAR.filter(m => m !== c.model)];
-    const catatan = [];
+    const catatan = [], mulai = Date.now();
     for (const model of daftar) {
+      if (Date.now() - mulai > 45000) { catatan.push('batas waktu total'); break; }
       let h;
       try { h = await mintaLangsung(c.kunci, model, permintaan, true); } catch (e) { catatan.push(`${model}: waktu habis`); continue; }
       if (h.status === 400 && !/API key/i.test((h.d.error && h.d.error.message) || '')) h = await mintaLangsung(c.kunci, model, permintaan, false);

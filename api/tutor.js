@@ -1,7 +1,10 @@
 // Proxy AI Tutor → Google Gemini. Kunci disimpan di env GEMINI_API_KEY (Vercel / .env lokal).
 // Rantai cadangan: bila satu model sibuk (503), kuota habis (429), atau sudah ditutup (404),
 // otomatis mencoba model berikutnya.
-const MODEL_DAFTAR = ['gemini-3.6-flash', 'gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-2.5-flash'];
+// Diuji 26 Okt 2026: 3.6/3.5 Flash stabil ± 1,2 dtk; 3.7/3.8 Flash sering sibuk (503/timeout) → hanya bila dipilih.
+const MODEL_DAFTAR = ['gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-2.5-flash'];
+const MODEL_IZIN = [...MODEL_DAFTAR, 'gemini-3.8-flash', 'gemini-3.7-flash'];
+const BATAS_TOTAL_MS = 45000; // hentikan rantai cadangan setelah ± 45 detik
 const COBA_LAGI = [404, 429, 500, 503];
 
 function badanGemini(model, { sistem, riwayat, json }, pakaiThinking) {
@@ -48,11 +51,12 @@ module.exports = async function handler(req, res) {
     riwayat: b.riwayat.slice(-16).map(r => ({ peran: r.peran === 'model' ? 'model' : 'user', teks: String(r.teks || '').slice(0, 4000) })),
     json: !!b.json
   };
-  const pilihan = MODEL_DAFTAR.includes(b.model) ? b.model : MODEL_DAFTAR[0];
+  const pilihan = MODEL_IZIN.includes(b.model) ? b.model : MODEL_DAFTAR[0];
   const daftar = [pilihan, ...MODEL_DAFTAR.filter(m => m !== pilihan)];
 
-  const galat = [];
+  const galat = [], mulai = Date.now();
   for (const model of daftar) {
+    if (Date.now() - mulai > BATAS_TOTAL_MS) { galat.push('batas waktu total'); break; }
     try {
       let h = await mintaGemini(kunci, model, permintaan, true);
       // Pengaturan "thinking" ditolak model tertentu → ulangi sekali tanpa pengaturan itu.
