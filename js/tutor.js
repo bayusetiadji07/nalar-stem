@@ -90,7 +90,8 @@ async function panggilAI(permintaan) {
   if (location.protocol === 'file:') throw new Error('LOKAL');
   const r = await fetch('api/tutor', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...permintaan, model: c.model })
+    // kode kelas → server memakai kunci Gemini milik guru kelas itu (bila guru memasangnya)
+    body: JSON.stringify({ ...permintaan, model: c.model, kode: (typeof S !== 'undefined' && S.profil && S.profil.kodeKelas) || '' })
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(d.error || `Server AI membalas ${r.status}`);

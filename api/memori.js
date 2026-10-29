@@ -109,6 +109,18 @@ module.exports = async function handler(req, res) {
         return res.status(200).json(await rpc('nalar_akun_masuk', { p_email: String(b.email || '').slice(0, 120), p_sandi: String(b.sandi || '').slice(0, 100) }));
       case 'akun_profil':
         return res.status(200).json({ guru: await rpc('nalar_akun_profil', { p_token: token }) });
+      case 'akun_kunci': {
+        // Kunci Gemini guru: diuji dulu ke Google, lalu disimpan terenkripsi (rahasia server di env NALAR_RAHASIA).
+        if (!process.env.NALAR_RAHASIA) return res.status(500).json({ error: 'NALAR_RAHASIA belum diatur di server.' });
+        const kunci = String(b.kunci || '').trim().slice(0, 100);
+        if (kunci) {
+          const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models?pageSize=1', {
+            headers: { 'x-goog-api-key': kunci }, signal: AbortSignal.timeout(10000)
+          }).catch(() => null);
+          if (!r || !r.ok) return res.status(400).json({ error: 'Kunci API Gemini tidak valid atau belum aktif. Salin ulang dari aistudio.google.com/apikey.' });
+        }
+        return res.status(200).json({ guru: await rpc('nalar_akun_kunci', { p_token: token, p_kunci: kunci || null, p_rahasia: process.env.NALAR_RAHASIA }) });
+      }
       case 'akun_keluar':
         await rpc('nalar_akun_keluar', { p_token: token });
         return res.status(200).json({ ok: true });

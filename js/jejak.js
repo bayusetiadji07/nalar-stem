@@ -280,6 +280,33 @@ function formGantiSandi(wadah) {
   };
 }
 
+// Kunci Gemini milik guru: dipakai Kak Nala untuk murid di kelas guru ini (kuota terbagi per guru).
+function tampilKunci(G) {
+  const w = $('#kartuKunci'); if (!w) return;
+  const ada = !!G.adaKunci;
+  w.innerHTML = `<div class="lab-kepala"><h3>🔑 Kunci Gemini untuk Kak Nala</h3>
+      ${ada ? `<span class="lencana hijau">terpasang ····${esc(G.kunciAkhiran || '')}</span>` : '<span class="lencana">belum dipasang</span>'}</div>
+    <p class="kecil">${ada
+      ? 'Kak Nala untuk murid di kelas Anda memakai kunci ini. Bila kuotanya habis, Kak Nala otomatis memakai kunci sekolah.'
+      : 'Agar Kak Nala tetap lancar saat banyak sekolah memakainya, pasang kunci Gemini milik Anda sendiri (gratis). Murid di kelas Anda akan memakai kuota kunci ini.'}</p>
+    <details class="kecil"><summary>Cara membuat kunci (± 2 menit)</summary><ol>
+      <li>Buka <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> dan masuk dengan akun Google.</li>
+      <li>Klik <b>Create API key</b>, lalu salin kunci yang muncul (diawali <code>AIza</code> atau <code>AQ.</code>).</li>
+      <li>Tempel di kolom di bawah, lalu klik <b>Simpan</b>. Kunci diuji dulu dan disimpan terenkripsi; tidak pernah ditampilkan kepada murid.</li></ol></details>
+    <form id="fKunci" class="baris-form" style="margin-top:10px">
+      <input type="password" id="isiKunci" placeholder="${ada ? 'Ganti dengan kunci baru…' : 'Tempel kunci API Gemini'}" autocomplete="off" required>
+      <button class="tombol utama">Simpan</button>${ada ? '<button type="button" class="tombol" id="bHapusKunci">Lepas kunci</button>' : ''}</form>`;
+  const kirim = async kunci => {
+    try {
+      const d = await memoriApi({ aksi: 'akun_kunci', token: tokenGuru(), kunci }, 20000);
+      setAkunGuru({ ...akunGuru(), guru: d.guru }); tampilKunci(d.guru);
+      toast(kunci ? 'Kunci Gemini tersimpan — Kak Nala di kelas Anda memakainya' : 'Kunci dilepas — Kak Nala memakai kunci sekolah');
+    } catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
+  };
+  $('#fKunci').onsubmit = e => { e.preventDefault(); kirim($('#isiKunci').value.trim()); };
+  const h = $('#bHapusKunci'); if (h) h.onclick = () => { if (confirm('Lepas kunci Gemini Anda? Kak Nala di kelas Anda akan memakai kunci sekolah.')) kirim(''); };
+}
+
 function halJejak() {
   if (location.protocol === 'file:') { APP.innerHTML = '<h1 class="judul-hal">Peta Jejak Berpikir</h1><p class="peringatan">Halaman ini memerlukan server — buka aplikasi lewat alamat web.</p>'; return; }
   const akun = akunGuru();
@@ -290,12 +317,19 @@ function halJejak() {
       <p class="kecil">👤 <b>${esc(G.nama || '')}</b> · ${esc(G.sekolah || '')}${admin ? ' · <span class="lencana">admin</span>' : ''}</p></div>
     <div class="aksi-porto">${admin ? '<a class="tombol" href="#/admin-guru">👥 Kelola guru</a><a class="tombol" href="#/kurasi">🧠 Kurasi memori</a>' : ''}<button class="tombol" id="bGantiSandi">🔑 Ganti sandi</button><button class="tombol" id="bKeluarGuru">Keluar</button></div></div>
   <div id="wadahSandi"></div>
+  <div class="kartu" id="kartuKunci"></div>
   <div class="kartu"><div class="lab-kepala"><h3>🏫 Kelas saya</h3><button class="tombol kecil" id="bSegarKelas">↻ Segarkan</button></div>
     <div id="daftarKelas"><p class="redup">Memuat…</p></div>
     <form id="fKelasBaru" class="baris-form" style="margin-top:12px"><input id="namaKelasBaru" placeholder="Nama kelas baru, mis. 8B 2026/2027" maxlength="60" required><button class="tombol utama">＋ Buat kelas</button></form>
     <p class="redup kecil">Setelah kelas dibuat, tuliskan <b>kodenya</b> di papan. Murid memasukkan kode itu di Beranda (kartu profil). Mulai saat itu jejak uji mereka terkirim otomatis — isi chat dengan Kak Nala <b>tidak</b> ikut terkirim.</p>
   </div>
   <div id="isiJejak"></div>`;
+  tampilKunci(G);
+  // segarkan profil (status kunci, nama sekolah) tanpa menahan halaman
+  memoriApi({ aksi: 'akun_profil', token: akun.token }, 10000).then(d => {
+    if (!d.guru) return;
+    setAkunGuru({ ...akunGuru(), guru: d.guru }); tampilKunci(d.guru);
+  }).catch(err => sesiGuruHabis(err));
   $('#bKeluarGuru').onclick = keluarGuru;
   $('#bGantiSandi').onclick = () => { const w = $('#wadahSandi'); if (w.innerHTML) w.innerHTML = ''; else formGantiSandi(w); };
   $('#bSegarKelas').onclick = () => muatKelas();
@@ -551,10 +585,10 @@ async function halAdminGuru() {
   catch (err) { if (!sesiGuruHabis(err)) $('#daftarGuru').innerHTML = `<p class="galat">${esc(err.message)}</p>`; return; }
   const tgl = t => t ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
   const sekolah = new Set(guru.map(g => g.sekolah.trim().toLowerCase())).size;
-  $('#daftarGuru').innerHTML = `<p><b>${guru.length}</b> guru · <b>${sekolah}</b> sekolah · <b>${guru.reduce((a, g) => a + +g.kelas, 0)}</b> kelas · <b>${guru.reduce((a, g) => a + +g.murid, 0)}</b> murid</p>
-    <div class="tabel-gulir"><table class="tabel"><thead><tr><th>Guru</th><th>Sekolah</th><th>Kelas</th><th>Murid</th><th>Terdaftar</th><th>Masuk terakhir</th><th>Status</th><th></th></tr></thead><tbody>
+  $('#daftarGuru').innerHTML = `<p><b>${guru.length}</b> guru · <b>${sekolah}</b> sekolah · <b>${guru.reduce((a, g) => a + +g.kelas, 0)}</b> kelas · <b>${guru.reduce((a, g) => a + +g.murid, 0)}</b> murid · <b>${guru.filter(g => g.ada_kunci).length}</b> guru memasang kunci Gemini sendiri</p>
+    <div class="tabel-gulir"><table class="tabel"><thead><tr><th>Guru</th><th>Sekolah</th><th>Kelas</th><th>Murid</th><th>Terdaftar</th><th>Masuk terakhir</th><th>Kunci AI</th><th>Status</th><th></th></tr></thead><tbody>
     ${guru.map(g => `<tr${g.aktif ? '' : ' class="redup"'}><td><b>${esc(g.nama)}</b>${g.peran === 'admin' ? ' <span class="lencana">admin</span>' : ''}<br><small>${esc(g.email)}</small></td>
-      <td>${esc(g.sekolah)}${g.kabupaten ? `<br><small>${esc(g.kabupaten)}</small>` : ''}</td><td>${g.kelas}</td><td>${g.murid}</td><td>${tgl(g.dibuat)}</td><td>${tgl(g.masuk_terakhir)}</td>
+      <td>${esc(g.sekolah)}${g.kabupaten ? `<br><small>${esc(g.kabupaten)}</small>` : ''}</td><td>${g.kelas}</td><td>${g.murid}</td><td>${tgl(g.dibuat)}</td><td>${tgl(g.masuk_terakhir)}</td><td>${g.ada_kunci ? '✅' : '—'}</td>
       <td>${g.aktif ? '<span class="lencana hijau">aktif</span>' : '<span class="lencana merah">nonaktif</span>'}</td>
       <td class="aksi-sel">${g.peran === 'admin' ? '' : `<button class="tombol kecil" data-aktif="${g.id}" data-nilai="${!g.aktif}">${g.aktif ? 'Nonaktifkan' : 'Aktifkan'}</button>`}
         <button class="tombol kecil" data-reset="${g.id}" data-nama="${esc(g.nama)}">Atur ulang sandi</button></td></tr>`).join('')}
