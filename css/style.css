@@ -601,3 +601,10 @@ body.mode-tes .fab-tutor { display: none; }
 /* Tautan menu khusus guru */
 .nav a.nav-guru { border: 1px solid #99f6e4; color: var(--utama-tua); background: #f0fdfa; }
 .nav a.nav-guru:hover, .nav a.nav-guru.aktif { background: var(--utama-muda); }
+
+/* Akun guru */
+.tab-akun { display: flex; gap: 8px; margin: 14px 0 12px; }
+.form-akun { max-width: 420px; }
+.form-akun input { width: 100%; }
+.aksi-sel { white-space: nowrap; }
+.aksi-sel .tombol { margin: 2px 0; }

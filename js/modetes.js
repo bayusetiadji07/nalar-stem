@@ -217,9 +217,9 @@ function htmlPratinjauTes(misi) {
 function pasangPanelTes(kelas, baris, muatUlang) {
   const atur = async tes => {
     try {
-      const d = await memoriApi({ aksi: 'guru_tes_atur', sandi: sandiGuru(), kode: kelas.kode, tes }, 15000);
+      const d = await memoriApi({ aksi: 'guru_tes_atur', token: tokenGuru(), kode: kelas.kode, tes }, 15000);
       kelas.tes = d.tes || null; muatUlang();
-    } catch (err) { toast(err.message, 'peringatan'); if (err.status === 401) { setSandiGuru(''); halJejak(); } }
+    } catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
   };
   const f = $('#fBukaTes'); if (!f) return;
   $('#tesMisi').onchange = e => { tesTerpilih = e.target.value; muatUlang(); };

@@ -211,44 +211,101 @@ let jejakTerpilih = { kode: '', misi: '', murid: '' };
 try { jejakTerpilih = { ...jejakTerpilih, ...JSON.parse(sessionStorage.getItem('nalarstem-jejak') || '{}') }; } catch (e) { /* abaikan */ }
 const simpanPilihanJejak = () => { try { sessionStorage.setItem('nalarstem-jejak', JSON.stringify(jejakTerpilih)); } catch (e) { /* abaikan */ } };
 
+/* ---------------- Akun guru ----------------
+   Tiap guru punya akun sendiri; kelas & jejak muridnya hanya terlihat olehnya. */
+const AKUN_GURU = 'nalarstem-akun-guru';
+function akunGuru() { try { return JSON.parse(localStorage.getItem(AKUN_GURU) || 'null'); } catch (e) { return null; } }
+function setAkunGuru(a) { try { if (a) localStorage.setItem(AKUN_GURU, JSON.stringify(a)); else localStorage.removeItem(AKUN_GURU); } catch (e) { /* abaikan */ } }
+const tokenGuru = () => (akunGuru() || {}).token || '';
+// sesi kedaluwarsa / akun dinonaktifkan → kembali ke layar masuk
+function sesiGuruHabis(err) { if (err && err.status === 401) { setAkunGuru(null); toast('Sesi masuk berakhir, silakan masuk lagi', 'peringatan'); halJejak(); return true; } return false; }
+
+function halMasukGuru() {
+  APP.innerHTML = `<h1 class="judul-hal">🔐 Peta Jejak Berpikir</h1>
+  <div class="kartu prosa" style="max-width:600px">
+    <p>Halaman ini khusus guru. Di sini guru melihat <b>cara murid bereksperimen</b> di laboratorium maya: apakah ia mengubah satu variabel tiap uji, menulis prediksi, memberi jeda berpikir, dan kapan kriterianya terpenuhi.</p>
+    <p class="redup kecil">Setiap guru memakai akunnya sendiri. Kelas dan jejak murid Anda hanya terlihat oleh Anda.</p>
+    <div class="tab-akun"><button type="button" class="tombol kecil utama" data-tab="masuk">Masuk</button><button type="button" class="tombol kecil" data-tab="daftar">Daftar akun guru</button></div>
+    <form id="fMasuk" class="form-akun">
+      <label class="isian"><span>Email</span><input type="email" id="mEmail" autocomplete="username" required></label>
+      <label class="isian"><span>Sandi</span><input type="password" id="mSandi" autocomplete="current-password" required></label>
+      <button class="tombol utama">Masuk</button>
+    </form>
+    <form id="fDaftar" class="form-akun" hidden>
+      <label class="isian"><span>Nama lengkap</span><input id="dNama" maxlength="80" required placeholder="mis. Siti Aminah, S.Pd."></label>
+      <label class="isian"><span>Sekolah</span><input id="dSekolah" maxlength="100" required placeholder="mis. SMP Negeri 1 Panji"></label>
+      <label class="isian"><span>Kabupaten/Kota</span><input id="dKab" maxlength="60" placeholder="mis. Situbondo"></label>
+      <label class="isian"><span>Email</span><input type="email" id="dEmail" autocomplete="username" required></label>
+      <label class="isian"><span>Sandi (min. 8 karakter)</span><input type="password" id="dSandi" minlength="8" autocomplete="new-password" required></label>
+      <button class="tombol utama">Buat akun</button>
+    </form>
+    <p class="galat" id="galatAkun" hidden></p>
+    <p class="redup kecil">Lupa sandi? Hubungi admin NalarSTEM untuk mengatur ulang sandi Anda.</p>
+  </div>`;
+  const galat = t => { const g = $('#galatAkun'); g.textContent = t; g.hidden = !t; };
+  $$('[data-tab]').forEach(b => b.onclick = () => {
+    const daftar = b.dataset.tab === 'daftar';
+    $('#fMasuk').hidden = daftar; $('#fDaftar').hidden = !daftar; galat('');
+    $$('[data-tab]').forEach(x => x.classList.toggle('utama', x === b));
+  });
+  const selesai = d => { setAkunGuru({ token: d.token, guru: d.guru }); toast(`Selamat datang, ${d.guru.nama}`); halJejak(); };
+  $('#fMasuk').onsubmit = async e => {
+    e.preventDefault(); galat('');
+    try { selesai(await memoriApi({ aksi: 'akun_masuk', email: $('#mEmail').value, sandi: $('#mSandi').value }, 15000)); }
+    catch (err) { galat(err.status === 401 ? err.message : 'Tidak bisa masuk: ' + err.message); }
+  };
+  $('#fDaftar').onsubmit = async e => {
+    e.preventDefault(); galat('');
+    try {
+      selesai(await memoriApi({ aksi: 'akun_daftar', nama: $('#dNama').value, sekolah: $('#dSekolah').value, kabupaten: $('#dKab').value, email: $('#dEmail').value, sandiBaru: $('#dSandi').value }, 15000));
+    } catch (err) { galat(err.message); }
+  };
+}
+
+async function keluarGuru() {
+  const t = tokenGuru(); setAkunGuru(null);
+  if (t) memoriApi({ aksi: 'akun_keluar', token: t }, 8000).catch(() => {});
+  location.hash = '#/guru';
+}
+
+function formGantiSandi(wadah) {
+  wadah.innerHTML = `<form id="fGantiSandi" class="baris-form" style="margin-top:10px">
+    <input type="password" id="gsLama" placeholder="Sandi lama" autocomplete="current-password" required>
+    <input type="password" id="gsBaru" placeholder="Sandi baru (min. 8)" minlength="8" autocomplete="new-password" required>
+    <button class="tombol utama">Simpan</button></form>`;
+  $('#fGantiSandi').onsubmit = async e => {
+    e.preventDefault();
+    try { await memoriApi({ aksi: 'akun_sandi', token: tokenGuru(), sandi: $('#gsLama').value, sandiBaru: $('#gsBaru').value }, 15000); wadah.innerHTML = ''; toast('Sandi diganti'); }
+    catch (err) { toast(err.message, 'peringatan'); }
+  };
+}
+
 function halJejak() {
   if (location.protocol === 'file:') { APP.innerHTML = '<h1 class="judul-hal">Peta Jejak Berpikir</h1><p class="peringatan">Halaman ini memerlukan server — buka aplikasi lewat alamat web.</p>'; return; }
-  if (!sandiGuru()) {
-    APP.innerHTML = `<h1 class="judul-hal">🔐 Peta Jejak Berpikir</h1>
-    <div class="kartu prosa" style="max-width:560px">
-      <p>Halaman ini khusus guru. Di sini guru melihat <b>cara murid bereksperimen</b> di laboratorium maya: apakah ia mengubah satu variabel tiap uji, menulis prediksi, memberi jeda berpikir, dan kapan kriterianya terpenuhi.</p>
-      <form id="fSandi" class="baris-form"><input type="password" id="sandiGuru" placeholder="Sandi guru" autocomplete="current-password" required><button class="tombol utama">Masuk</button></form>
-      <p class="galat" id="galatSandi" hidden></p>
-    </div>`;
-    $('#fSandi').onsubmit = async e => {
-      e.preventDefault();
-      const s = $('#sandiGuru').value, g = $('#galatSandi'); g.hidden = true;
-      try {
-        const d = await memoriApi({ aksi: 'guru_cek', sandi: s }, 15000);
-        if (!d.ok) { g.textContent = 'Sandi salah.'; g.hidden = false; return; }
-        setSandiGuru(s); halJejak();
-      } catch (err) { g.textContent = 'Tidak bisa menghubungi server: ' + err.message; g.hidden = false; }
-    };
-    return;
-  }
+  const akun = akunGuru();
+  if (!akun || !akun.token) return halMasukGuru();
+  const G = akun.guru || {}, admin = G.peran === 'admin';
   APP.innerHTML = `<div class="kepala-porto"><div><h1 class="judul-hal">🧭 Peta Jejak Berpikir</h1>
-      <p class="redup">Lihat cara murid bereksperimen — bukan hanya hasil akhirnya.</p></div>
-    <div class="aksi-porto"><a class="tombol" href="#/kurasi">🧠 Kurasi memori</a><button class="tombol" id="bKeluarGuru">Keluar</button></div></div>
-  <div class="kartu"><div class="lab-kepala"><h3>🏫 Kelas</h3><button class="tombol kecil" id="bSegarKelas">↻ Segarkan</button></div>
+      <p class="redup">Lihat cara murid bereksperimen — bukan hanya hasil akhirnya.</p>
+      <p class="kecil">👤 <b>${esc(G.nama || '')}</b> · ${esc(G.sekolah || '')}${admin ? ' · <span class="lencana">admin</span>' : ''}</p></div>
+    <div class="aksi-porto">${admin ? '<a class="tombol" href="#/admin-guru">👥 Kelola guru</a><a class="tombol" href="#/kurasi">🧠 Kurasi memori</a>' : ''}<button class="tombol" id="bGantiSandi">🔑 Ganti sandi</button><button class="tombol" id="bKeluarGuru">Keluar</button></div></div>
+  <div id="wadahSandi"></div>
+  <div class="kartu"><div class="lab-kepala"><h3>🏫 Kelas saya</h3><button class="tombol kecil" id="bSegarKelas">↻ Segarkan</button></div>
     <div id="daftarKelas"><p class="redup">Memuat…</p></div>
     <form id="fKelasBaru" class="baris-form" style="margin-top:12px"><input id="namaKelasBaru" placeholder="Nama kelas baru, mis. 8B 2026/2027" maxlength="60" required><button class="tombol utama">＋ Buat kelas</button></form>
     <p class="redup kecil">Setelah kelas dibuat, tuliskan <b>kodenya</b> di papan. Murid memasukkan kode itu di Beranda (kartu profil). Mulai saat itu jejak uji mereka terkirim otomatis — isi chat dengan Kak Nala <b>tidak</b> ikut terkirim.</p>
   </div>
   <div id="isiJejak"></div>`;
-  $('#bKeluarGuru').onclick = () => { setSandiGuru(''); location.hash = '#/guru'; };
+  $('#bKeluarGuru').onclick = keluarGuru;
+  $('#bGantiSandi').onclick = () => { const w = $('#wadahSandi'); if (w.innerHTML) w.innerHTML = ''; else formGantiSandi(w); };
   $('#bSegarKelas').onclick = () => muatKelas();
   $('#fKelasBaru').onsubmit = async e => {
     e.preventDefault();
     try {
-      const d = await memoriApi({ aksi: 'guru_kelas_buat', sandi: sandiGuru(), nama: $('#namaKelasBaru').value.trim() }, 15000);
+      const d = await memoriApi({ aksi: 'guru_kelas_buat', token: tokenGuru(), nama: $('#namaKelasBaru').value.trim() }, 15000);
       $('#namaKelasBaru').value = ''; jejakTerpilih.kode = d.kode; simpanPilihanJejak();
       toast(`Kelas dibuat — kode: ${d.kode}`); muatKelas();
-    } catch (err) { toast(err.message, 'peringatan'); if (err.status === 401) { setSandiGuru(''); halJejak(); } }
+    } catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
   };
   muatKelas();
 }
@@ -256,8 +313,8 @@ function halJejak() {
 async function muatKelas() {
   const wadah = $('#daftarKelas'); if (!wadah) return;
   let kelas = [];
-  try { kelas = (await memoriApi({ aksi: 'guru_kelas_daftar', sandi: sandiGuru() }, 15000)).hasil || []; }
-  catch (err) { wadah.innerHTML = `<p class="galat">${esc(err.message)}</p>`; if (err.status === 401) { setSandiGuru(''); halJejak(); } return; }
+  try { kelas = (await memoriApi({ aksi: 'guru_kelas_daftar', token: tokenGuru() }, 15000)).hasil || []; }
+  catch (err) { if (!sesiGuruHabis(err)) wadah.innerHTML = `<p class="galat">${esc(err.message)}</p>`; return; }
   if (!kelas.length) { wadah.innerHTML = '<p class="redup">Belum ada kelas. Buat kelas pertamamu di bawah.</p>'; $('#isiJejak').innerHTML = ''; return; }
   if (!kelas.some(k => k.kode === jejakTerpilih.kode)) { jejakTerpilih.kode = kelas[0].kode; simpanPilihanJejak(); }
   wadah.innerHTML = `<div class="daftar-kelas">${kelas.map(k => `<button type="button" class="kelas-chip ${k.kode === jejakTerpilih.kode ? 'aktif' : ''}" data-kode="${esc(k.kode)}">
@@ -303,8 +360,8 @@ async function muatJejakKelas(kelas) {
   const wadah = $('#isiJejak'); if (!wadah) return;
   wadah.innerHTML = '<p class="redup">Memuat jejak murid…</p>';
   let baris = [];
-  try { baris = (await memoriApi({ aksi: 'guru_jejak', sandi: sandiGuru(), kode: kelas.kode }, 20000)).hasil || []; }
-  catch (err) { wadah.innerHTML = `<p class="galat">${esc(err.message)}</p>`; return; }
+  try { baris = (await memoriApi({ aksi: 'guru_jejak', token: tokenGuru(), kode: kelas.kode }, 20000)).hasil || []; }
+  catch (err) { if (sesiGuruHabis(err)) return; wadah.innerHTML = `<p class="galat">${esc(err.message)}</p>`; return; }
   const nalarPer = Object.fromEntries(baris.filter(r => r.misi === ID_UJI_NALAR).map(r => [r.perangkat, ringkasNalar(r.data)]));
   const misiAda = MISI.filter(m => baris.some(r => r.misi === m.id));
   const kartuKode = `<div class="kartu kartu-kode"><div><small class="redup">Kode kelas <b>${esc(kelas.nama)}</b></small><div class="kode-besar">${esc(kelas.kode)}</div></div>
@@ -440,8 +497,8 @@ function tampilDetailJejak(m, r, kelas, gulir = true) {
   gambarPetaJejak(cv, m, r.data);
   $('#bHapusMurid').onclick = async () => {
     if (!confirm(`Hapus semua jejak ${r.nama} dari kelas ${kelas.nama}? Data di perangkat murid tidak terhapus.`)) return;
-    try { await memoriApi({ aksi: 'guru_jejak_hapus', sandi: sandiGuru(), kode: kelas.kode, perangkat: r.perangkat }, 15000); jejakTerpilih.murid = ''; simpanPilihanJejak(); toast('Jejak murid dihapus'); muatKelas(); }
-    catch (err) { toast(err.message, 'peringatan'); }
+    try { await memoriApi({ aksi: 'guru_jejak_hapus', token: tokenGuru(), kode: kelas.kode, perangkat: r.perangkat }, 15000); jejakTerpilih.murid = ''; simpanPilihanJejak(); toast('Jejak murid dihapus'); muatKelas(); }
+    catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
   };
   if (gulir) wadah.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -455,8 +512,8 @@ function pasangZonaKelas(kelas) {
   const b = $('#bHapusKelas'); if (!b) return;
   b.onclick = async () => {
     if (!confirm(`Hapus kelas ${kelas.nama} (${kelas.kode}) beserta semua jejak muridnya? Tindakan ini tidak bisa dibatalkan.`)) return;
-    try { await memoriApi({ aksi: 'guru_kelas_hapus', sandi: sandiGuru(), kode: kelas.kode }, 15000); jejakTerpilih = { kode: '', misi: '', murid: '' }; simpanPilihanJejak(); toast('Kelas dihapus'); muatKelas(); }
-    catch (err) { toast(err.message, 'peringatan'); }
+    try { await memoriApi({ aksi: 'guru_kelas_hapus', token: tokenGuru(), kode: kelas.kode }, 15000); jejakTerpilih = { kode: '', misi: '', murid: '' }; simpanPilihanJejak(); toast('Kelas dihapus'); muatKelas(); }
+    catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
   };
 }
 
@@ -478,4 +535,39 @@ function unduhCsvJejak(kelas, baris) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = `jejak-berpikir-${kelas.kode}-${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+/* ---------------- Kelola guru (admin) ---------------- */
+async function halAdminGuru() {
+  const akun = akunGuru();
+  if (!akun || !akun.token) return halMasukGuru();
+  if ((akun.guru || {}).peran !== 'admin') { location.hash = '#/jejak'; return; }
+  APP.innerHTML = `<div class="kepala-porto"><div><h1 class="judul-hal">👥 Kelola Guru</h1>
+      <p class="redup">Daftar guru yang memakai NalarSTEM. Setiap guru hanya melihat kelas dan jejak muridnya sendiri.</p></div>
+    <div class="aksi-porto"><a class="tombol" href="#/jejak">← Peta Jejak</a></div></div>
+  <div class="kartu" id="daftarGuru"><p class="redup">Memuat…</p></div>`;
+  let guru = [];
+  try { guru = (await memoriApi({ aksi: 'admin_guru_daftar', token: tokenGuru() }, 15000)).hasil || []; }
+  catch (err) { if (!sesiGuruHabis(err)) $('#daftarGuru').innerHTML = `<p class="galat">${esc(err.message)}</p>`; return; }
+  const tgl = t => t ? new Date(t).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+  const sekolah = new Set(guru.map(g => g.sekolah.trim().toLowerCase())).size;
+  $('#daftarGuru').innerHTML = `<p><b>${guru.length}</b> guru · <b>${sekolah}</b> sekolah · <b>${guru.reduce((a, g) => a + +g.kelas, 0)}</b> kelas · <b>${guru.reduce((a, g) => a + +g.murid, 0)}</b> murid</p>
+    <div class="tabel-gulir"><table class="tabel"><thead><tr><th>Guru</th><th>Sekolah</th><th>Kelas</th><th>Murid</th><th>Terdaftar</th><th>Masuk terakhir</th><th>Status</th><th></th></tr></thead><tbody>
+    ${guru.map(g => `<tr${g.aktif ? '' : ' class="redup"'}><td><b>${esc(g.nama)}</b>${g.peran === 'admin' ? ' <span class="lencana">admin</span>' : ''}<br><small>${esc(g.email)}</small></td>
+      <td>${esc(g.sekolah)}${g.kabupaten ? `<br><small>${esc(g.kabupaten)}</small>` : ''}</td><td>${g.kelas}</td><td>${g.murid}</td><td>${tgl(g.dibuat)}</td><td>${tgl(g.masuk_terakhir)}</td>
+      <td>${g.aktif ? '<span class="lencana hijau">aktif</span>' : '<span class="lencana merah">nonaktif</span>'}</td>
+      <td class="aksi-sel">${g.peran === 'admin' ? '' : `<button class="tombol kecil" data-aktif="${g.id}" data-nilai="${!g.aktif}">${g.aktif ? 'Nonaktifkan' : 'Aktifkan'}</button>`}
+        <button class="tombol kecil" data-reset="${g.id}" data-nama="${esc(g.nama)}">Atur ulang sandi</button></td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="redup kecil">Atur ulang sandi dipakai bila guru lupa sandinya: buat sandi sementara, sampaikan kepada guru tersebut, lalu minta ia menggantinya lewat tombol "Ganti sandi".</p>`;
+  $$('[data-aktif]').forEach(b => b.onclick = async () => {
+    try { await memoriApi({ aksi: 'admin_guru_atur', token: tokenGuru(), id: +b.dataset.aktif, aktif: b.dataset.nilai === 'true' }, 15000); toast('Status guru diperbarui'); halAdminGuru(); }
+    catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
+  });
+  $$('[data-reset]').forEach(b => b.onclick = async () => {
+    const baru = prompt(`Sandi sementara untuk ${b.dataset.nama} (min. 8 karakter):`);
+    if (!baru) return;
+    try { await memoriApi({ aksi: 'admin_guru_atur', token: tokenGuru(), id: +b.dataset.reset, sandiBaru: baru }, 15000); toast('Sandi diatur ulang — sampaikan kepada guru tersebut'); }
+    catch (err) { if (!sesiGuruHabis(err)) toast(err.message, 'peringatan'); }
+  });
 }

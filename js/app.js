@@ -89,6 +89,7 @@ function rute() {
   if (hal === 'pengaturan') return halPengaturan();
   if (hal === 'kurasi') return halKurasi();
   if (hal === 'jejak') return halJejak();
+  if (hal === 'admin-guru') return halAdminGuru();
   halBeranda();
 }
 window.addEventListener('hashchange', rute);
