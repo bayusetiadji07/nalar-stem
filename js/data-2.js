@@ -360,6 +360,49 @@ MISI.push(
       { id: 'kompak', label: 'Kekompakan', satuan: '' },
       { id: 'biaya', label: 'Biaya per kg kedelai', satuan: 'Rp' }
     ]
+  },
+  {
+    id: 'iklim',
+    judul: 'Botol Rumah Kaca: Bukti Perubahan Iklim',
+    ikon: '🌍',
+    kelas: 'Kelas 9 · Pemanasan Global & Perubahan Iklim (Efek Rumah Kaca, Radiasi Kalor)',
+    warna: '#15803d',
+    ringkas: 'Rancang peraga dua botol yang membuktikan gas CO₂ memerangkap panas, secara adil, aman, dan meyakinkan warga.',
+    kisah: 'Warga pesisir Besuki mulai merasakan <b>rob yang makin sering</b> dan <b>kemarau yang makin panjang</b>. Saat penyuluhan Hari Bumi di balai desa, masih ada warga yang bertanya, <i>"Masa iya gas tak terlihat bisa membuat Bumi lebih panas?"</i> Kelasmu diminta membuat <b>peraga dua botol</b>: botol berisi udara biasa dan botol yang <b>diperkaya CO₂</b> dari reaksi cuka dan soda kue, lalu keduanya disinari lampu. Peraga harus menunjukkan <b>selisih suhu minimal 2 °C</b> dalam <b>paling lama 30 menit</b>, botol tidak boleh terlalu panas sampai penyok, dan pengujiannya harus <b>adil</b> supaya warga percaya.',
+    kriteria: [
+      'Selisih suhu botol CO₂ − botol udara minimal 2 °C',
+      'Suhu botol paling tinggi 50 °C (botol PET tidak penyok)',
+      'Uji adil: kedua botol berjarak sama dari lampu',
+      'Pengamatan paling lama 30 menit'
+    ],
+    kendala: ['Biaya bahan paling banyak Rp 10.000 (soda kue Rp 100/g, cuka dapur 5% Rp 20/mL, selang Rp 3.000, kertas hitam Rp 1.000)', 'Botol PET bening 1,5 L dua buah; suhu ruang 30 °C; lampu yang tersedia: LED 10 W, pijar 40 W, 60 W, 100 W'],
+    konsep: `
+      <p><b>Efek rumah kaca</b>: sinar matahari menembus atmosfer dan memanaskan permukaan Bumi. Permukaan yang hangat memancarkan kembali kalor sebagai <b>radiasi inframerah</b>. Gas rumah kaca seperti <b>CO₂</b>, metana, dan uap air <b>menyerap inframerah</b> lalu memancarkannya ke segala arah, termasuk kembali ke Bumi, sehingga kalor tertahan lebih lama.</p>
+      <p>Sejak era industri, kadar CO₂ di atmosfer naik dari ± 280 ppm menjadi lebih dari 420 ppm karena pembakaran bahan bakar fosil dan penebangan hutan. Akibatnya suhu rata-rata Bumi naik (<b>pemanasan global</b>) dan pola iklim berubah: <b>kemarau lebih panjang</b>, hujan ekstrem, dan <b>naiknya muka air laut</b> yang memperparah rob di pesisir.</p>
+      <p>Pada peraga, <b>lampu pijar</b> berperan sebagai matahari karena memancarkan banyak inframerah, sedangkan <b>lampu LED</b> hampir tidak memancarkan inframerah. Intensitas radiasi berkurang sebanding dengan <b>kuadrat jarak</b>. <b>Alas hitam</b> berperan seperti permukaan Bumi: menyerap cahaya lalu memancarkan inframerah.</p>
+      <p class="rumus">CH₃COOH + NaHCO₃ → CH₃COONa + H₂O + CO₂↑ &nbsp;·&nbsp; intensitas ∝ 1 ÷ jarak² &nbsp;·&nbsp; ΔT naik lalu mendatar</p>
+      <p><b>Uji adil</b> sangat menentukan: kedua botol harus sama (ukuran, warna, tutup, jarak, posisi termometer). Hati-hati, <b>cairan sisa reaksi</b> di dalam botol ikut menyerap kalor dan bisa menutupi efek CO₂. Peraga botol hanyalah <b>model</b>: atmosfer sungguhan jauh lebih tebal, dan pemanasan global terjadi dalam puluhan tahun, bukan menit.</p>
+      <p class="peringatan">⚠️ Lampu pijar sangat panas: jangan disentuh dan jauhkan dari kertas. Botol PET melunak di atas ± 60 °C. Selalu awasi lampu yang menyala.</p>`,
+    kataKunci: ['efek rumah kaca', 'rumah kaca', 'co2', 'karbon dioksida', 'inframerah', 'radiasi', 'pemanasan global', 'perubahan iklim', 'kalor', 'jarak', 'uji adil', 'variabel kontrol', 'kapasitas kalor', 'model', 'emisi'],
+    variabel: [
+      { id: 'lampu', label: 'Sumber panas', tipe: 'select', awal: 'led', opsi: [['led', 'Lampu LED 10 W'], ['pijar40', 'Lampu pijar 40 W'], ['pijar60', 'Lampu pijar 60 W'], ['pijar100', 'Lampu pijar 100 W']] },
+      { id: 'jarak', label: 'Jarak lampu ke botol', tipe: 'range', min: 10, max: 60, step: 5, satuan: 'cm', awal: 30 },
+      { id: 'soda', label: 'Soda kue untuk membuat CO₂', tipe: 'range', min: 0, max: 20, step: 1, satuan: 'g', awal: 5 },
+      { id: 'isi', label: 'Cara mengisi CO₂', tipe: 'select', awal: 'langsung', opsi: [['langsung', 'Reaksi langsung di botol uji'], ['selang', 'Dialirkan lewat selang dari botol reaksi']] },
+      { id: 'tutup', label: 'Tutup botol', tipe: 'select', awal: 'longgar', opsi: [['longgar', 'Tutup longgar'], ['rapat', 'Tutup rapat + selotip']] },
+      { id: 'alas', label: 'Latar botol', tipe: 'select', awal: 'tanpa', opsi: [['tanpa', 'Tanpa latar'], ['hitam', 'Kertas hitam di belakang botol']] },
+      { id: 'waktu', label: 'Lama penyinaran', tipe: 'range', min: 5, max: 40, step: 5, satuan: 'menit', awal: 10 },
+      { id: 'posisi', label: 'Posisi botol', tipe: 'select', awal: 'sejajar', opsi: [['sejajar', 'Sejajar, jarak sama ke lampu'], ['depan', 'Botol CO₂ lebih dekat ke lampu']] }
+    ],
+    keluaran: [
+      { id: 'tAir', label: 'Suhu botol udara', satuan: '°C' },
+      { id: 'tCo2', label: 'Suhu botol kaya CO₂', satuan: '°C' },
+      { id: 'selisih', label: 'Selisih suhu (CO₂ − udara)', satuan: '°C' },
+      { id: 'kadar', label: 'Kadar CO₂ rata-rata di botol', satuan: '%' },
+      { id: 'cair', label: 'Cairan sisa reaksi di botol uji', satuan: 'mL' },
+      { id: 'tMaks', label: 'Suhu botol tertinggi', satuan: '°C' },
+      { id: 'biaya', label: 'Biaya', satuan: 'Rp' }
+    ]
   }
 );
 
@@ -755,6 +798,51 @@ Object.assign(NYATA, {
       { gejala: 'Berlendir dan bau asam', kunci: 'lendir|asam|basi|lengket', petunjuk: ['Apakah kedelai sudah kering dan alat sudah bersih sebelum diberi ragi?', 'Apakah bungkusnya terlalu rapat sehingga pengap dan lembap? Siapa yang tumbuh dalam keadaan itu?'] },
       { gejala: 'Ada bintik hitam dan bau amonia', kunci: 'hitam|spora|amonia|pesing', petunjuk: ['Berapa lama tempe dibiarkan setelah sudah padat?', 'Apakah bagian tengah tempe terlalu panas karena terlalu tebal?'] }
     ]
+  },
+  iklim: {
+    waktu: '40 menit menyiapkan + 30 menit pengujian',
+    alat: [
+      'Dua botol PET bening 1,5 L yang sama persis, tutup botol, selotip/lakban',
+      'Botol reaksi ketiga + selang kecil (selang akuarium) bila rancanganmu mengalirkan CO₂',
+      'Cuka dapur 5% dan soda kue, gelas takar, sendok teh/timbangan dapur',
+      'Lampu meja dengan bohlam pijar sesuai rancangan, meteran/penggaris',
+      'Dua termometer digital (atau termometer biasa yang dimasukkan lewat lubang tutup), kertas hitam bila sesuai rancangan',
+      'Stopwatch atau jam'
+    ],
+    keselamatan: [
+      'Lampu pijar sangat panas: jangan disentuh, jangan didekatkan ke kertas, dan matikan setelah selesai.',
+      'Jaga jarak lampu sesuai rancangan; bila botol mulai penyok atau berbau plastik, matikan lampu.',
+      'Pakai kacamata pelindung saat mereaksikan cuka dan soda kue; bila cuka mengenai mata, bilas dengan air mengalir.',
+      'Jangan menutup rapat botol reaksi yang sedang menghasilkan gas tanpa selang keluar, agar tekanan tidak berlebih.'
+    ],
+    langkah: [
+      'Beri label kedua botol: "UDARA" dan "CO₂". Pasang termometer pada posisi yang sama di kedua botol.',
+      'Isi botol CO₂: masukkan soda kue dan cuka ke botol reaksi, lalu alirkan gasnya lewat selang ke dasar botol CO₂ (CO₂ lebih berat sehingga mendorong udara keluar). Bila rancanganmu reaksi langsung, lakukan di botol CO₂.',
+      'Tutup kedua botol sesuai rancangan. Pasang kertas hitam di belakang kedua botol bila rancanganmu memakai latar hitam.',
+      'Letakkan kedua botol berdampingan dengan jarak yang SAMA ke lampu (ukur dengan penggaris).',
+      'Catat suhu awal, lalu nyalakan lampu. Catat suhu kedua botol setiap 2 menit selama waktu rancanganmu.',
+      'Hitung selisih suhu dan buat grafik suhu terhadap waktu untuk kedua botol.',
+      'Tukar posisi kedua botol lalu ulangi (atau ulangi dua kali) untuk memastikan hasilnya bukan karena posisi.'
+    ],
+    takaran: v => {
+      const h = hitungIklim(v);
+      const cuka = Math.round(+v.soda * 60 / 84 / 0.05);
+      return [
+        `${LAMPU_IKLIM[v.lampu].nama}, jarak ${v.jarak} cm dari KEDUA botol, penyinaran ${v.waktu} menit.`,
+        `CO₂ dari ${v.soda} g soda kue (± ${fxd(+v.soda / 5)} sendok teh) + ± ${cuka} mL cuka dapur 5%; ${ISI_IKLIM[v.isi].nama.toLowerCase()}; ${v.tutup === 'rapat' ? 'tutup rapat + selotip' : 'tutup longgar'}${v.alas === 'hitam' ? '; kertas hitam di belakang botol' : ''}.`,
+        `Prediksi simulasi: botol udara ± ${fx(h.tAir)} °C, botol CO₂ ± ${fx(h.tCo2)} °C, selisih ± ${fx(h.selisih)} °C.`
+      ];
+    },
+    ukur: [
+      { id: 'tAir', label: 'Suhu akhir botol udara', satuan: '°C', sim: 'tAir' },
+      { id: 'tCo2', label: 'Suhu akhir botol CO₂', satuan: '°C', sim: 'tCo2' },
+      { id: 'selisih', label: 'Selisih suhu', satuan: '°C', sim: 'selisih' }
+    ],
+    masalah: [
+      { gejala: 'Botol CO₂ malah lebih dingin', kunci: 'lebih dingin|lebih rendah|terbalik|minus', petunjuk: ['Apa yang ada di dalam botol CO₂ selain gas? Apakah ada cairan sisa reaksi?', 'Benda apa yang butuh lebih banyak kalor untuk naik suhunya: udara atau air?'] },
+      { gejala: 'Suhu kedua botol hampir sama', kunci: 'sama|tidak beda|kecil|sedikit', petunjuk: ['Apakah lampumu memancarkan banyak inframerah? Bagaimana dengan lampu LED?', 'Apakah CO₂ masih ada di botol, atau sudah bocor lewat tutup yang longgar?'] },
+      { gejala: 'Botol penyok atau berbau plastik', kunci: 'penyok|leleh|bau plastik|melengkung', petunjuk: ['KESELAMATAN DULU: matikan lampu. Lalu pikirkan: bagaimana jarak memengaruhi kuat radiasi?', 'Apakah selisih yang besar boleh dicapai dengan cara yang tidak aman?'] }
+    ]
   }
 });
 
@@ -857,5 +945,16 @@ UJI_NALAR.push(
       'Makin dingin suhu ruang, makin baik tempe yang dihasilkan, karena kapang tumbuh paling cepat di tempat dingin.'
     ],
     bahas: 'Pertumbuhan kapang memiliki suhu optimum. Data menunjukkan pola naik lalu gagal, bukan "makin panas makin baik".'
+  },
+  {
+    ind: 'evaluasi',
+    soal: 'Sebuah video menunjukkan botol berisi CO₂ 6 °C lebih panas daripada botol berisi udara. Ternyata botol CO₂ diletakkan 10 cm lebih dekat ke lampu. Penilaian yang paling tepat adalah …',
+    opsi: [
+      'Belum meyakinkan: jarak ke lampu berbeda, sehingga selisih suhu bisa disebabkan jarak, bukan CO₂.',
+      'Meyakinkan: selisih 6 °C sudah sangat besar, sehingga pasti seluruhnya disebabkan oleh gas CO₂.',
+      'Meyakinkan: botol yang lebih dekat justru lebih dingin, jadi efek CO₂ sebenarnya jauh lebih besar.',
+      'Tidak meyakinkan: CO₂ tidak dapat menyerap panas sama sekali, sehingga video itu pasti palsu.'
+    ],
+    bahas: 'Uji adil hanya mengubah satu variabel. Bila jarak juga berbeda, kita tidak bisa memastikan penyebab selisih suhunya.'
   }
 );

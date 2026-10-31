@@ -151,6 +151,10 @@ Wide illustration of an East Java coastline: on one side the shore is eroded wit
 ```
 Illustration of a small home tempeh workshop next to an Indonesian school: on a clean wooden table, freshly made tempeh blocks wrapped in banana leaves and in plastic with small holes, one block sliced open to show soybeans tightly bound by fluffy white mycelium. A junior high student checks the temperature in the middle of a block with a thermometer while another sprinkles tempeh starter onto cooled boiled soybeans with a clean spoon; a friendly tempeh maker watches. For comparison, a failed block on a small plate looks loose and pale. Warm kitchen light, steam from a pot in the background, clean and appetizing.
 ```
+### `misi-iklim.jpg` — Botol Rumah Kaca: Bukti Perubahan Iklim (misi ke-24)
+```
+Illustration of Indonesian junior high school students (white shirts, navy/blue trousers and skirts, some girls in white hijab) in a bright school science lab doing a greenhouse effect experiment: two identical clear plastic bottles side by side on a wooden table, one labeled "UDARA" and one labeled "CO2", each with a small thermometer, an incandescent desk lamp shining warm light on both from the same distance, a third bottle with vinegar and baking soda connected by a thin tube to the CO2 bottle, students recording temperatures on a clipboard. Through the window: a coastal village with a sea wall, slightly flooded street from high tide, and a dry hot sky. Soft friendly digital illustration, warm colors with teal and amber accents, no text other than the two bottle labels, landscape 3:2.
+```
 
 ## 4. Hiasan & ilustrasi pendukung
 

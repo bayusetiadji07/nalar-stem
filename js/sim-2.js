@@ -777,3 +777,102 @@ Object.assign(SIM, {
   mangrove: { hitung: hitungMangrove, kriteria: kriteriaMangrove, gambar: gambarMangrove, sumbuX: ['lebar', 'rapat', 'umur'], sumbuY: ['abrasi', 'gelombang', 'karbon', 'biaya'] },
   tempe: { hitung: hitungTempe, kriteria: kriteriaTempe, gambar: gambarTempe, sumbuX: ['suhu', 'lama', 'tebal', 'ragi'], sumbuY: ['tutup', 'tengah'] }
 });
+
+/* ---------------------------------------------------------
+   24. BOTOL RUMAH KACA (perubahan iklim)
+   Dua botol 1,5 L disinari lampu: satu berisi udara, satu diperkaya CO₂ dari reaksi cuka + soda kue.
+   Daya radiasi inframerah lampu E ∝ P_IR ÷ jarak². Kenaikan suhu udara ΔT = 0,19·E·alas·(1 − e^(−t/11)).
+   CO₂ menyerap & memancarkan kembali inframerah → faktor 1 + 0,42·kadar·(alas hitam 1,5).
+   Jebakan: reaksi langsung di botol uji meninggalkan cairan yang ikut menyerap kalor (kapasitas kalor besar),
+   sehingga botol CO₂ bisa tampak lebih dingin. Tutup longgar → CO₂ bocor perlahan.
+   --------------------------------------------------------- */
+const LAMPU_IKLIM = {
+  led: { nama: 'Lampu LED 10 W', ir: 1.5 },
+  pijar40: { nama: 'Lampu pijar 40 W', ir: 34 },
+  pijar60: { nama: 'Lampu pijar 60 W', ir: 52 },
+  pijar100: { nama: 'Lampu pijar 100 W', ir: 88 }
+};
+const ISI_IKLIM = {
+  langsung: { nama: 'Reaksi langsung di botol uji', efisiensi: 0.8, harga: 0 },
+  selang: { nama: 'Gas dialirkan lewat selang dari botol reaksi', efisiensi: 0.6, harga: 3000 }
+};
+const T_RUANG_IKLIM = 30;
+
+function hitungIklim(v) {
+  const L = LAMPU_IKLIM[v.lampu], I = ISI_IKLIM[v.isi];
+  const d = +v.jarak, soda = +v.soda, t = +v.waktu, hitam = v.alas === 'hitam';
+  const E = L.ir / Math.pow(d / 20, 2);
+  const dTeq = 0.19 * E * (hitam ? 1.45 : 1);
+  const vCo2 = soda / 84 * 24.7;                                     // L gas CO₂
+  const f = soda > 0 ? Math.min(v.isi === 'selang' ? 0.9 : 0.95, vCo2 * I.efisiensi / 1.5) : 0;
+  const fEf = v.tutup === 'rapat' ? f : f * (12 / t) * (1 - Math.exp(-t / 12)); // rata-rata kadar selama pengamatan
+  const cuka = soda * 60 / 84 / 0.05;                                // mL cuka dapur 5% agar bereaksi pas
+  const cair = v.isi === 'langsung' ? cuka : 0;
+  const kalorCair = 1 / (1 + cair / 180);
+  const k = 1 - Math.exp(-t / 11);
+  const dekat = v.posisi === 'depan' ? Math.pow(d / Math.max(4, d - 6), 2) : 1;
+  const faktorCo2 = 1 + 0.42 * fEf * (hitam ? 1.5 : 1);
+  const tAir = T_RUANG_IKLIM + dTeq * k;
+  const tCo2 = T_RUANG_IKLIM + dTeq * dekat * faktorCo2 * kalorCair * k;
+  const biaya = Math.round((soda * 100 + cuka * 20 + I.harga + (hitam ? 1000 : 0)) / 100) * 100;
+  return {
+    tAir: bulat(tAir, 1), tCo2: bulat(tCo2, 1), selisih: bulat(tCo2 - tAir, 1), kadar: Math.round(fEf * 100),
+    cair: Math.round(cair), tMaks: bulat(Math.max(tAir, tCo2), 1), biaya
+  };
+}
+function kriteriaIklim(v, h) {
+  return [
+    { teks: 'Selisih suhu botol CO₂ − botol udara ≥ 2 °C', lulus: h.selisih >= 2, nilai: `${fx(h.selisih)} °C` },
+    { teks: 'Suhu botol paling tinggi 50 °C (botol aman)', lulus: h.tMaks <= 50, nilai: `${fx(h.tMaks)} °C` },
+    { teks: 'Uji adil: kedua botol sejajar dari lampu', lulus: v.posisi === 'sejajar', nilai: v.posisi === 'sejajar' ? 'sejajar' : 'botol CO₂ lebih dekat' },
+    { teks: 'Pengamatan paling lama 30 menit', lulus: +v.waktu <= 30, nilai: `${v.waktu} menit` },
+    { teks: 'Biaya bahan ≤ Rp 10.000', lulus: h.biaya <= 10000, nilai: rp(h.biaya) }
+  ];
+}
+function gambarIklim(ctx, W, H, v, h, p) {
+  const meja = H * 0.72;
+  if (!latar(ctx, W, H, 'bg-lab-sekolah', 0.64, meja)) { ctx.fillStyle = '#f8fafc'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = '#e7e5e4'; ctx.fillRect(0, meja, W, H - meja); }
+  ctx.fillStyle = 'rgba(120,53,15,.55)'; ctx.fillRect(0, meja, W, 8);
+  // lampu di kiri
+  const lx = W * 0.08, ly = meja - 110;
+  ctx.strokeStyle = '#334155'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(lx - 14, meja); ctx.lineTo(lx - 14, ly - 30); ctx.lineTo(lx + 4, ly - 30); ctx.stroke();
+  ctx.fillStyle = '#475569'; ctx.beginPath(); ctx.moveTo(lx - 6, ly - 30); ctx.lineTo(lx + 20, ly - 30); ctx.lineTo(lx + 28, ly - 8); ctx.lineTo(lx - 14, ly - 8); ctx.closePath(); ctx.fill();
+  const terang = { led: 0.35, pijar40: 0.6, pijar60: 0.8, pijar100: 1 }[v.lampu];
+  ctx.fillStyle = `rgba(253,224,71,${0.2 + 0.35 * terang})`; ctx.beginPath(); ctx.arc(lx + 7, ly + 2, 24 + 14 * terang, 0, 7); ctx.fill();
+  ctx.fillStyle = v.lampu === 'led' ? '#e0f2fe' : '#fde047'; ctx.beginPath(); ctx.arc(lx + 7, ly + 2, 11, 0, 7); ctx.fill();
+  // jarak lampu → botol (skala), botol CO₂ di belakang botol udara bila "sejajar" (sama jarak, digeser vertikal-semu)
+  const skala = (W * 0.44) / 60, xAwal = lx + 44 + +v.jarak * skala;
+  const xUdara = xAwal, xCo2 = xAwal + 52 - (v.posisi === 'depan' ? 6 * skala + 52 : 0);
+  const botol = (x, co2, judul) => {
+    const lb = 32, tb = 100, y = meja;
+    if (v.alas === 'hitam') { ctx.fillStyle = '#111827'; ctx.fillRect(x - lb / 2 - 4, y - tb - 4, lb + 8, tb + 4); }
+    ctx.fillStyle = co2 ? 'rgba(148,163,184,.4)' : 'rgba(224,242,254,.5)'; ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5;
+    kotakBulat(ctx, x - lb / 2, y - tb, lb, tb, 8); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = v.tutup === 'rapat' ? '#0d9488' : '#f59e0b'; ctx.fillRect(x - 6, y - tb - 9, 12, 9);
+    if (co2) {
+      for (let k = 0; k < Math.round(h.kadar / 6); k++) { const a = k * 2.4 + p * 3, rx = x + Math.sin(a) * (lb / 2 - 6), ry = y - 12 - ((k * 13 + p * 40) % (tb - 24)); ctx.fillStyle = 'rgba(71,85,105,.6)'; ctx.beginPath(); ctx.arc(rx, ry, 2, 0, 7); ctx.fill(); }
+      if (h.cair > 0) { const tc = Math.min(tb * 0.6, h.cair / 1500 * tb); ctx.fillStyle = 'rgba(56,189,248,.6)'; ctx.fillRect(x - lb / 2 + 2, y - tc, lb - 4, tc - 1); }
+      if (v.tutup === 'longgar') for (let k = 0; k < 3; k++) { const t = (p * 2 + k / 3) % 1; ctx.fillStyle = `rgba(71,85,105,${0.6 * (1 - t)})`; ctx.beginPath(); ctx.arc(x + 4 + k * 3, y - tb - 12 - t * 22, 2, 0, 7); ctx.fill(); }
+    }
+    label(ctx, judul, x, y + 16, { rata: 'center', ukuran: 10, tebal: true, warna: '#0f172a', latar: 'rgba(255,255,255,.9)' });
+  };
+  // sinar inframerah (garis bergelombang merah)
+  const kuat = Math.min(1, (LAMPU_IKLIM[v.lampu].ir / Math.pow(+v.jarak / 20, 2)) / 60);
+  for (let k = 0; k < 4; k++) {
+    const y0 = ly - 4 + k * 13, t = (p * 2 + k * 0.25) % 1;
+    ctx.strokeStyle = `rgba(239,68,68,${0.12 + 0.6 * kuat})`; ctx.lineWidth = 2; ctx.beginPath();
+    for (let s = 0; s <= 30; s++) { const x = lx + 34 + s * (Math.min(xUdara, xCo2) - lx - 60) / 30, y = y0 + 22 * (s / 30) + Math.sin(s * 0.9 + t * 6) * 3; s ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+  botol(xUdara, false, 'udara');
+  botol(xCo2, true, 'kaya CO₂');
+  const kp = mulus(p);
+  const ta = T_RUANG_IKLIM + (h.tAir - T_RUANG_IKLIM) * kp, tc = T_RUANG_IKLIM + (h.tCo2 - T_RUANG_IKLIM) * kp;
+  termometer2(ctx, W * 0.8, 52, 104, ta, 25, 60, `udara ${fx(ta)}°`, 50);
+  termometer2(ctx, W * 0.93, 52, 104, tc, 25, 60, `CO₂ ${fx(tc)}°`, 50);
+  label(ctx, `${LAMPU_IKLIM[v.lampu].nama} · jarak ${v.jarak} cm · ${v.waktu} menit · CO₂ ± ${h.kadar}%`, 12, 16, { ukuran: 10, tebal: true, warna: '#334155', latar: 'rgba(255,255,255,.9)' });
+  if (p >= 1) hasilAkhir(ctx, W, H, `Selisih ${fx(h.selisih)} °C · suhu tertinggi ${fx(h.tMaks)} °C · ${rp(h.biaya)}`, kriteriaIklim(v, h).every(k => k.lulus), h.selisih >= 1);
+}
+Object.assign(SIM, {
+  iklim: { hitung: hitungIklim, kriteria: kriteriaIklim, gambar: gambarIklim, sumbuX: ['jarak', 'soda', 'waktu'], sumbuY: ['selisih', 'tCo2', 'tAir', 'biaya'] }
+});
