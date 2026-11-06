@@ -184,7 +184,25 @@ const KATA_MATERI = {
   roket: ['perubahan fisika', 'fisika', 'partikel', 'wujud', 'menguap', 'larut', 'mengencerkan', 'pengenceran', 'reaktan', 'produk', 'persamaan reaksi', 'kekekalan massa', 'lavoisier', 'endoterm', 'perbandingan']
 };
 
-Object.entries(MATERI).forEach(([id, html]) => {
-  const m = MISI.find(x => x.id === id);
-  if (m) { m.konsepRingkas = m.konsep; m.konsep = html; m.kataKunci = [...new Set([...m.kataKunci, ...(KATA_MATERI[id] || [])])]; }
-});
+// Pasang materi ke misi: konsep lama disimpan sebagai konsepRingkas (acuan Kak Nala), kata kunci ditambah.
+function pasangMateri(materi, kata = {}) {
+  Object.entries(materi).forEach(([id, html]) => {
+    const m = MISI.find(x => x.id === id);
+    if (m && !m.konsepRingkas) { m.konsepRingkas = m.konsep; m.konsep = html; m.kataKunci = [...new Set([...m.kataKunci, ...(kata[id] || [])])]; }
+  });
+}
+pasangMateri(MATERI, KATA_MATERI);
+
+/* ---------- Cetakan materi ala buku (dipakai js/materi-7.js, -8.js, -9.js) ---------- */
+const mTabel = (kepala, baris, angka) => `<table class="tabel-materi${angka ? ' angka' : ''}"><thead><tr>${kepala.map(k => `<th>${k}</th>`).join('')}</tr></thead><tbody>${baris.map(b => `<tr>${b.map(x => `<td>${x}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+const mKotak = (jenis, isi) => `<div class="kotak-${jenis}"><b>${{ misi: '🔗 Di misimu:', tahukah: '💡 Tahukah kamu?', coba: '🧪 Coba sendiri:', miskon: '⚠️ Hati-hati, ini sering keliru!' }[jenis]}</b> ${isi}</div>`;
+const mRumus = (isi, ket) => `<p class="rumus">${isi}${ket ? `<br><small>${ket}</small>` : ''}</p>`;
+const mGbr = (svg, ket) => `${svg}<p class="ket-gbr">${ket}</p>`;
+function bukuMateri(id, { pembuka, bagian, ringkas, uji, aman }) {
+  const huruf = i => String.fromCharCode(65 + i);
+  const semua = [...bagian, ['Ringkasan & uji diri', `${ringkas ? mTabel(ringkas[0], ringkas.slice(1)) : ''}${aman ? `<p class="pengingat">⚠️ Keselamatan: ${aman}</p>` : ''}
+    <details class="uji-diri"><summary>🧠 Uji dirimu (klik untuk membuka)</summary><ol>${uji.map(([q, p]) => `<li>${q}<details><summary>Petunjuk</summary>${p}</details></li>`).join('')}</ol></details>`]];
+  return `<div class="materi"><p class="pembuka">${pembuka}</p>
+    <nav class="daftar-isi"><b>Isi materi</b>${semua.map(([j], i) => `<a href="#" onclick="document.getElementById('mt-${id}-${i}').scrollIntoView({behavior:'smooth',block:'start'});return false">${huruf(i)}. ${j}</a>`).join('')}</nav>
+    ${semua.map(([j, isi], i) => `<section id="mt-${id}-${i}"><h4>${huruf(i)}. ${j}</h4>${isi}</section>`).join('')}</div>`;
+}
