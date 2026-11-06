@@ -198,7 +198,36 @@ const mTabel = (kepala, baris, angka) => `<table class="tabel-materi${angka ? ' 
 const mKotak = (jenis, isi) => `<div class="kotak-${jenis}"><b>${{ misi: '🔗 Di misimu:', tahukah: '💡 Tahukah kamu?', coba: '🧪 Coba sendiri:', miskon: '⚠️ Hati-hati, ini sering keliru!' }[jenis]}</b> ${isi}</div>`;
 const mRumus = (isi, ket) => `<p class="rumus">${isi}${ket ? `<br><small>${ket}</small>` : ''}</p>`;
 const mGbr = (svg, ket) => `${svg}<p class="ket-gbr">${ket}</p>`;
+// Ilustrasi AI per misi (assets/img/materi/materi-<id>.jpg): [keterangan, indeks bagian tempat gambar]
+const ILUSTRASI = {
+  penjernih: ['Cara memisahkan campuran di sekitar kita: menyaring santan, mengendapkan lumpur, menyaring air berlapis, dan merebus air.', 1],
+  pendingin: ['Kalor berpindah dengan konduksi, konveksi, dan radiasi; kotak pendingin nelayan harus menghambat ketiganya.', 2],
+  pengering: ['Menjemur ikan di para-para terbuka dibandingkan dengan pengering tenaga surya beralas hitam dan berpenutup bening.', 1],
+  garam: ['Tahapan tambak garam: air laut dipekatkan, menguap di meja kristalisasi, lalu kristal garam dipanen.', 1],
+  kompos: ['Dekomposer bekerja di tumpukan kompos sekolah, dan kompos matang kembali menyuburkan kebun.', 0],
+  sejuk: ['Ruang kelas yang sejuk tanpa AC: atap terang, plafon, ventilasi silang, roster, dan pohon peneduh.', 2],
+  mangrove: ['Sabuk mangrove: api-api berakar napas di depan, bakau berakar tunjang di belakang, meredam ombak dan menjadi rumah satwa.', 1],
+  hidroponik: ['Kebun sawi hidroponik dalam ruangan dengan lampu LED merah-biru.', 1],
+  angin: ['Kincir angin mini mengubah energi angin laut menjadi listrik untuk lampu pos ronda.', 0],
+  nyamuk: ['Daur hidup nyamuk Aedes: telur, jentik, kepompong, dan nyamuk dewasa.', 1],
+  perahu: ['Perahu sederhana membawa karung garam saat banjir rob, dan percobaan plastisin: bentuk bola tenggelam, bentuk perahu mengapung.', 2],
+  roketair: ['Lomba roket air: air disemburkan ke bawah, roket terdorong ke atas.', 2],
+  jembatan: ['Rangka segitiga dipakai pada jembatan sungguhan dan pada model jembatan stik es krim.', 2],
+  pesawat: ['Petani garam memakai katrol dan tuas untuk menaikkan karung ke gerobak.', 2],
+  optik: ['Proyektor dari kardus, lensa, dan HP memproyeksikan gambar besar ke dinding kelas.', 4],
+  bunyi: ['Sasando, alat musik petik dari Pulau Rote, dan sasando mini dari kardus.', 3],
+  gempa: ['Menguji model rumah di atas meja getar; rumah berangka kayu dengan pengaku silang tetap berdiri, sedangkan tembok bata di sebelahnya retak.', 4],
+  boraks: ['Menguji bakso dan kerupuk dengan kertas kunyit: kuning berarti negatif, merah bata menandakan boraks.', 3],
+  tetes: ['Penyiram tetes: wadah air diletakkan tinggi, selang bercabang meneteskan air ke pot bermulsa jerami.', 0],
+  listrik: ['Lampu belajar darurat LED dari baterai AA saat listrik padam.', 3],
+  magnet: ['Derek elektromagnet mini memilah sampah besi dari kaleng aluminium di bank sampah sekolah.', 4],
+  tempe: ['Tahapan membuat tempe: kedelai direbus, dikupas dan diberi ragi, dibungkus, lalu kapang tumbuh menyelimuti.', 1],
+  iklim: ['Dampak perubahan iklim di pesisir: rob, kemarau panjang, dan upaya warga menanam mangrove.', 2]
+};
+
 function bukuMateri(id, { pembuka, bagian, ringkas, uji, aman }) {
+  const ilu = ILUSTRASI[id];
+  if (ilu) bagian = bagian.map((b, i) => i === ilu[1] ? [b[0], gbr(`materi-${id}.jpg`, `Ilustrasi. ${ilu[0]}`) + b[1]] : b);
   const huruf = i => String.fromCharCode(65 + i);
   const semua = [...bagian, ['Ringkasan & uji diri', `${ringkas ? mTabel(ringkas[0], ringkas.slice(1)) : ''}${aman ? `<p class="pengingat">⚠️ Keselamatan: ${aman}</p>` : ''}
     <details class="uji-diri"><summary>🧠 Uji dirimu (klik untuk membuka)</summary><ol>${uji.map(([q, p]) => `<li>${q}<details><summary>Petunjuk</summary>${p}</details></li>`).join('')}</ol></details>`]];
