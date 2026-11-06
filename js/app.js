@@ -1085,54 +1085,7 @@ function gambarRadar(cv, rata) {
 }
 
 /* ---------------- Panduan guru ---------------- */
-function halGuru() {
-  setKonteksTutor({ jenis: 'umum' });
-  APP.innerHTML = `<h1 class="judul-hal">Panduan Guru</h1>
-  <div class="kartu prosa">
-    <h3>Tujuan</h3>
-    <p>NalarSTEM melatih <b>kemampuan berpikir kritis</b> murid SMP (Fase D) melalui pembelajaran IPA berbasis <b>STEM</b> dengan model <b>PjBL-STEM / Engineering Design Process</b>. AI Tutor "Kak Nala" berperan sebagai <i>scaffolding</i> Sokratik: menuntun dengan pertanyaan, bukan memberi jawaban.</p>
-    <h3>Sintaks pembelajaran (± 2–3 JP per misi)</h3>
-    <table class="tabel"><thead><tr><th>Langkah</th><th>Kegiatan murid</th><th>Indikator berpikir kritis</th><th>Peran guru</th></tr></thead><tbody>
-      ${LANGKAH.map(L => `<tr><td><b>${L.no}. ${L.judul}</b><br><small>${L.edp}</small></td><td>${L.arahan}</td><td>${L.indikator.map(i => INDIKATOR.find(x => x.id === i).nama).join(', ')}</td><td>${['Memantik dengan kisah lokal; pastikan murid membedakan kriteria dan kendala.', 'Mengonfirmasi konsep; luruskan miskonsepsi yang muncul.', 'Memeriksa kelengkapan variabel & pola "Jika–maka–karena".', 'Berkeliling; tanyakan "variabel apa yang kamu ubah?"', 'Memfasilitasi diskusi kelompok membandingkan data.', 'Presentasi CER antarkelompok dan refleksi.', 'Memeriksa cek keselamatan & alat, mendampingi penggunaan alat tajam/uji di luar kelas, lalu memfasilitasi diskusi hasil nyata vs simulasi.'][L.no - 1]}</td></tr>`).join('')}
-    </tbody></table>
-    <h3>Rubrik penilaian (dipakai AI & tutor lokal)</h3>
-    <table class="tabel"><thead><tr><th>Skor</th><th>Deskriptor</th></tr></thead><tbody>
-      <tr><td>4 · Mahir</td><td>Tepat dan lengkap, memakai konsep IPA yang benar dan data/angka spesifik, alasannya logis dan runtut.</td></tr>
-      <tr><td>3 · Cakap</td><td>Sebagian besar tepat dan beralasan, tetapi kurang data spesifik atau kaitan konsep kurang jelas.</td></tr>
-      <tr><td>2 · Berkembang</td><td>Tepat sebagian, alasan dangkal/umum, atau ada miskonsepsi kecil.</td></tr>
-      <tr><td>1 · Mulai berkembang</td><td>Belum menjawab pertanyaan, terlalu singkat, atau miskonsepsi besar.</td></tr>
-    </tbody></table>
-    <p class="redup">Skor AI bersifat <b>formatif</b> — gunakan sebagai umpan balik cepat, bukan nilai akhir. Guru tetap memvalidasi melalui portofolio murid.</p>
-    <h3>Fitur penguat berpikir kritis</h3>
-    <ul>
-      <li><b>Detektor uji adil</b> — sistem menandai uji yang mengubah lebih dari satu variabel sekaligus.</li>
-      <li><b>Prediksi sebelum menguji</b> — murid membandingkan dugaan dengan hasil (konflik kognitif).</li>
-      <li><b>Kriteria vs kendala yang saling tarik-menarik</b> — tidak ada satu jawaban tunggal; murid harus menimbang (<i>trade-off</i>).</li>
-      <li><b>Grafik data</b> — murid memilih sumbu sendiri untuk menemukan pola.</li>
-      <li><b>Uji Nalar</b> — ${UJI_NALAR.length} soal literasi sains: hoaks, korelasi vs kausalitas, variabel, CER.</li>
-    </ul>
-    <h3>Catatan model simulasi</h3>
-    <p>Simulasi memakai model fisika/biologi yang <b>disederhanakan</b> agar pola teramati jelas (mis. faktor pembatas Blackman, konduksi dinding datar, efisiensi penyaringan per lapisan, lintasan roket dengan faktor hambatan udara tetap). Diskusikan dengan murid bahwa model selalu punya keterbatasan — ini sendiri merupakan latihan berpikir kritis.</p>
-    <h3>Praktik dunia nyata (Langkah 7)</h3>
-    <p>Setiap misi dilengkapi daftar alat &amp; bahan murah, <b>cek keselamatan</b> yang wajib dicentang sebelum langkah kerja terbuka, <b>takaran praktis</b> yang dihitung dari uji terbaik murid di simulasi, tabel <b>data uji nyata</b> (bisa dengan foto), dan perbandingan otomatis dengan prediksi simulasi. Tombol <b>Ada masalah?</b> menghubungkan murid ke Kak Nala, yang diprogram mendahulukan keselamatan dan menolak modifikasi berbahaya.</p>
-    <table class="tabel"><thead><tr><th>Misi</th><th>Waktu</th><th>Poin keselamatan utama</th></tr></thead><tbody>
-      ${MISI.map(m => `<tr><td>${m.ikon} ${esc(m.judul)}</td><td>${esc(NYATA[m.id].waktu)}</td><td>${esc(NYATA[m.id].keselamatan[0])}</td></tr>`).join('')}
-    </tbody></table>
-    <h3>Rubrik produk nyata (penilaian guru)</h3>
-    <table class="tabel"><thead><tr><th>Aspek</th><th>4 · Mahir</th><th>2 · Berkembang</th></tr></thead><tbody>
-      <tr><td>Keselamatan</td><td>Semua prosedur keselamatan dipatuhi tanpa diingatkan; area kerja rapi.</td><td>Perlu diingatkan lebih dari sekali.</td></tr>
-      <tr><td>Fungsi prototipe</td><td>Memenuhi semua kriteria keberhasilan saat diuji nyata.</td><td>Memenuhi sebagian kriteria.</td></tr>
-      <tr><td>Data &amp; dokumentasi</td><td>Uji diulang ≥ 3 kali, data lengkap dengan satuan, ada foto.</td><td>Uji hanya sekali atau data tidak lengkap.</td></tr>
-      <tr><td>Refleksi model</td><td>Menjelaskan selisih nyata–simulasi dengan faktor spesifik dan mengusulkan perbaikan.</td><td>Hanya menyebut "hasilnya beda" tanpa alasan jelas.</td></tr>
-    </tbody></table>
-    <h3>🧠 Memori Kak Nala</h3>
-    <p>Setiap jawaban dan penilaian AI direkam <b>tanpa nama murid</b> (email, nomor telepon, dan tautan juga disamarkan) ke database sekolah. Saat AI tidak tersedia, Kak Nala mencari tanya-jawab yang mirip di misi dan langkah yang sama, dan penilaian lembar kerja memakai skor jawaban-jawaban serupa yang pernah dinilai AI. Salinan memori juga tersimpan di perangkat murid untuk dipakai saat offline.</p>
-    <p>🧭 <b>Peta Jejak Berpikir:</b> buat kelas di halaman <a href="#/jejak"><b>Peta Jejak Berpikir</b></a> (bersandi), bagikan kodenya, lalu lihat cara tiap murid bereksperimen — uji adil atau coba-coba, menulis prediksi atau tidak, jeda berpikir antar-uji, dan kapan kriterianya terpenuhi.</p>
-    <p>Guru memeriksa isi memori di halaman <a href="#/kurasi"><b>Kurasi Memori</b></a> (bersandi): <b>setujui</b> jawaban yang baik agar diutamakan, <b>rapikan</b> jawaban yang merujuk data murid tertentu agar berlaku umum, atau <b>tolak</b> yang kurang tepat. Murid dapat menonaktifkan perekaman di Pengaturan AI.</p>
-    <h3>Pengumpulan hasil</h3>
-    <p>Data tersimpan di perangkat masing-masing murid. Minta murid membuka <b>Portofolio</b> → <b>Cetak / simpan PDF</b>, atau <b>Salin ringkasan</b> lalu kirim ke guru.</p>
-  </div>`;
-}
+// halGuru() (Buku Panduan Guru) ada di js/panduan.js
 
 /* ---------------- Kurasi memori Kak Nala (guru) ---------------- */
 const SANDI_GURU = 'nalarstem-guru';
