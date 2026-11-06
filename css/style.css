@@ -106,6 +106,9 @@ input[type=radio] { width: auto; accent-color: var(--utama); }
 .alur .no { width: 28px; height: 28px; border-radius: 50%; background: var(--utama); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: .85rem; margin-bottom: 6px; }
 .alur small { color: var(--redup); }
 .grid-misi { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 18px; }
+.judul-kelas { grid-column: 1 / -1; margin: 10px 0 -4px; font-size: 1.15rem; display: flex; align-items: baseline; gap: 10px; border-bottom: 2px solid var(--garis, #E3E8EE); padding-bottom: 6px; }
+.judul-kelas:first-child { margin-top: 0; }
+.judul-kelas small { font-size: .85rem; font-weight: 600; opacity: .65; }
 .kartu-misi { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--garis); border-radius: 18px; overflow: hidden; text-decoration: none; color: inherit; box-shadow: var(--bayang); transition: transform .15s, box-shadow .15s; }
 .km-sampul { position: relative; aspect-ratio: 3 / 2; background: color-mix(in srgb, var(--aksen) 14%, #fff); border-bottom: 4px solid var(--aksen); overflow: hidden; }
 .km-sampul img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }

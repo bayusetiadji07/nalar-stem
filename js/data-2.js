@@ -958,3 +958,8 @@ UJI_NALAR.push(
     bahas: 'Uji adil hanya mengubah satu variabel. Bila jarak juga berbeda, kita tidak bisa memastikan penyebab selisih suhunya.'
   }
 );
+
+/* Urutkan misi menurut kelas: 7 → 7–8 → 7–9 → 8 → 8–9 → 9 (urutan asli dipertahankan bila kelasnya sama).
+   Semua bagian aplikasi mencari misi lewat id, jadi data murid tidak terpengaruh. */
+const kelasMisi = m => { const a = (m.kelas.match(/Kelas\s*(\d)(?:\s*[–-]\s*(\d))?/) || []).slice(1).map(Number); return [a[0] || 9, a[1] || a[0] || 9]; };
+MISI.sort((a, b) => { const [a1, a2] = kelasMisi(a), [b1, b2] = kelasMisi(b); return a1 - b1 || a2 - b2; });

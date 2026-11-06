@@ -104,6 +104,16 @@ function sampulMisi(m, kelas = 'km-sampul') {
   return `<div class="${kelas}">${gambar(`misi-${m.id}.jpg`, m.judul)}<span class="km-emoji">${m.ikon}</span></div>`;
 }
 
+// Daftar misi dengan judul pemisah per kelas (MISI sudah terurut 7 → 8 → 9 di data-2.js)
+function gridMisiBerkelas() {
+  const jumlah = {}; MISI.forEach(m => { const k = kelasMisi(m)[0]; jumlah[k] = (jumlah[k] || 0) + 1; });
+  let sebelum = 0;
+  return MISI.map(m => {
+    const k = kelasMisi(m)[0], judul = k !== sebelum ? `<h3 class="judul-kelas">Kelas ${k} <small>${jumlah[k]} misi</small></h3>` : '';
+    sebelum = k; return judul + kartuMisi(m);
+  }).join('');
+}
+
 function kartuMisi(m) {
   const n = kemajuan(m);
   return `<a class="kartu-misi" href="#/misi/${m.id}/1" style="--aksen:${m.warna}">
@@ -179,7 +189,7 @@ function halBeranda() {
 
   <section>
     <h2 class="judul-bagian">Misi STEM</h2>
-    <div class="grid-misi">${MISI.map(kartuMisi).join('')}</div>
+    <div class="grid-misi">${gridMisiBerkelas()}</div>
   </section>
 
   <p class="catatan-ai">Status AI Tutor: <b>${c.sumber === 'lokal' ? 'Tutor lokal (tanpa AI)' : c.sumber === 'pribadi' ? 'Gemini — kunci pribadi' : 'Gemini — server sekolah'}</b> · <a href="#/pengaturan">ubah</a></p>`;
@@ -201,7 +211,7 @@ function halBeranda() {
 function halDaftarMisi() {
   APP.innerHTML = `<h1 class="judul-hal">Misi STEM</h1>
   <p class="redup">Pilih satu misi. Setiap misi memuat ${LANGKAH.length} langkah dan laboratorium maya. Kerjakan berurutan — jawabanmu tersimpan otomatis.</p>
-  <div class="grid-misi">${MISI.map(kartuMisi).join('')}</div>`;
+  <div class="grid-misi">${gridMisiBerkelas()}</div>`;
 }
 
 /* ---------------- Halaman misi ---------------- */
