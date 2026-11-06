@@ -42,6 +42,13 @@ function hitungContohRoket() {
 
 function halGuru() {
   setKonteksTutor({ jenis: 'umum' });
+  // Khusus guru: hanya terbuka setelah masuk ke Peta Jejak Guru
+  if (!(akunGuru() || {}).token) {
+    APP.innerHTML = `<h1 class="judul-hal">📘 Buku Panduan Guru</h1><div class="kartu prosa" style="max-width:600px">
+      <p>Panduan ini khusus untuk guru. Silakan masuk dengan akun guru di <b>Peta Jejak Guru</b> terlebih dahulu; tombol <b>📘 Panduan Guru</b> ada di sana.</p>
+      <a class="tombol utama" href="#/jejak">🧭 Masuk ke Peta Jejak Guru</a></div>`;
+    return;
+  }
   const angka = x => String(x).replace('.', ',');
   const rp = x => 'Rp ' + Math.round(x).toLocaleString('id-ID');
   const U = hitungContohRoket();
@@ -89,7 +96,7 @@ function halGuru() {
   APP.innerHTML = `<div class="buku">
   <div class="bk-alat no-print">
     <span>📘 <b>Buku Panduan Guru</b> · ${DAFTAR.length - 1} bab + lampiran</span>
-    <span class="bk-alat-tombol"><button type="button" class="tombol" data-ke="bk-isi">📑 Daftar isi</button><button type="button" class="tombol utama" id="bCetakBuku">🖨️ Cetak / simpan PDF</button></span>
+    <span class="bk-alat-tombol"><a class="tombol" href="#/jejak">← Peta Jejak</a><button type="button" class="tombol" data-ke="bk-isi">📑 Daftar isi</button><button type="button" class="tombol utama" id="bCetakBuku">🖨️ Cetak / simpan PDF</button></span>
   </div>
 
   <!-- ================= SAMPUL ================= -->

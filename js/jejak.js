@@ -265,7 +265,7 @@ function halMasukGuru() {
 async function keluarGuru() {
   const t = tokenGuru(); setAkunGuru(null);
   if (t) memoriApi({ aksi: 'akun_keluar', token: t }, 8000).catch(() => {});
-  location.hash = '#/guru';
+  location.hash = '#/jejak';
 }
 
 function formGantiSandi(wadah) {
@@ -315,7 +315,7 @@ function halJejak() {
   APP.innerHTML = `<div class="kepala-porto"><div><h1 class="judul-hal">🧭 Peta Jejak Berpikir</h1>
       <p class="redup">Lihat cara murid bereksperimen — bukan hanya hasil akhirnya.</p>
       <p class="kecil">👤 <b>${esc(G.nama || '')}</b> · ${esc(G.sekolah || '')}${admin ? ' · <span class="lencana">admin</span>' : ''}</p></div>
-    <div class="aksi-porto">${admin ? '<a class="tombol" href="#/admin-guru">👥 Kelola guru</a><a class="tombol" href="#/kurasi">🧠 Kurasi memori</a>' : ''}<button class="tombol" id="bGantiSandi">🔑 Ganti sandi</button><button class="tombol" id="bKeluarGuru">Keluar</button></div></div>
+    <div class="aksi-porto">${admin ? '<a class="tombol" href="#/admin-guru">👥 Kelola guru</a><a class="tombol" href="#/kurasi">🧠 Kurasi memori</a>' : ''}<a class="tombol utama" href="#/guru">📘 Panduan Guru</a><button class="tombol" id="bGantiSandi">🔑 Ganti sandi</button><button class="tombol" id="bKeluarGuru">Keluar</button></div></div>
   <div id="wadahSandi"></div>
   <div class="kartu" id="kartuKunci"></div>
   <div class="kartu"><div class="lab-kepala"><h3>🏫 Kelas saya</h3><button class="tombol kecil" id="bSegarKelas">↻ Segarkan</button></div>
