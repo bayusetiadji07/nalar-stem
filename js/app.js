@@ -91,8 +91,9 @@ function rute() {
   if (hal === 'jejak') return halJejak();
   if (hal === 'admin-guru') return halAdminGuru();
   if (hal === 'tentang') return halSambut();
-  // Kunjungan pertama (belum ada nama & belum ada misi) → halaman sambutan dulu
-  if (!hal && !sudahDisambut() && !S.profil.nama && !Object.keys(S.misi || {}).length) return halSambut();
+  // Halaman awal: tampil setiap kali aplikasi dibuka (sekali per sesi), Beranda ada di #/beranda
+  if (!hal && !sudahDisambut()) return halSambut();
+  if (hal === 'beranda') tandaiDisambut();
   halBeranda();
 }
 window.addEventListener('hashchange', rute);

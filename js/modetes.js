@@ -64,7 +64,7 @@ async function halTes() {
   if (!S.profil.kodeKelas) {
     APP.innerHTML = `<h1 class="judul-hal">📝 Mode Tes</h1><div class="kartu prosa" style="max-width:620px">
       <p>Tes dibuka oleh gurumu untuk kelas tertentu. Masukkan <b>kode kelas</b> dari gurumu di kartu profil Beranda terlebih dahulu.</p>
-      <a class="tombol utama" href="#/">Ke Beranda</a></div>`;
+      <a class="tombol utama" href="#/beranda">Ke Beranda</a></div>`;
     return;
   }
   if (!S.tesKelas) APP.innerHTML = '<p class="redup">Memeriksa tes dari gurumu…</p>';

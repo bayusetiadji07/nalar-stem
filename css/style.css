@@ -719,3 +719,5 @@ body.mode-tes .fab-tutor { display: none; }
   .sambut-hero-isi { padding: 24px 18px; } .sambut-pintu { grid-template-columns: 1fr; }
   .sambut-fitur, .sambut-angka { grid-template-columns: 1fr 1fr; }
 }
+.sambut-lanjut { display: block; width: 100%; margin-top: 12px; font: inherit; text-align: left; background: #fff; border: 1.5px solid var(--utama); color: var(--utama-tua); border-radius: 14px; padding: 11px 16px; cursor: pointer; font-weight: 600; }
+.sambut-lanjut:hover { background: var(--utama-muda); }

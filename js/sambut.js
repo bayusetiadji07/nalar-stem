@@ -1,12 +1,13 @@
 /* =========================================================
    NalarSTEM — Halaman sambutan (#/tentang)
-   Muncul otomatis pada kunjungan pertama (sebelum Beranda), lalu bisa
-   dibuka lagi dari menu "Tentang & FAQ". Berisi perkenalan, pintu masuk
+   Menjadi halaman awal setiap kali aplikasi dibuka (sekali per sesi/tab),
+   dan bisa dibuka lagi dari menu "Tentang & FAQ". Berisi perkenalan, pintu masuk
    murid/guru, cara memulai, dan tanya-jawab (FAQ) tentang Kak Nala.
    ========================================================= */
-const KUNCI_SAMBUT = 'nalarstem-sambut';
-const sudahDisambut = () => { try { return !!localStorage.getItem(KUNCI_SAMBUT); } catch (e) { return true; } };
-const tandaiDisambut = () => { try { localStorage.setItem(KUNCI_SAMBUT, String(Date.now())); } catch (e) { /* abaikan */ } };
+const KUNCI_SAMBUT = 'nalarstem-masuk';
+// Disimpan di sessionStorage: halaman awal muncul lagi setiap aplikasi/tab baru dibuka.
+const sudahDisambut = () => { try { return !!sessionStorage.getItem(KUNCI_SAMBUT); } catch (e) { return true; } };
+const tandaiDisambut = () => { try { sessionStorage.setItem(KUNCI_SAMBUT, '1'); } catch (e) { /* abaikan */ } };
 
 const FAQ = [
   ['Apa itu NalarSTEM?', 'Laboratorium IPA STEM di HP untuk murid SMP. Murid memecahkan masalah sehari-hari di sekitar pesisir lewat <b>24 misi</b>: memahami masalah, menggali konsep, merancang, menguji di laboratorium maya, menganalisis data, menyimpulkan, lalu mewujudkannya di dunia nyata.'],
@@ -34,7 +35,8 @@ function halSambut() {
         <button class="pintu murid" data-masuk="murid"><span>🎒</span><b>Saya murid</b><small>Mulai misi & isi kode kelas</small></button>
         <button class="pintu guru" data-masuk="guru"><span>🧭</span><b>Saya guru</b><small>Buat kelas & pantau jejak berpikir</small></button>
       </div>
-      <a href="#" class="sambut-lewati" data-masuk="lihat">Lihat-lihat dulu →</a>
+      ${S.profil.nama ? `<button class="sambut-lanjut" data-masuk="lanjut">▶ Lanjutkan sebagai <b>${esc(S.profil.nama)}</b>${S.profil.namaKelas || S.profil.kelas ? ` · ${esc(S.profil.namaKelas || S.profil.kelas)}` : ''}</button>` : ''}
+      <a href="#" class="sambut-lewati" data-masuk="lihat">Lihat-lihat misi dulu →</a>
     </div>
   </section>
 
@@ -83,7 +85,7 @@ function halSambut() {
   </div>`;
   $$('[data-masuk]').forEach(b => b.onclick = e => {
     e.preventDefault(); tandaiDisambut();
-    const ke = { murid: '#/', guru: '#/jejak', lihat: '#/misi' }[b.dataset.masuk];
+    const ke = { murid: '#/beranda', lanjut: '#/beranda', guru: '#/jejak', lihat: '#/misi' }[b.dataset.masuk];
     if (location.hash === ke) rute(); else location.hash = ke;
   });
 }
