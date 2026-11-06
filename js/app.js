@@ -311,10 +311,13 @@ function halMisi(id, no) {
 }
 
 function perbaruiStepper(m, st) {
-  $$('.stepper a').forEach((a, i) => {
-    const ok = langkahTerisi(m, st, LANGKAH[i]);
+  // nomor langkah diambil dari tautan (ada tautan 0 · Pemanasan di depan, jadi indeks tidak sama dengan nomor)
+  $$('.stepper a').forEach(a => {
+    const no = +(a.getAttribute('href') || '').split('/').pop(), L = LANGKAH.find(x => x.no === no);
+    if (!L) return;
+    const ok = langkahTerisi(m, st, L);
     a.classList.toggle('beres', ok);
-    $('.no', a).textContent = ok ? '✓' : i + 1;
+    $('.no', a).textContent = ok ? '✓' : no;
   });
 }
 
