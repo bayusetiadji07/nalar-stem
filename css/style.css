@@ -726,3 +726,4 @@ body.mode-tes .fab-tutor { display: none; }
 body.mode-gerbang .nav, body.mode-gerbang .tombol-menu, body.mode-gerbang .fab-tutor, body.mode-gerbang .tombol-pasang { display: none !important; }
 body.mode-gerbang .atas .merek { pointer-events: none; }
 body.mode-gerbang .atas { justify-content: center; }
+.sambut-judul p { margin: 4px 0 0; max-width: 760px; }

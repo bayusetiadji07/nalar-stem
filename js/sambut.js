@@ -27,6 +27,8 @@ function halSambut(gerbang) {
   if (gerbang) { document.body.classList.add('mode-gerbang'); bersihkan.push(() => document.body.classList.remove('mode-gerbang')); }
   const misiKelas = [7, 8, 9].map(k => MISI.filter(m => kelasMisi(m)[0] === k).length);
   APP.innerHTML = `<div class="sambut">
+  ${!gerbang ? `<div class="sambut-judul"><h1 class="judul-hal">Tentang NalarSTEM &amp; FAQ</h1>
+    <p class="redup">NalarSTEM adalah lab IPA STEM di HP untuk murid SMP, ditemani <b>Kak Nala</b>, AI tutor yang bertanya balik. Halaman ini menjelaskan isi aplikasi, cara memulai, dan jawaban atas pertanyaan yang sering diajukan.</p></div>` : `
   <section class="sambut-hero">
     ${gambar('hero.jpg', '', 'sambut-latar', false)}
     <div class="sambut-hero-isi">
@@ -40,7 +42,7 @@ function halSambut(gerbang) {
       ${S.profil.nama ? `<button class="sambut-lanjut" data-masuk="lanjut">▶ Lanjutkan sebagai <b>${esc(S.profil.nama)}</b>${S.profil.namaKelas || S.profil.kelas ? ` · ${esc(S.profil.namaKelas || S.profil.kelas)}` : ''}</button>` : ''}
       <a href="#" class="sambut-lewati" data-masuk="lihat">Lihat-lihat misi dulu →</a>` : ''}
     </div>
-  </section>
+  </section>`}
 
   <section class="sambut-angka">
     <div><b>${MISI.length}</b><small>misi STEM<br>kelas 7 (${misiKelas[0]}) · 8 (${misiKelas[1]}) · 9 (${misiKelas[2]})</small></div>
