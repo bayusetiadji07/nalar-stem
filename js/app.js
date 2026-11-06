@@ -85,6 +85,7 @@ function rute() {
   if (hal === 'uji-nalar') return halUjiNalar();
   if (hal === 'tes') return halTes();
   if (hal === 'portofolio') return halPortofolio();
+  if (hal === 'awal') return halSambut(true);
   if (hal === 'guru') return halGuru();
   if (hal === 'pengaturan') return halPengaturan();
   if (hal === 'kurasi') return halKurasi();
