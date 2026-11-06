@@ -611,3 +611,36 @@ body.mode-tes .fab-tutor { display: none; }
 .form-akun input { width: 100%; }
 .aksi-sel { white-space: nowrap; }
 .aksi-sel .tombol { margin: 2px 0; }
+
+/* Materi Gali Konsep ala buku sains (js/materi.js) */
+.materi { line-height: 1.65; }
+.materi section { border-top: 1px solid var(--garis); padding-top: 14px; margin-top: 18px; scroll-margin-top: 90px; }
+.materi h4 { font-size: 1.12rem; margin: 0 0 8px; color: var(--utama-tua); }
+.materi .pembuka { font-size: 1.02rem; background: var(--utama-muda); border-radius: 12px; padding: 12px 14px; }
+.daftar-isi { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 4px; align-items: center; }
+.daftar-isi b { margin-right: 4px; font-size: .9rem; }
+.daftar-isi a { font-size: .82rem; font-weight: 600; text-decoration: none; color: var(--utama-tua); background: #f1f5f9; border: 1px solid var(--garis); border-radius: 99px; padding: 3px 10px; }
+.daftar-isi a:hover { background: var(--utama-muda); }
+.svg-materi { display: block; width: 100%; max-width: 660px; height: auto; margin: 10px auto 2px; }
+.ket-gbr, .gbr-materi figcaption { font-size: .85rem; color: var(--redup); text-align: center; margin: 2px 0 12px; font-style: italic; }
+.gbr-materi { margin: 12px 0; }
+.gbr-materi img { display: block; width: 100%; max-width: 720px; margin: 0 auto; border-radius: 14px; box-shadow: 0 4px 16px rgba(15, 23, 42, .1); }
+.gbr-materi figcaption { margin-top: 6px; }
+.tabel-materi { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: .9rem; }
+.tabel-materi th, .tabel-materi td { border: 1px solid var(--garis); padding: 6px 9px; text-align: left; vertical-align: top; }
+.tabel-materi th { background: #f1f5f9; }
+.tabel-materi.angka td:not(:first-child) { text-align: center; }
+.materi .ciri li { margin-bottom: 4px; }
+.kotak-misi, .kotak-tahukah, .kotak-coba, .kotak-miskon { border-radius: 12px; padding: 10px 14px; margin: 10px 0; font-size: .94rem; }
+.kotak-misi { background: #ede9fe; border-left: 4px solid #7c3aed; }
+.kotak-tahukah { background: #fef3c7; border-left: 4px solid #f59e0b; }
+.kotak-coba { background: #dcfce7; border-left: 4px solid #16a34a; }
+.kotak-miskon { background: #fee2e2; border-left: 4px solid #dc2626; }
+.materi .pengingat { background: #fef3c7; color: #92400e; padding: 10px 12px; border-radius: 10px; font-size: .92rem; }
+.uji-diri { background: #f8fafc; border: 1px solid var(--garis); border-radius: 12px; padding: 10px 14px; }
+.uji-diri > summary { font-weight: 700; cursor: pointer; }
+.uji-diri ol { margin: 10px 0 0; padding-left: 20px; }
+.uji-diri li { margin-bottom: 8px; }
+.uji-diri li details { margin-top: 3px; font-size: .88rem; color: var(--redup); }
+.uji-diri li summary { cursor: pointer; color: var(--utama-tua); font-weight: 600; }
+@media (max-width: 560px) { .tabel-materi { font-size: .8rem; } .tabel-materi th, .tabel-materi td { padding: 5px 6px; } }

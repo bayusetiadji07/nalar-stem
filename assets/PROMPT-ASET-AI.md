@@ -191,3 +191,9 @@ Wide banner illustration combining small vignettes of a water rocket, a mini win
 1. Kompres dulu (mis. squoosh.app → WebP kualitas 75–80, lebar maks 1600 px) agar aplikasi tetap ringan di HP murid.
 2. Simpan ke `assets/img/` dengan nama berkas di atas.
 3. Beri tahu Claude untuk memasangnya — aplikasi akan memakai gambar bila berkasnya ada, dan tetap memakai ikon emoji bila tidak ada.
+
+## Ilustrasi materi Gali Konsep (assets/img/materi/, dari ChatGPT, 6 Nov 2026)
+Gaya sama dengan sampul misi, rasio 3:2, TANPA tulisan/label (label dibuat lewat SVG/HTML di js/materi.js). Asli di assets/asli/materi/.
+- `materi-fisika.jpg`: 4 panel (2x2) perubahan fisika: es mencair di gelas warung, tambak garam (air laut menguap, kristal garam), lilin meleleh lalu membeku di tatakan, gula larut dalam teh.
+- `materi-kimia.jpg`: 4 panel perubahan kimia di desa pesisir: jangkar kapal berkarat (vs jangkar baru), kayu bakar terbakar di tungku tanah liat, pisang segar vs membusuk, kedelai vs tempe berjamur di daun pisang; panah oranye sebelum → sesudah.
+- `materi-balon.jpg`: satu adegan percobaan balon: botol plastik berisi cuka berbuih, balon ungu mengembang di mulut botol, mangkuk soda kue + sendok, gelas ukur; murid laki-laki & murid berjilbab berkacamata pelindung, murid perempuan menyentuh botol yang terasa dingin.

@@ -821,7 +821,7 @@ function konteksMisi(m, st, L) {
   baris.push(`Misi: ${m.judul} (${m.kelas}).`);
   baris.push(`Masalah: ${polos(m.kisah)}`);
   baris.push(`Kriteria: ${m.kriteria.join('; ')}. Kendala: ${m.kendala.join('; ')}.`);
-  baris.push(`Konsep kunci (untuk acuan tutor, jangan dibacakan utuh): ${polos(m.konsep)}`);
+  baris.push(`Konsep kunci (untuk acuan tutor, jangan dibacakan utuh): ${polos(m.konsepRingkas || m.konsep)}`);
   baris.push(`Murid sedang di Langkah ${L.no} "${L.judul}" (EDP: ${L.edp}). Arahan: ${L.arahan}`);
   const isianLangkah = L.isian.map(f => `- ${f.label} → ${st.isian[f.id] ? `"${st.isian[f.id]}"` : '(belum diisi)'}`).join('\n');
   baris.push(`Isian murid di langkah ini:\n${isianLangkah}`);
