@@ -33,12 +33,12 @@ function halSambut(gerbang) {
       <span class="sambut-label">Lab IPA STEM + AI Tutor · SMP Fase D</span>
       <h1>Belajar IPA dengan <span>bernalar</span>, bukan menghafal.</h1>
       <p>Pecahkan masalah nyata di sekitarmu, uji rancanganmu di laboratorium maya, dan ditemani <b>Kak Nala</b>, AI yang bertanya balik agar kamu menemukan jawabannya sendiri.</p>
-      <div class="sambut-pintu">
+      ${gerbang ? `<div class="sambut-pintu">
         <button class="pintu murid" data-masuk="murid"><span>🎒</span><b>Saya murid</b><small>Mulai misi & isi kode kelas</small></button>
         <button class="pintu guru" data-masuk="guru"><span>🧭</span><b>Saya guru</b><small>Buat kelas & pantau jejak berpikir</small></button>
       </div>
       ${S.profil.nama ? `<button class="sambut-lanjut" data-masuk="lanjut">▶ Lanjutkan sebagai <b>${esc(S.profil.nama)}</b>${S.profil.namaKelas || S.profil.kelas ? ` · ${esc(S.profil.namaKelas || S.profil.kelas)}` : ''}</button>` : ''}
-      <a href="#" class="sambut-lewati" data-masuk="lihat">Lihat-lihat misi dulu →</a>
+      <a href="#" class="sambut-lewati" data-masuk="lihat">Lihat-lihat misi dulu →</a>` : ''}
     </div>
   </section>
 
@@ -61,11 +61,11 @@ function halSambut(gerbang) {
 
   <section class="sambut-blok sambut-cara">
     <div><h2>🎒 Untuk murid</h2><ol>
-      <li>Ketuk <b>Saya murid</b>, lalu tulis nama dan <b>kode kelas</b> dari gurumu di Beranda.</li>
+      <li>${gerbang ? 'Ketuk <b>Saya murid</b>, lalu tulis' : 'Di <b>Beranda</b>, tulis'} nama dan <b>kode kelas</b> dari gurumu.</li>
       <li>Pilih misi sesuai kelasmu, mulai dari <b>Pemanasan</b>.</li>
       <li>Kerjakan 7 langkahnya; tanya Kak Nala bila bingung. Jawabanmu tersimpan otomatis.</li></ol></div>
     <div><h2>🧭 Untuk guru</h2><ol>
-      <li>Ketuk <b>Saya guru</b> → daftar akun di Peta Jejak Guru.</li>
+      <li>${gerbang ? 'Ketuk <b>Saya guru</b> →' : 'Buka menu <b>Peta Jejak Guru</b> →'} daftar akun guru.</li>
       <li>Buat kelas dan bagikan <b>kode kelasnya</b> kepada murid.</li>
       <li>Pasang <b>kunci Gemini</b> sendiri (gratis) agar kuota Kak Nala tidak berebut.</li>
       <li>Buka <b>tes awal</b>, jalankan misi, buka <b>tes akhir</b>, lalu pantau hasilnya.</li></ol></div>
@@ -77,11 +77,11 @@ function halSambut(gerbang) {
   </section>
 
   <section class="sambut-penutup">
-    <p>Siap mulai?</p>
+    ${gerbang ? `<p>Siap mulai?</p>
     <div class="sambut-pintu kecil">
       <button class="pintu murid" data-masuk="murid"><span>🎒</span><b>Saya murid</b></button>
       <button class="pintu guru" data-masuk="guru"><span>🧭</span><b>Saya guru</b></button>
-    </div>
+    </div>` : ''}
     <small>NalarSTEM · Bayu Setiadji, S.Pd., Gr. · SMP Negeri 3 Besuki, Situbondo</small>
   </section>
   </div>`;
