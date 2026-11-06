@@ -644,3 +644,32 @@ body.mode-tes .fab-tutor { display: none; }
 .uji-diri li details { margin-top: 3px; font-size: .88rem; color: var(--redup); }
 .uji-diri li summary { cursor: pointer; color: var(--utama-tua); font-weight: 600; }
 @media (max-width: 560px) { .tabel-materi { font-size: .8rem; } .tabel-materi th, .tabel-materi td { padding: 5px 6px; } }
+
+/* Langkah 0 · Pemanasan (apersepsi, js/apersepsi.js) */
+.stepper.dengan-0 { grid-template-columns: repeat(8, 1fr); }
+.apersepsi { display: grid; gap: 14px; max-width: 900px; }
+.apersepsi .kartu { margin: 0; }
+.apersepsi h3 { margin: 0 0 8px; }
+.ap-pemantik { display: grid; grid-template-columns: 220px 1fr; gap: 16px; align-items: center; border-left: 5px solid var(--aksen); }
+.ap-pemantik p { font-size: 1.05rem; margin: 0; }
+.ap-gambar { aspect-ratio: 3 / 2; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--aksen) 12%, #fff); }
+.ap-gambar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ap-ingat { margin: 0; padding-left: 20px; } .ap-ingat li { margin-bottom: 4px; }
+.ap-tebak { display: grid; gap: 8px; margin: 8px 0 6px; }
+.ap-tebak button { text-align: left; font: inherit; font-weight: 600; padding: 10px 14px; border-radius: 12px; border: 1.5px solid var(--garis); background: #fff; cursor: pointer; }
+.ap-tebak button:hover { border-color: var(--aksen); }
+.ap-tebak button.pilih { border-color: var(--aksen); background: color-mix(in srgb, var(--aksen) 12%, #fff); box-shadow: 0 0 0 2px color-mix(in srgb, var(--aksen) 25%, transparent); }
+.ap-tujuan { margin: 0; padding-left: 20px; } .ap-tujuan li { margin-bottom: 4px; }
+.ap-manfaat { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+.ap-manfaat ul { margin: 0; padding-left: 20px; }
+.ap-profesi { display: flex; flex-wrap: wrap; gap: 6px; }
+.ap-profesi span { background: #fef3c7; color: #92400e; font-weight: 600; font-size: .85rem; border-radius: 99px; padding: 4px 11px; }
+.kecil-alur { margin: 0; }
+.ap-siap { text-align: center; padding: 6px 0 20px; }
+.tombol.besar { font-size: 1.08rem; padding: 14px 28px; }
+.ap-ulang { border-left: 5px solid #f59e0b; background: #fffbeb; }
+.ap-ulang p { margin: 6px 0 0; }
+@media (max-width: 720px) {
+  .ap-pemantik, .ap-manfaat { grid-template-columns: 1fr; }
+  .stepper.dengan-0 { grid-template-columns: repeat(8, 1fr); }
+}

@@ -80,7 +80,7 @@ function rute() {
   document.body.classList.remove('menu-buka');
   window.scrollTo(0, 0);
   setKonteksTutor({ jenis: 'umum' });
-  if (hal === 'misi' && a) return halMisi(a, +b || 1);
+  if (hal === 'misi' && a) return halMisi(a, b === '0' ? 0 : (+b || 1));
   if (hal === 'misi') return halDaftarMisi();
   if (hal === 'uji-nalar') return halUjiNalar();
   if (hal === 'tes') return halTes();
@@ -114,9 +114,20 @@ function gridMisiBerkelas() {
   }).join('');
 }
 
+// Stepper misi: 0 · Pemanasan (apersepsi) + 7 langkah
+function htmlStepper(m, st, aktif) {
+  const ada0 = typeof APERSEPSI !== 'undefined' && APERSEPSI[m.id], siap0 = !!(st.apersepsi && st.apersepsi.siap);
+  return `<nav class="stepper${ada0 ? ' dengan-0' : ''}" style="--aksen:${m.warna}">
+    ${ada0 ? `<a href="#/misi/${m.id}/0" class="${aktif === 0 ? 'aktif' : ''} ${siap0 ? 'beres' : ''}"><span class="no">${siap0 ? '✓' : 0}</span><span class="nm">Pemanasan</span></a>` : ''}
+    ${LANGKAH.map(x => `<a href="#/misi/${m.id}/${x.no}" class="${x.no === aktif ? 'aktif' : ''} ${langkahTerisi(m, st, x) ? 'beres' : ''}">
+      <span class="no">${langkahTerisi(m, st, x) ? '✓' : x.no}</span><span class="nm">${x.judul}</span></a>`).join('')}
+  </nav>`;
+}
+
 function kartuMisi(m) {
   const n = kemajuan(m);
-  return `<a class="kartu-misi" href="#/misi/${m.id}/1" style="--aksen:${m.warna}">
+  const awal = typeof APERSEPSI !== 'undefined' && APERSEPSI[m.id] && !(S.misi[m.id] && S.misi[m.id].apersepsi && S.misi[m.id].apersepsi.siap) && !n ? 0 : 1;
+  return `<a class="kartu-misi" href="#/misi/${m.id}/${awal}" style="--aksen:${m.warna}">
     ${sampulMisi(m)}
     <div class="km-isi">
       <span class="km-kelas">${esc(m.kelas)}</span>
@@ -219,6 +230,7 @@ function halMisi(id, no) {
   const m = MISI.find(x => x.id === id);
   if (!m) { location.hash = '#/misi'; return; }
   const st = ms(id);
+  if (no === 0 && typeof halApersepsi === 'function') { setKonteksTutor({ jenis: 'misi', m, L: LANGKAH[0] }); return halApersepsi(m); }
   const L = LANGKAH[jepit(no, 1, LANGKAH.length) - 1];
   setKonteksTutor({ jenis: 'misi', m, L });
 
@@ -227,10 +239,7 @@ function halMisi(id, no) {
     <a href="#/misi" class="kembali">← Semua misi</a>
     <div class="km-judul">${sampulMisi(m, 'km-ikon besar')}<div><span class="km-kelas">${esc(m.kelas)}</span><h1>${esc(m.judul)}</h1></div></div>
   </div>
-  <nav class="stepper" style="--aksen:${m.warna}">
-    ${LANGKAH.map(x => `<a href="#/misi/${id}/${x.no}" class="${x.no === L.no ? 'aktif' : ''} ${langkahTerisi(m, st, x) ? 'beres' : ''}">
-      <span class="no">${langkahTerisi(m, st, x) ? '✓' : x.no}</span><span class="nm">${x.judul}</span></a>`).join('')}
-  </nav>
+  ${htmlStepper(m, st, L.no)}
   <div class="tata-misi">
     <div class="kolom-utama">
       <div class="arahan" style="--aksen:${m.warna}">
@@ -334,6 +343,7 @@ function isiLangkah(m, st, L) {
     return `<div class="kartu"><h3>🏆 Uji terbaikmu</h3>${terbaik
       ? `<p>Uji ke-${terbaik.no} memenuhi <b>${terbaik.lulus}/${terbaik.total}</b> kriteria.</p><div class="ringkas-uji">${m.variabel.map(v => `<span><small>${esc(v.label)}</small>${esc(tampilVar(v, terbaik.v[v.id]))}</span>`).join('')}</div>`
       : '<p class="redup">Belum ada uji. Kembali ke Langkah 4.</p>'}</div>
+      ${typeof htmlTebakanAwal === 'function' ? htmlTebakanAwal(m, st) : ''}
       <div class="kartu cer"><b>Pola CER:</b> <span>Klaim</span> → <span>Bukti</span> → <span>Penalaran</span>. Klaim tanpa bukti hanyalah pendapat; bukti tanpa penalaran belum menjelaskan <i>mengapa</i>.</div>`;
   }
   return '';
