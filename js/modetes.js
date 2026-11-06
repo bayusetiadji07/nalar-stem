@@ -1,7 +1,7 @@
 /* =========================================================
    NalarSTEM — Mode Tes (tes awal & tes akhir per misi)
    Guru membuka tes untuk kelasnya (misi + Paket A/B) dari #/jejak.
-   Murid mengerjakan 6 soal sesuai materi misi di #/tes, SEKALI saja,
+   Murid mengerjakan 10 soal (4 konsep + 6 berpikir kritis) di #/tes, SEKALI saja,
    tanpa Kak Nala, dan hanya melihat skor; kunci & pembahasan baru
    tampil bila guru membukanya. Hasil dikirim lewat jejak (misi 'tes').
    Bank soal: js/tes.js (TES_MISI) — tersimpan di perangkat, jadi bisa offline.
@@ -9,6 +9,13 @@
 const ID_TES = 'tes';
 const NAMA_PAKET = { A: 'Tes awal', B: 'Tes akhir' };
 const URUT_IND = ['interpretasi', 'analisis', 'inferensi', 'evaluasi', 'eksplanasi', 'regulasi'];
+// Soal 1–4 tiap paket mengukur pemahaman konsep (ind 'konsep'), sisanya indikator berpikir kritis.
+const INFO_KONSEP = { id: 'konsep', nama: 'Pemahaman konsep', warna: '#0284c7' };
+const infoInd = id => (id === 'konsep' ? INFO_KONSEP : INDIKATOR.find(x => x.id === id));
+// Sub-skor dari hasil tersimpan; hasil lama (6 soal) tidak punya data konsep.
+const skorKbk = r => (r && r.ind ? URUT_IND.filter(id => r.ind[id] !== undefined).reduce((a, id) => a + r.ind[id], 0) : null);
+const nilaiKonsep = r => (r && r.kt ? Math.round(r.kp / r.kt * 100) : null);
+const nilaiKbk = r => { const n = r && r.ind ? URUT_IND.filter(id => r.ind[id] !== undefined).length : 0; return n ? Math.round(skorKbk(r) / n * 100) : null; };
 
 /* ---------------- Sisi murid ---------------- */
 // Pengaturan tes dari guru disimpan di S.tesKelas agar tetap terbaca saat offline.
@@ -30,7 +37,7 @@ function htmlKartuTes() {
   return `<a class="kartu kartu-tes-beranda" href="#/tes" style="--aksen:${m.warna}">
     <span class="kt-ikon">📝</span>
     <div><small class="redup">Dibuka gurumu</small><b>${NAMA_PAKET[t.paket]} · ${m.ikon} ${esc(m.judul)}</b>
-      <span class="redup kecil">${h && h.selesai ? `Sudah dikerjakan — skor ${h.skor}/${h.total}${t.bahas ? ' · pembahasan sudah dibuka' : ''}` : '6 soal · dikerjakan sekali · tanpa bantuan Kak Nala'}</span></div>
+      <span class="redup kecil">${h && h.selesai ? `Sudah dikerjakan — skor ${h.skor}/${h.total}${t.bahas ? ' · pembahasan sudah dibuka' : ''}` : `${TES_MISI[t.misi][t.paket].length} soal · dikerjakan sekali · tanpa bantuan Kak Nala`}</span></div>
     <span class="tombol ${h && h.selesai ? '' : 'utama'} kecil">${h && h.selesai ? 'Lihat hasil' : 'Kerjakan →'}</span>
   </a>`;
 }
@@ -45,7 +52,7 @@ function ringkasTes() {
   const hasil = {};
   Object.entries(S.tes || {}).forEach(([misi, P]) => Object.entries(P).forEach(([paket, h]) => {
     if (!h.selesai) return;
-    (hasil[misi] = hasil[misi] || {})[paket] = { s: h.skor, t: h.total, ind: h.ind, j: h.pilih, w: h.selesai, d: h.mulai ? Math.round((h.selesai - h.mulai) / 1000) : null };
+    (hasil[misi] = hasil[misi] || {})[paket] = { s: h.skor, t: h.total, ind: h.ind, kp: h.kp, kt: h.kt, j: h.pilih, w: h.selesai, d: h.mulai ? Math.round((h.selesai - h.mulai) / 1000) : null };
   }));
   return { v: 1, hasil };
 }
@@ -87,7 +94,7 @@ function gambarTes() {
       <li>Tes hanya bisa dikirim <b>satu kali</b>. Kerjakan sendiri — Kak Nala tidak tersedia selama tes.</li>
       <li>Setelah dikirim kamu melihat skormu. Kunci dan pembahasan dibuka oleh gurumu.</li></ul></div>`}
     <div class="daftar-soal">${soal.map((q, i) => {
-      const I = INDIKATOR.find(x => x.id === q.ind), dipilih = h.jawab[i];
+      const I = infoInd(q.ind), dipilih = h.jawab[i];
       const kelasSoal = bahas ? (dipilih === 0 ? 'benar' : 'salah') : '';
       return `<div class="kartu soal ${kelasSoal}">
         <div class="soal-kepala"><span class="nomor">${i + 1}</span>${selesai ? `<span class="ind-tag"><span style="--c:${I.warna}">${I.nama}</span></span>` : ''}</div>
@@ -112,7 +119,9 @@ function gambarTes() {
     if (!confirm('Kirim jawaban sekarang? Setelah dikirim, jawaban tidak bisa diubah.')) return;
     h.pilih = soal.map((q, i) => h.jawab[i]);
     h.skor = h.pilih.filter(o => o === 0).length; h.total = soal.length;
-    h.ind = Object.fromEntries(soal.map((q, i) => [q.ind, h.pilih[i] === 0 ? 1 : 0]));
+    h.ind = Object.fromEntries(soal.map((q, i) => [q, i]).filter(([q]) => q.ind !== 'konsep').map(([q, i]) => [q.ind, h.pilih[i] === 0 ? 1 : 0]));
+    const ik = soal.map((q, i) => i).filter(i => soal[i].ind === 'konsep');
+    h.kt = ik.length; h.kp = ik.filter(i => h.pilih[i] === 0).length;
     h.selesai = Date.now(); h.mulai = h.mulai || h.selesai; simpan();
     kirimJejak(ID_TES, true);
     toast(navigator.onLine ? 'Jawaban terkirim ke gurumu' : 'Jawaban tersimpan — terkirim otomatis saat online');
@@ -124,9 +133,10 @@ function htmlHasilTes(h, soal, bahas) {
   const nilai = Math.round(h.skor / h.total * 100);
   return `<div class="kartu skor-kuis skor-tes"><span><b>Skormu: ${h.skor}/${h.total}</b> · nilai ${nilai}</span>
     <small class="redup">Dikirim ${new Date(h.selesai).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}${S.jejakTertunda && S.jejakTertunda[ID_TES] ? (navigator.onLine ? ' · ⏳ sedang dikirim ke gurumu' : ' · ⏳ menunggu sinyal untuk terkirim') : ' · ✔ sudah diterima gurumu'}</small></div>
-    <div class="kartu"><b>Kemampuan berpikir kritis yang diukur</b>
-      <div class="ind-hasil">${soal.map((q, i) => { const I = INDIKATOR.find(x => x.id === q.ind); const ok = h.pilih[i] === 0;
-        return `<span class="${ok ? 'ok' : 'belum'}" style="--c:${I.warna}">${ok ? '✔' : '✗'} ${I.nama}</span>`; }).join('')}</div>
+    <div class="kartu"><b>Kemampuan yang diukur</b>
+      ${h.kt ? `<p class="kecil">Pemahaman konsep: <b>${h.kp}/${h.kt}</b> · Berpikir kritis: <b>${skorKbk(h)}/${URUT_IND.length}</b></p>` : ''}
+      <div class="ind-hasil">${soal.map((q, i) => { const I = infoInd(q.ind); const ok = h.pilih[i] === 0;
+        return `<span class="${ok ? 'ok' : 'belum'}" style="--c:${I.warna}">${ok ? '✔' : '✗'} ${q.ind === 'konsep' ? `Konsep no. ${i + 1}` : I.nama}</span>`; }).join('')}</div>
       ${bahas ? '' : '<p class="redup kecil">Tanda ✔/✗ menunjukkan kebiasaan berpikir yang sudah atau belum tepat. Bahas bersama gurumu setelah pembahasan dibuka.</p>'}</div>`;
 }
 
@@ -164,19 +174,21 @@ function htmlPanelTes(kelas, baris) {
   const gKelas = dua.length ? rataRata(dua.map(r => r.g).filter(g => g !== null)) : null;
   const indPersen = (arr, P) => Object.fromEntries(URUT_IND.map(id => { const v = arr.filter(r => r[P] && r[P].ind && r[P].ind[id] !== undefined); return [id, v.length ? v.filter(r => r[P].ind[id]).length / v.length : null]; }));
   const iA = indPersen(adaA, 'A'), iB = indPersen(adaB, 'B');
+  const konsepPersen = (arr, P) => { const v = arr.filter(r => r[P] && r[P].kt); return v.length ? v.reduce((a, r) => a + r[P].kp, 0) / v.reduce((a, r) => a + r[P].kt, 0) : null; };
+  const kA = konsepPersen(adaA, 'A'), kB = konsepPersen(adaB, 'B');
   const status = t ? (() => { const tm = MISI.find(x => x.id === t.misi); return `<div class="status-tes buka"><b>🟢 Sedang dibuka:</b> ${NAMA_PAKET[t.paket]} · ${tm.ikon} ${esc(tm.judul)} · pembahasan ${t.bahas ? '<b>terbuka</b>' : 'tertutup'}
       <span class="aksi-tes"><button class="tombol kecil" id="bTesBahas">${t.bahas ? '🙈 Tutup pembahasan' : '💡 Buka pembahasan'}</button><button class="tombol kecil bahaya" id="bTesTutup">⏹ Tutup tes</button></span></div>`; })()
     : '<div class="status-tes"><b>⚪ Tidak ada tes yang dibuka.</b> Murid hanya bisa mengerjakan tes setelah Anda membukanya.</div>';
   return `<div class="kartu panel-tes">
     <div class="lab-kepala"><h3>📝 Mode Tes — tes awal &amp; tes akhir per misi</h3></div>
-    <p class="redup kecil">Setiap misi punya 2 paket paralel berisi 6 soal sesuai materi dan tujuan pembelajarannya (satu soal per indikator berpikir kritis). Buka <b>Paket A</b> sebelum misi dimulai dan <b>Paket B</b> setelah misi selesai. Murid mengerjakan sekali di <b>#/tes</b> (kartu muncul di Beranda), tanpa Kak Nala, dan kunci tersembunyi sampai Anda membuka pembahasan.</p>
+    <p class="redup kecil">Setiap misi punya 2 paket paralel berisi 10 soal: soal 1–4 mengukur <b>pemahaman konsep</b> materi Gali Konsep, soal 5–10 mengukur <b>berpikir kritis</b> (satu soal per indikator). Kisi-kisi dan pedoman penskoran ada di bawah. Buka <b>Paket A</b> sebelum misi dimulai dan <b>Paket B</b> setelah misi selesai. Murid mengerjakan sekali di <b>#/tes</b> (kartu muncul di Beranda), tanpa Kak Nala, dan kunci tersembunyi sampai Anda membuka pembahasan.</p>
     ${status}
     <form id="fBukaTes" class="baris-form">
       <select id="tesMisi" aria-label="Misi">${MISI.map(x => `<option value="${x.id}" ${x.id === tesTerpilih ? 'selected' : ''}>${x.ikon} ${esc(x.judul)}</option>`).join('')}</select>
       <select id="tesPaket" aria-label="Paket"><option value="A">Paket A — tes awal</option><option value="B" ${adaA.length ? 'selected' : ''}>Paket B — tes akhir</option></select>
       <button class="tombol utama">▶ Buka tes ini</button>
     </form>
-    <details class="cara-skor"><summary>Lihat tujuan pembelajaran &amp; soal ${esc(m.judul)}</summary>${htmlPratinjauTes(m.id)}</details>
+    <details class="cara-skor"><summary>📋 Kisi-kisi, soal &amp; pedoman penskoran — ${esc(m.judul)}</summary>${htmlKisiTes(m.id)}</details>
     <h4 class="sub-ringkas">📈 Hasil ${m.ikon} ${esc(m.judul)}</h4>
     ${D.length ? `<div class="statistik">
       <div><b>${adaA.length}<small class="dari"> / ${adaB.length}</small></b><small>mengerjakan awal / akhir</small></div>
@@ -185,17 +197,19 @@ function htmlPanelTes(kelas, baris) {
       <div><b>${gKelas === null ? '—' : desimal(gKelas, 2)}</b><small>N-gain rata-rata · ${tafsirGain(gKelas)}${dua.length ? ` (${dua.length} murid)` : ''}</small></div>
     </div>
     <div class="tabel-gulir"><table class="tabel tabel-ind-tes"><thead><tr><th>Indikator</th><th>Benar · tes awal</th><th>Benar · tes akhir</th></tr></thead><tbody>
+      <tr><td><span class="ind-tag"><span style="--c:${INFO_KONSEP.warna}">${INFO_KONSEP.nama}</span></span> <small class="redup">(4 soal)</small></td><td>${batangPersen(kA)}</td><td>${batangPersen(kB)}</td></tr>
       ${URUT_IND.map(id => { const I = INDIKATOR.find(x => x.id === id); return `<tr><td><span class="ind-tag"><span style="--c:${I.warna}">${I.nama}</span></span></td>
         <td>${batangPersen(iA[id])}</td><td>${batangPersen(iB[id])}</td></tr>`; }).join('')}</tbody></table></div>
     <div class="lab-kepala"><b>Tiap murid</b><button class="tombol kecil" id="bUnduhTes">⬇️ Unduh CSV tes</button></div>
-    <div class="tabel-gulir"><table class="tabel"><thead><tr><th>Murid</th><th>Tes awal</th><th>Tes akhir</th><th>N-gain</th><th>Indikator belum tepat (tes terakhir)</th></tr></thead><tbody>
+    <div class="tabel-gulir"><table class="tabel"><thead><tr><th>Murid</th><th>Tes awal</th><th>Tes akhir</th><th>N-gain</th><th>Konsep · Berpikir kritis<br><small>(awal → akhir)</small></th><th>Indikator belum tepat (tes terakhir)</th></tr></thead><tbody>
       ${D.map(r => { const akhir = r.B || r.A; const belum = akhir && akhir.ind ? URUT_IND.filter(id => akhir.ind[id] === 0).map(id => INDIKATOR.find(x => x.id === id).nama) : [];
         return `<tr><td><b>${esc(r.nama)}</b>${r.kelas ? `<br><small class="redup">${esc(r.kelas)}</small>` : ''}</td>
           <td>${r.a === null ? '<span class="redup">—</span>' : `${r.a} <small class="redup">(${r.A.s}/${r.A.t})</small>`}</td>
           <td>${r.b === null ? '<span class="redup">—</span>' : `<b>${r.b}</b> <small class="redup">(${r.B.s}/${r.B.t})</small>`}</td>
           <td>${r.g === null ? '—' : `${desimal(r.g, 2)} <small class="redup">${tafsirGain(r.g)}</small>`}</td>
+          <td class="kecil">${['A', 'B'].map(P => r[P] ? `${nilaiKonsep(r[P]) ?? '—'} · ${nilaiKbk(r[P]) ?? '—'}` : '—').join(' → ')}</td>
           <td class="kecil">${belum.length ? esc(belum.join(', ')) : akhir ? '✔ semua tepat' : '—'}</td></tr>`; }).join('')}</tbody></table></div>
-    <p class="redup kecil">Nilai = jumlah benar ÷ 6 × 100. N-gain = (akhir − awal) ÷ (100 − awal): Tinggi ≥ 0,7 · Sedang 0,3–0,69 · Rendah &lt; 0,3. Paket A dan B paralel: nomor yang sama mengukur indikator yang sama dengan konteks berbeda.</p>`
+    <p class="redup kecil">Nilai = jumlah benar ÷ jumlah soal × 100 (paket baru 10 soal; hasil lama 6 soal tetap dihitung dari 6). Sub-nilai konsep = benar soal 1–4 ÷ 4 × 100, berpikir kritis = benar soal 5–10 ÷ 6 × 100. N-gain = (akhir − awal) ÷ (100 − awal): Tinggi ≥ 0,7 · Sedang 0,3–0,69 · Rendah &lt; 0,3. Paket A dan B paralel: nomor yang sama mengukur indikator yang sama dengan konteks berbeda.</p>`
     : `<p class="redup">Belum ada murid yang mengerjakan tes misi ini.</p>`}
   </div>`;
 }
@@ -206,12 +220,38 @@ function batangPersen(p) {
   return `<span class="batang-persen"><i style="width:${n}%"></i></span> ${n}%`;
 }
 
-function htmlPratinjauTes(misi) {
-  const B = TES_MISI[misi];
-  const daftar = P => `<ol class="pratinjau-tes">${B[P].map(q => { const I = INDIKATOR.find(x => x.id === q.ind);
-    return `<li><span class="ind-tag"><span style="--c:${I.warna}">${I.nama}</span></span> ${esc(q.soal)}<br><small>✔ ${esc(q.opsi[0])}</small></li>`; }).join('')}</ol>`;
-  return `<p class="kecil"><b>Tujuan pembelajaran:</b></p><ol class="kecil">${B.tujuan.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
-    <p class="kecil"><b>Paket A (tes awal)</b></p>${daftar('A')}<p class="kecil"><b>Paket B (tes akhir)</b></p>${daftar('B')}`;
+// Kisi-kisi, soal, kunci, dan pedoman penskoran (juga dipakai untuk versi cetak)
+function htmlKisiTes(misi, cetak) {
+  const B = TES_MISI[misi], m = MISI.find(x => x.id === misi);
+  const tabel = P => `<div class="tabel-gulir"><table class="tabel tabel-kisi"><thead><tr><th>No</th><th>TP</th><th>Indikator soal</th><th>Level</th><th>Aspek</th><th>Bentuk</th><th>Kunci</th></tr></thead><tbody>
+    ${B[P].map((q, i) => { const I = infoInd(q.ind); return `<tr><td>${i + 1}</td><td>${q.tp || '—'}</td><td>${esc(q.kisi || '')}</td><td>${q.lv || '—'}</td>
+      <td><span class="ind-tag"><span style="--c:${I.warna}">${I.nama}</span></span></td><td>PG</td><td class="kecil">${esc(q.opsi[0])}</td></tr>`; }).join('')}</tbody></table></div>`;
+  const soal = P => `<ol class="pratinjau-tes">${B[P].map(q => `<li>${esc(q.soal)}<br><small>✔ ${esc(q.opsi[0])}</small>${cetak ? `<br><small class="redup">Pembahasan: ${esc(q.bahas)}</small>` : ''}</li>`).join('')}</ol>`;
+  const nKonsep = B.A.filter(q => q.ind === 'konsep').length, nKbk = B.A.length - nKonsep;
+  return `${cetak ? `<h2>Kisi-kisi &amp; Pedoman Penskoran Tes — ${esc(m.judul)}</h2><p>${esc(m.kelas)}</p>` : `<p class="kecil"><button type="button" class="tombol kecil" data-cetak-kisi="${misi}">🖨️ Cetak kisi-kisi, soal &amp; pedoman</button></p>`}
+    <p class="kecil"><b>Tujuan pembelajaran (TP):</b></p><ol class="kecil">${B.tujuan.map(x => `<li>${esc(x)}</li>`).join('')}</ol>
+    <p class="kecil"><b>Kisi-kisi Paket A (tes awal)</b></p>${tabel('A')}
+    <p class="kecil"><b>Kisi-kisi Paket B (tes akhir)</b> — paralel dengan Paket A: nomor yang sama mengukur indikator dan level yang sama dengan konteks berbeda.</p>${tabel('B')}
+    <p class="kecil"><b>Pedoman penskoran</b></p>
+    <div class="tabel-gulir"><table class="tabel tabel-kisi"><thead><tr><th>Komponen</th><th>Aturan</th></tr></thead><tbody>
+      <tr><td>Skor tiap soal</td><td>Jawaban sesuai kunci = 1, salah atau kosong = 0 (pilihan ganda, 4 opsi)</td></tr>
+      <tr><td>Skor maksimum</td><td>${B.A.length} (pemahaman konsep ${nKonsep} + berpikir kritis ${nKbk})</td></tr>
+      <tr><td>Nilai akhir</td><td>jumlah skor ÷ ${B.A.length} × 100</td></tr>
+      <tr><td>Sub-nilai pemahaman konsep</td><td>skor soal 1–${nKonsep} ÷ ${nKonsep} × 100</td></tr>
+      <tr><td>Sub-nilai berpikir kritis</td><td>skor soal ${nKonsep + 1}–${B.A.length} ÷ ${nKbk} × 100; tiap soal mewakili satu indikator Facione</td></tr>
+      <tr><td>Kategori nilai</td><td>86–100 Sangat baik · 71–85 Baik · 56–70 Cukup · ≤ 55 Perlu bimbingan</td></tr>
+      <tr><td>Peningkatan (N-gain)</td><td>(nilai akhir − nilai awal) ÷ (100 − nilai awal): Tinggi ≥ 0,7 · Sedang 0,3–0,69 · Rendah &lt; 0,3</td></tr>
+    </tbody></table></div>
+    <p class="kecil"><b>Soal &amp; kunci Paket A</b></p>${soal('A')}<p class="kecil"><b>Soal &amp; kunci Paket B</b></p>${soal('B')}`;
+}
+
+function cetakKisiTes(misi) {
+  const w = window.open('', '_blank'); if (!w) { toast('Izinkan jendela baru (pop-up) untuk mencetak', 'peringatan'); return; }
+  w.document.write(`<!doctype html><html lang="id"><head><meta charset="utf-8"><title>Kisi-kisi tes</title>
+    <style>body{font:12px/1.45 system-ui,Segoe UI,sans-serif;color:#0f172a;margin:24px}h2{margin:0 0 4px}table{width:100%;border-collapse:collapse;margin:6px 0 12px}
+    th,td{border:1px solid #cbd5e1;padding:4px 6px;text-align:left;vertical-align:top}th{background:#f1f5f9}.ind-tag span{font-weight:700}
+    ol li{margin-bottom:5px}.redup{color:#5b6576}@page{size:A4;margin:14mm}</style></head><body>${htmlKisiTes(misi, true)}</body></html>`);
+  w.document.close(); setTimeout(() => w.print(), 400);
 }
 
 function pasangPanelTes(kelas, baris, muatUlang) {
@@ -232,16 +272,17 @@ function pasangPanelTes(kelas, baris, muatUlang) {
   const bb = $('#bTesBahas'); if (bb) bb.onclick = () => atur({ ...kelas.tes, bahas: !kelas.tes.bahas });
   const bt = $('#bTesTutup'); if (bt) bt.onclick = () => { if (confirm('Tutup tes? Murid yang belum mengirim tidak bisa mengerjakannya lagi (kecuali yang sedang offline).')) atur(null); };
   const bu = $('#bUnduhTes'); if (bu) bu.onclick = () => unduhCsvTes(kelas, baris);
+  $$('[data-cetak-kisi]').forEach(b => b.onclick = () => cetakKisiTes(b.dataset.cetakKisi));
 }
 
 function unduhCsvTes(kelas, baris) {
   const sel = v => { const s = String(v ?? ''); return /[";\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
-  const kepala = ['nama', 'kelas', 'misi', 'paket', 'benar', 'jumlah_soal', 'nilai', ...URUT_IND, 'durasi_detik', 'dikirim', 'n_gain'];
+  const kepala = ['nama', 'kelas', 'misi', 'paket', 'benar', 'jumlah_soal', 'nilai', 'konsep_benar', 'konsep_jumlah', 'nilai_konsep', 'nilai_berpikir_kritis', ...URUT_IND, 'durasi_detik', 'dikirim', 'n_gain'];
   const isi = [];
   baris.filter(r => r.misi === ID_TES && r.data && r.data.hasil).forEach(r => Object.entries(r.data.hasil).forEach(([misi, H]) => {
     const m = MISI.find(x => x.id === misi), g = nGain(nilai100(H.A), nilai100(H.B));
     ['A', 'B'].forEach(P => { const h = H[P]; if (!h) return;
-      isi.push([r.nama, r.kelas, m ? m.judul : misi, `${P} (${NAMA_PAKET[P]})`, h.s, h.t, nilai100(h), ...URUT_IND.map(id => (h.ind && h.ind[id] !== undefined ? h.ind[id] : '')),
+      isi.push([r.nama, r.kelas, m ? m.judul : misi, `${P} (${NAMA_PAKET[P]})`, h.s, h.t, nilai100(h), h.kt ? h.kp : '', h.kt || '', nilaiKonsep(h) ?? '', nilaiKbk(h) ?? '', ...URUT_IND.map(id => (h.ind && h.ind[id] !== undefined ? h.ind[id] : '')),
         h.d ?? '', new Date(h.w).toLocaleString('id-ID'), P === 'B' && g !== null ? g.toFixed(2).replace('.', ',') : ''].map(sel).join(';')); });
   }));
   const blob = new Blob(['﻿' + [kepala.join(';'), ...isi].join('\n')], { type: 'text/csv;charset=utf-8' });
