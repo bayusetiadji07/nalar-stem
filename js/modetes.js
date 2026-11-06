@@ -24,8 +24,19 @@ async function segarkanTesKelas() {
   try {
     const d = await memoriApi({ aksi: 'kelas_info', kode: S.profil.kodeKelas }, 10000);
     if (d && d.nama) { S.profil.namaKelas = d.nama; S.tesKelas = d.tes || null; simpan(); }
+    else if (d && !d.error) keluarKelasDihapus();   // server menjawab tetapi kelas sudah tidak ada
   } catch (e) { /* pakai salinan terakhir */ }
   return S.tesKelas || null;
+}
+
+// Kelas sudah dihapus guru: lepaskan murid dari kelas itu di perangkat ini.
+function keluarKelasDihapus() {
+  if (!S.profil.kodeKelas) return;
+  const nama = S.profil.namaKelas || S.profil.kodeKelas;
+  delete S.profil.kodeKelas; delete S.profil.namaKelas; delete S.tesKelas; delete S.jejakTertunda; simpan();
+  toast(`Kelas ${nama} sudah dihapus oleh gurumu. Minta kode kelas baru, lalu isi di kartu profil Beranda.`, 'peringatan');
+  const hal = (location.hash || '#/').split('/')[1] || '';
+  if (['beranda', 'tes', ''].includes(hal)) rute();
 }
 const tesValid = t => !!(t && TES_MISI[t.misi] && (t.paket === 'A' || t.paket === 'B'));
 const hasilTes = (misi, paket) => ((S.tes || {})[misi] || {})[paket] || null;

@@ -87,7 +87,10 @@ function kirimJejak(misiId, segera = false) {
     try {
       await memoriApi({ aksi: 'jejak_kirim', kode: S.profil.kodeKelas, perangkat: idPerangkat(), nama: S.profil.nama, kelas: S.profil.kelas, misi: misiId, data }, 12000);
       delete S.jejakTertunda[misiId]; S.jejakTerkirim = Date.now(); simpan();
-    } catch (e) { /* dicoba lagi saat aplikasi dibuka / kembali online */ }
+    } catch (e) {
+      if (/kode kelas tidak ditemukan/i.test(e.message || '')) keluarKelasDihapus();
+      /* selain itu dicoba lagi saat aplikasi dibuka / kembali online */
+    }
   }, segera ? 0 : 2500);
 }
 function kirimJejakTertunda() {

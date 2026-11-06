@@ -1352,4 +1352,5 @@ $('#tombolMenu').onclick = () => document.body.classList.toggle('menu-buka');
 pasangTutor();
 rute();
 kirimJejakTertunda();
+segarkanTesKelas();   // sekaligus memeriksa kelas murid masih ada (bila sudah dihapus guru, murid dilepas)
 perbaruiPaketMemori().catch(() => { /* offline: pakai salinan yang ada */ });
