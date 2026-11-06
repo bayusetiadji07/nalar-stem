@@ -92,7 +92,7 @@ function rute() {
   if (hal === 'admin-guru') return halAdminGuru();
   if (hal === 'tentang') return halSambut();
   // Halaman awal: tampil setiap kali aplikasi dibuka (sekali per sesi), Beranda ada di #/beranda
-  if (!hal && !sudahDisambut()) return halSambut();
+  if (!hal && !sudahDisambut()) return halSambut(true);
   if (hal === 'beranda') tandaiDisambut();
   halBeranda();
 }

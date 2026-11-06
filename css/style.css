@@ -721,3 +721,8 @@ body.mode-tes .fab-tutor { display: none; }
 }
 .sambut-lanjut { display: block; width: 100%; margin-top: 12px; font: inherit; text-align: left; background: #fff; border: 1.5px solid var(--utama); color: var(--utama-tua); border-radius: 14px; padding: 11px 16px; cursor: pointer; font-weight: 600; }
 .sambut-lanjut:hover { background: var(--utama-muda); }
+
+/* Mode gerbang: halaman awal sebagai pintu masuk, menu baru muncul setelah masuk */
+body.mode-gerbang .nav, body.mode-gerbang .tombol-menu, body.mode-gerbang .fab-tutor, body.mode-gerbang .tombol-pasang { display: none !important; }
+body.mode-gerbang .atas .merek { pointer-events: none; }
+body.mode-gerbang .atas { justify-content: center; }

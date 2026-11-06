@@ -22,7 +22,9 @@ const FAQ = [
   ['Tips agar lancar dipakai di kelas?', 'Kerjakan <b>berpasangan</b> atau 1 HP per kelompok, sehingga permintaan ke AI berkurang separuh. Bila muncul tanda <b>⚙️ Tutor lokal</b>, coba lagi 1–2 menit kemudian. Pasang <b>kunci Gemini sendiri</b> sebelum memakai NalarSTEM di kelas.']
 ];
 
-function halSambut() {
+// gerbang = true bila tampil sebagai pintu masuk (menu disembunyikan sampai pengguna masuk)
+function halSambut(gerbang) {
+  if (gerbang) { document.body.classList.add('mode-gerbang'); bersihkan.push(() => document.body.classList.remove('mode-gerbang')); }
   const misiKelas = [7, 8, 9].map(k => MISI.filter(m => kelasMisi(m)[0] === k).length);
   APP.innerHTML = `<div class="sambut">
   <section class="sambut-hero">
