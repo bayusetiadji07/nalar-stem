@@ -90,6 +90,9 @@ function rute() {
   if (hal === 'kurasi') return halKurasi();
   if (hal === 'jejak') return halJejak();
   if (hal === 'admin-guru') return halAdminGuru();
+  if (hal === 'tentang') return halSambut();
+  // Kunjungan pertama (belum ada nama & belum ada misi) → halaman sambutan dulu
+  if (!hal && !sudahDisambut() && !S.profil.nama && !Object.keys(S.misi || {}).length) return halSambut();
   halBeranda();
 }
 window.addEventListener('hashchange', rute);
