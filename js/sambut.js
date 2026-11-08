@@ -9,6 +9,8 @@ const KUNCI_SAMBUT = 'nalarstem-masuk';
 const sudahDisambut = () => { try { return !!sessionStorage.getItem(KUNCI_SAMBUT); } catch (e) { return true; } };
 const tandaiDisambut = () => { try { sessionStorage.setItem(KUNCI_SAMBUT, '1'); } catch (e) { /* abaikan */ } };
 
+const VIDEO_TUTORIAL = 'YViVp_sOAZ8';   // youtu.be/YViVp_sOAZ8 — tutorial penggunaan NalarSTEM
+
 const FAQ = [
   ['Apa itu NalarSTEM?', 'Laboratorium IPA STEM di HP untuk murid SMP. Murid memecahkan masalah sehari-hari di sekitar pesisir lewat <b>24 misi</b>: memahami masalah, menggali konsep, merancang, menguji di laboratorium maya, menganalisis data, menyimpulkan, lalu mewujudkannya di dunia nyata.'],
   ['Kak Nala itu apa?', 'AI tutor di dalam NalarSTEM yang memakai <b>Gemini (Google)</b>. Kak Nala tidak memberi jawaban langsung, tetapi <b>bertanya balik</b> agar murid menemukan sendiri jawabannya, lalu menilai jawaban setiap langkah dengan rubrik berpikir kritis.'],
@@ -43,6 +45,20 @@ function halSambut(gerbang) {
       <a href="#" class="sambut-lewati" data-masuk="lihat">Lihat-lihat misi dulu →</a>` : ''}
     </div>
   </section>`}
+
+  <section class="sambut-blok sambut-video">
+    <div class="sv-teks">
+      <span class="sambut-label">🎬 Video tutorial · ± 6 menit</span>
+      <h2>Lihat cara memakai NalarSTEM</h2>
+      <p>Dari membuat akun guru dan kelas, menjalankan misi Roket Cuka &amp; Soda Kue bersama Kak Nala, sampai membuka tes dan membaca Peta Jejak murid.</p>
+    </div>
+    <div class="sv-bingkai" id="bingkaiVideo">
+      <button type="button" class="sv-sampul" id="putarVideo" aria-label="Putar video tutorial NalarSTEM">
+        ${gambar('tutorial-guru.jpg', 'Video tutorial NalarSTEM', '', true)}
+        <span class="sv-putar" aria-hidden="true">▶ Putar video</span>
+      </button>
+    </div>
+  </section>
 
   <section class="sambut-angka">
     <div><b>${MISI.length}</b><small>misi STEM<br>kelas 7 (${misiKelas[0]}) · 8 (${misiKelas[1]}) · 9 (${misiKelas[2]})</small></div>
@@ -87,6 +103,12 @@ function halSambut(gerbang) {
     <small>NalarSTEM · Bayu Setiadji, S.Pd., Gr. · SMP Negeri 3 Besuki, Situbondo</small>
   </section>
   </div>`;
+  // pemutar YouTube baru dimuat saat diklik (halaman awal tetap ringan & tidak memasang cookie YouTube)
+  $('#putarVideo').onclick = () => {
+    if (!navigator.onLine) { toast('Video butuh internet. Sambungkan HP ke internet lalu coba lagi.', 'peringatan'); return; }
+    $('#bingkaiVideo').innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${VIDEO_TUTORIAL}?autoplay=1&rel=0&modestbranding=1" title="Video tutorial NalarSTEM"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>`;
+  };
   $$('[data-masuk]').forEach(b => b.onclick = e => {
     e.preventDefault(); tandaiDisambut();
     const ke = { murid: '#/beranda', lanjut: '#/beranda', guru: '#/jejak', lihat: '#/misi' }[b.dataset.masuk];
