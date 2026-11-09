@@ -871,3 +871,9 @@ body.mode-gerbang .atas { justify-content: center; }
 .sv-putar { position: absolute; left: 16px; bottom: 16px; padding: 10px 20px; border-radius: 99px; background: rgba(220, 38, 38, .95); color: #fff; font: 800 1rem var(--font); box-shadow: 0 8px 24px rgba(0, 0, 0, .35); transition: transform .15s; }
 .sv-sampul:hover .sv-putar { transform: scale(1.08); }
 @media (max-width: 760px) { .sambut-video { grid-template-columns: 1fr; } .sv-putar { left: 10px; bottom: 10px; padding: 7px 14px; font-size: .88rem; } }
+
+/* Halaman awal: strip jumlah pengunjung */
+.sambut-pengunjung { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 18px; margin: -6px 0 18px; padding: 10px 16px;
+  background: #fff; border: 1px dashed var(--garis); border-radius: 14px; font-size: .9rem; color: var(--redup); }
+.sambut-pengunjung b { color: var(--utama-tua); font-size: 1.05rem; }
+.sambut-pengunjung .sp-judul { font-weight: 800; color: var(--teks); }

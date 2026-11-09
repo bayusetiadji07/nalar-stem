@@ -24,6 +24,28 @@ const FAQ = [
   ['Tips agar lancar dipakai di kelas?', 'Kerjakan <b>berpasangan</b> atau 1 HP per kelompok, sehingga permintaan ke AI berkurang separuh. Bila muncul tanda <b>⚙️ Tutor lokal</b>, coba lagi 1–2 menit kemudian. Pasang <b>kunci Gemini sendiri</b> sebelum memakai NalarSTEM di kelas.']
 ];
 
+// Penghitung pengunjung: satu perangkat dihitung sekali per hari (ID acak perangkat, tanpa nama).
+// Hasil disimpan sebentar di sessionStorage agar tidak memanggil server setiap kali halaman awal dibuka.
+async function muatPengunjung() {
+  const w = $('#pengunjung'); if (!w) return;
+  const angka = n => Number(n || 0).toLocaleString('id-ID');
+  const tampil = d => {
+    w.hidden = false;
+    w.innerHTML = `<span class="sp-judul">👀 Pengunjung NalarSTEM</span>
+      <span><b>${angka(d.total)}</b> total perangkat</span><span><b>${angka(d.pekanIni)}</b> pekan ini</span><span><b>${angka(d.hariIni)}</b> hari ini</span>`;
+  };
+  let simpanan = null;
+  try { simpanan = JSON.parse(sessionStorage.getItem('nalarstem-pengunjung') || 'null'); } catch (e) { /* abaikan */ }
+  if (simpanan && Date.now() - simpanan.w < 5 * 60e3) return tampil(simpanan.d);
+  if (!navigator.onLine) { if (simpanan) tampil(simpanan.d); return; }
+  try {
+    const d = await memoriApi({ aksi: 'kunjungan', perangkat: idPerangkat() }, 8000);
+    if (!d || d.total === undefined) return;
+    try { sessionStorage.setItem('nalarstem-pengunjung', JSON.stringify({ w: Date.now(), d })); } catch (e) { /* abaikan */ }
+    if (document.body.contains(w)) tampil(d);
+  } catch (e) { if (simpanan) tampil(simpanan.d); }
+}
+
 // gerbang = true bila tampil sebagai pintu masuk (menu disembunyikan sampai pengguna masuk)
 function halSambut(gerbang) {
   if (gerbang) { document.body.classList.add('mode-gerbang'); bersihkan.push(() => document.body.classList.remove('mode-gerbang')); }
@@ -66,6 +88,7 @@ function halSambut(gerbang) {
     <div><b>6</b><small>indikator berpikir<br>kritis dinilai rubrik</small></div>
     <div><b>0</b><small>rupiah & tanpa instalasi<br>cukup lewat HP</small></div>
   </section>
+  <div class="sambut-pengunjung" id="pengunjung" hidden></div>
 
   <section class="sambut-blok">
     <h2>Apa yang bisa dilakukan?</h2>
@@ -103,6 +126,7 @@ function halSambut(gerbang) {
     <small>NalarSTEM · Bayu Setiadji, S.Pd., Gr. · SMP Negeri 3 Besuki, Situbondo</small>
   </section>
   </div>`;
+  muatPengunjung();
   // pemutar YouTube baru dimuat saat diklik (halaman awal tetap ringan & tidak memasang cookie YouTube)
   $('#putarVideo').onclick = () => {
     if (!navigator.onLine) { toast('Video butuh internet. Sambungkan HP ke internet lalu coba lagi.', 'peringatan'); return; }

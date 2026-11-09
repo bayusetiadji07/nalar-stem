@@ -65,6 +65,8 @@ module.exports = async function handler(req, res) {
         if (hasil && hasil[0] && b.catat !== false) await rpc('nalar_catat_pakai', { p_id: hasil[0].id }).catch(() => {});
         return res.status(200).json({ hasil: hasil || [] });
       }
+      case 'kunjungan':   // penghitung pengunjung halaman awal (hanya ID acak perangkat + tanggal)
+        return res.status(200).json(await rpc('nalar_kunjungan_catat', { p_perangkat: String(b.perangkat || '').slice(0, 24) }));
       case 'paket':
         return res.status(200).json({ hasil: await rpc('nalar_paket', {}) });
       case 'guru_cek':
