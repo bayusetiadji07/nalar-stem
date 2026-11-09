@@ -877,3 +877,9 @@ body.mode-gerbang .atas { justify-content: center; }
   background: #fff; border: 1px dashed var(--garis); border-radius: 14px; font-size: .9rem; color: var(--redup); }
 .sambut-pengunjung b { color: var(--utama-tua); font-size: 1.05rem; }
 .sambut-pengunjung .sp-judul { font-weight: 800; color: var(--teks); }
+
+/* Kaki halaman: penghitung StatCounter */
+.kaki-statistik { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 6px !important; }
+.kaki-statistik img.statcounter { display: block; height: 20px; width: auto; border-radius: 3px; image-rendering: pixelated; }
+.kaki-statistik #wadahCounter a, .kaki-statistik #wadahCounter div { display: inline-flex; }
+.kaki-statistik > a { font-weight: 700; }
