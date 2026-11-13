@@ -883,6 +883,3 @@ body.mode-gerbang .atas { justify-content: center; }
 .kaki-statistik img.statcounter { display: block; height: 20px; width: auto; border-radius: 3px; image-rendering: pixelated; }
 .kaki-statistik #wadahCounter a, .kaki-statistik #wadahCounter div { display: inline-flex; }
 .kaki-statistik > a { font-weight: 700; }
-
-/* Menu per peran: tautan khusus guru disembunyikan bagi murid (guru yang sudah masuk melihat semua menu) */
-body:not(.peran-guru) .nav [data-peran="guru"] { display: none !important; }
