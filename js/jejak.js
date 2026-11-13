@@ -218,7 +218,9 @@ const simpanPilihanJejak = () => { try { sessionStorage.setItem('nalarstem-jejak
    Tiap guru punya akun sendiri; kelas & jejak muridnya hanya terlihat olehnya. */
 const AKUN_GURU = 'nalarstem-akun-guru';
 function akunGuru() { try { return JSON.parse(localStorage.getItem(AKUN_GURU) || 'null'); } catch (e) { return null; } }
-function setAkunGuru(a) { try { if (a) localStorage.setItem(AKUN_GURU, JSON.stringify(a)); else localStorage.removeItem(AKUN_GURU); } catch (e) { /* abaikan */ } }
+function setAkunGuru(a) { try { if (a) localStorage.setItem(AKUN_GURU, JSON.stringify(a)); else localStorage.removeItem(AKUN_GURU); } catch (e) { /* abaikan */ } perbaruiPeran(); }
+// Tampilan menu per peran: guru yang sudah masuk melihat semua menu; murid hanya menu belajar (lihat [data-peran="guru"] di index.html).
+function perbaruiPeran() { document.body.classList.toggle('peran-guru', !!((akunGuru() || {}).token)); }
 const tokenGuru = () => (akunGuru() || {}).token || '';
 // sesi kedaluwarsa / akun dinonaktifkan → kembali ke layar masuk
 function sesiGuruHabis(err) { if (err && err.status === 401) { setAkunGuru(null); toast('Sesi masuk berakhir, silakan masuk lagi', 'peringatan'); halJejak(); return true; } return false; }

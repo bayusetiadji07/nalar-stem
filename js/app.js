@@ -75,6 +75,7 @@ const APP = $('#app');
 let bersihkan = [];
 function rute() {
   bersihkan.forEach(f => f()); bersihkan = [];
+  perbaruiPeran();
   const [, hal, a, b] = (location.hash || '#/').split('/');
   $$('.nav a').forEach(x => x.classList.toggle('aktif', x.getAttribute('href') === '#/' + (hal || '')));
   document.body.classList.remove('menu-buka');
